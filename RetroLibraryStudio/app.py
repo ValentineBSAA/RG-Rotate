@@ -53,7 +53,7 @@ from system_shelves import (PRIMARY_SYSTEMS, console_counts, console_order_key,
                             console_visual, grouped_shelves)
 from workspace_setup import suggested_workspace, copy_existing_workspace, count_workspace_files
 
-VERSION = '1.6.6 Beta – Unified Game Titles & Automatic Cover Repair'
+VERSION = '1.6.7 Beta – Clear PS1 Picker & Extraction Diagnostics'
 SCALE_CHOICES = [('100%', 100), ('110%', 110), ('125%', 125), ('140%', 140), ('150%', 150)]
 MAX_VISIBLE_FILES = 1200
 
@@ -2634,27 +2634,27 @@ class Window(QMainWindow):
             return
 
         dialog = QDialog(self)
-        dialog.setWindowTitle('Choose PlayStation Classics by game title')
-        dialog.resize(1000, 690)
+        dialog.setWindowTitle('Select PlayStation games')
+        dialog.resize(1010, 690)
         lay = QVBoxLayout(dialog)
         lay.setContentsMargins(17, 17, 17, 17)
-        lay.setSpacing(10)
-        lay.addWidget(label('Choose the PS1 games you actually want', 'H2', True))
-        lay.addWidget(label(
-            f'{len(games)} source package(s) found  •  {folder}\n'
-            'Titles come from EBOOT metadata where available, not guessed Sony folder IDs. '
-            'Just select the games: EBOOT.PBP and its nearby KEYS.BIN are handled together. '
-            'Originals remain untouched.', 'Small', True))
+        lay.setSpacing(9)
+        lay.addWidget(label('Select PlayStation games', 'H2', True))
+        location = label(f'{len(games)} games found  •  Source: {folder.name}', 'Small', True)
+        location.setToolTip(str(folder))
+        lay.addWidget(location)
+        lay.addWidget(label('Choose one or several games below. Matching companion files '
+                            'are included automatically; originals stay unchanged.', 'Small', True))
         if result.get('truncated'):
             lay.addWidget(label(
                 'Preview limit reached (1,500 packages). Choose a smaller source folder '
                 'so no games are omitted.', 'Small', True))
         query = QLineEdit()
-        query.setPlaceholderText('Filter by game title, Sony folder code or archive name…')
+        query.setPlaceholderText('Search game name or Sony ID…')
         lay.addWidget(query)
 
         table = QTableWidget(len(games), 5)
-        table.setHorizontalHeaderLabels(['Import', 'Game title', 'Sony folder / file', 'Type', 'Size'])
+        table.setHorizontalHeaderLabels(['Select', 'Game', 'Source ID', 'Format', 'Size'])
         table.setSelectionMode(QAbstractItemView.SelectionMode.NoSelection)
         table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
         table.setAlternatingRowColors(True)
@@ -2691,8 +2691,7 @@ class Window(QMainWindow):
         def update_count(_item=None):
             selected = sum(table.item(i, 0).checkState() == Qt.CheckState.Checked
                            for i in range(table.rowCount()))
-            summary.setText(f'{selected} selected of {len(games)} packages. '
-                'Only selected games will be processed; no KEYS.BIN checkbox is needed.')
+            summary.setText(f'{selected} selected  •  {len(games)} available  •  No manual KEYS selection')
 
         def filter_rows(value):
             term = str(value).casefold().strip()
@@ -2732,7 +2731,7 @@ class Window(QMainWindow):
                 return
             dialog.accept()
 
-        actions.addWidget(button('Import selected games', accept_selected, 'Accent'))
+        actions.addWidget(button('Import selected', accept_selected, 'Accent'))
         lay.addLayout(actions)
         update_count()
         if dialog.exec() != QDialog.DialogCode.Accepted or not paths:
@@ -2805,12 +2804,12 @@ class Window(QMainWindow):
                 f'Batch: {imported} game(s) imported, {skipped} already present/no changes, '
                 f'{issues} need attention. Original source files were preserved.')
             self.set_status('PS1 Classics batch finished. Review each game result.')
-            DetailsDialog(self, title='Batch game import results',
-                subtitle=(f'{len(items)} package(s) checked  •  '
+            DetailsDialog(self, title='Game import results',
+                subtitle=(f'{len(items)} checked  •  '
                           f'{imported} imported  •  {skipped} already present  •  '
-                          f'{issues} need attention'),
+                          f'{issues} could not finish'),
                 sections=[
-                    ('Collection status', [
+                    ('Import summary', [
                         ('Imported', f'{imported} game(s)'),
                         ('Already present', f'{skipped} game(s)'),
                         ('Needs attention', f'{issues} game(s)'),
@@ -2824,8 +2823,8 @@ class Window(QMainWindow):
                      + (f"  •  Folder: {row['folder']}" if row.get('folder') else '')
                      + (f"  •  {row['message']}" if row.get('message') else ''))
                     for row in items[:100]],
-                note='Unrecognized or different editions were not overwritten. '
-                     'Any failed game can be retried without disturbing the others.',
+                note='A failed extraction does not create a CHD. Your original '
+                     'EBOOT and companion files were not modified.',
                 technical='\n'.join(result.get('errors', [])),
                 accent='#8fdaca').exec()
         elif result.get('cancelled'):
