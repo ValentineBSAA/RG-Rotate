@@ -1,5 +1,14 @@
 # Project handoff · read this before working
 
+## v1.6.2 branch handoff | all-console duplicate guard + user-friendly disc extraction
+
+User real v1.6.1 Windows screenshots show **7Z extracting**, PSXtract multi-disc identified, Final Fantasy VII SCES Europe discs 1-3 reconstructing data tracks, PSXtract MD5 pass reported, then CHDman converting Disc 1. Final 3 CHDs/M3U/gameplay **not yet observed**. User requests one clear PS1 disc 1/2/3 extraction stage, and adds **IMPORTANT: duplicate detection must cover every console, not PS1 alone**.
+
+Feature branch feature/v1.6.2-disc-progress-and-duplicate-guard. ps1_progress.py safely parses PSXtract console text for brief live disc stages. ps1_psn.py now drains stdout in background while sending only safe milestones; app.py shows compact PS1 disc chips in the activity footer during import. library_duplicates.py deduplicates exact SHA-256 contents across **all 13 supported systems**, for individual game files and archives, while refusing different-source same-title collisions without deleting. core.py wires shared guard before file copy and after ZIP/7Z extraction. PS1 title/receipt extension in ps1_duplicates.py + ps1_pipeline.py only processes EBOOT.PBP SHA-256, never KEYS.BIN; metadata lives in hidden .retro-library/psn-sources, not visible ROMs. Legacy CHDs lacking provenance require review.
+
+No current game files, CHDs, M3U, artworks, app installer, microSD, or NAS source data deleted/rewritten by code. Real user physical card and final FFVII outcome pending. [Full acceptance](LIBRARY_DEDUP_AND_PS1_PROGRESS.md).
+
+
 ## v1.6.1 source candidate · PSOne Classics EBOOT and 7Z
 
 New real Windows screenshot shows `Final Fantasy VII (English)(PSN)/NPEF00069/EBOOT.PBP`, `KEYS.BIN`, `DOCUMENT.DAT`. This is a PS1 Classics PSN package, *not* a 3-disc CUE/BIN dump or normal PSP ISO. v1.6.0 had proper .7z archive handling but no PSN-to-CHD bridge and risked treating KEYS.BIN as a standalone PS1 BIN track.
