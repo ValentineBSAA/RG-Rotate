@@ -1,19 +1,42 @@
 """Display metadata and disc grouping without reading or renaming any ROM."""
+import os
 import re
 from artwork_gallery import clean_title, game_key
+from ps1_collections import disc_identity, logical_disc_groups
 
 
 def group_games(entries):
     groups = {}
-    # Only discs with explicit disc tags group together. Editions are retained.
+    collections, claimed = logical_disc_groups(entries)
+    # A scan-validated M3U is the only tile representing its CHD disc set.
+    # Keep referenced entries in the group for searching and file details.
     for entry in entries:
-        identity = (entry.system, str(entry.path.parent), clean_title(entry.label).casefold())
+        path_key = os.path.normcase(os.path.abspath(str(entry.path)))
+        if path_key in claimed:
+            continue
+        if path_key in collections:
+            groups[('multi-disc', path_key)] = collections[path_key]
+            continue
+        if entry.system == 'PS1' and entry.extension.lower() == '.chd' and disc_identity(entry.label)[1] is not None:
+            # Invalid/incomplete M3Us never conceal individual disc CHDs.
+            identity = ('unpaired-disc', path_key)
+        elif entry.system == 'PS1' and entry.extension.lower() == '.m3u':
+            identity = ('unverified-playlist', path_key)
+        else:
+            identity = (entry.system, str(entry.path.parent), clean_title(entry.label).casefold())
         groups.setdefault(identity, []).append(entry)
     return list(groups.values())
 
 
 def preferred_title(settings, entry):
-    return str(settings.value('titles/' + game_key(entry.system, entry.label), '') or clean_title(entry.label))
+    chosen = settings.value('titles/' + game_key(entry.system, entry.label), '')
+    if chosen:
+        return str(chosen)
+    if entry.system == 'PS1' and entry.extension.lower() == '.chd':
+        base, number = disc_identity(entry.label)
+        if number is not None and entry.path.parent.name.casefold() == base.casefold():
+            return clean_title(base)
+    return clean_title(entry.label)
 
 
 def gallery_columns(width, scale):
@@ -30,8 +53,11 @@ def format_badge_info(entry, group=None):
         return {'kind':'BIN+CUE', 'badge':'BIN/CUE', 'description':'CUE disc descriptor with external BIN tracks',
             'verification':'This is a CUE/BIN source disc, NOT a CHD. Tracks are not combined into CHD until conversion succeeds.'}
     if ext == '.m3u':
-        return {'kind':'M3U', 'badge':'M3U', 'description':'Multi-disc playlist (.m3u)',
-            'verification':'An M3U references separate disc images; it is not a CHD itself. Referenced files and disc switching require testing.'}
+        discs = [e for e in (group or []) if str(e.extension).lower() == '.chd']
+        count = len(discs)
+        return {'kind':'M3U', 'badge':f'{count} DISCS' if count >= 2 else 'M3U',
+            'description':f'{count} disc playlist (.m3u), with separate CHDs' if count >= 2 else 'Multi-disc playlist (.m3u)',
+            'verification':'The playlist groups separate CHDs into one game entry. File scanning checks references; actual CHD integrity and emulator disc switching still require independent verification.'}
     known = {'.bin':'BIN', '.img':'IMG', '.iso':'ISO', '.pbp':'PBP', '.cso':'CSO', '.gba':'GBA', '.nds':'NDS'}
     badge = known.get(ext, (ext.lstrip('.') or 'FILE').upper()[:8])
     return {'kind':badge, 'badge':badge, 'description':f'{badge} game file',
