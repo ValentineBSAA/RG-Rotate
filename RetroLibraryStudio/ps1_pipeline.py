@@ -369,7 +369,7 @@ def guided_import(paths: list[Path], workspace: Path, fallback: str, binary: Pat
                                 psn_extractor=psn_extractor, psn_title_hint=title_hint)
     out = {'copied': 0, 'skipped': 0, 'converted': 0, 'playlists': 0, 'playlists_updated': 0,
            'errors': [], 'cancelled': False, 'artwork_attempted': False,
-           'artwork': {}, 'artwork_games': []}
+           'artwork': {}, 'artwork_games': [], 'duplicate_notes': []}
     if cancel is not None and cancel.is_set():
         out['cancelled'] = True
         return out
@@ -384,6 +384,7 @@ def guided_import(paths: list[Path], workspace: Path, fallback: str, binary: Pat
     # KEYS.BIN is a companion to the package, NEVER a separate PS1 disc.
     from ps1_psn import (is_ps1_classic, psn_companions, pbp_disc_signature,
                          package_title, extract_psn_with_helper, ordered_psn_cues)
+    from ps1_duplicates import fingerprint_pbp, decide_repeat, record_import
     psn_files = [p for p in paths if p.suffix.lower() == '.pbp' and is_ps1_classic(p)]
     psn_consumed = set(psn_files)
     psn_related = set()
@@ -392,6 +393,20 @@ def guided_import(paths: list[Path], workspace: Path, fallback: str, binary: Pat
         psn_related.update(p for p in (doc, keys) if p is not None)
         try:
             title = package_title(pbp, psn_title_hint)
+            phase(f'Checking for an existing PS1 collection: {title}', 0, 0)
+            digest = fingerprint_pbp(pbp, cancel=cancel)
+            decision, note = decide_repeat(workspace, title, digest)
+            if decision == 'same':
+                out['skipped'] += 1
+                out['duplicate_notes'].append(note)
+                phase(f'Already imported • {title} • one collection retained', 0, 0)
+                continue
+            if decision == 'review':
+                out['skipped'] += 1
+                out['duplicate_notes'].append(note)
+                out['errors'].append(f'{title}: {note}')
+                phase(f'Possible duplicate • {title} • kept existing files', 0, 0)
+                continue
             with tempfile.TemporaryDirectory(prefix='rgl-psn-extract-') as temp:
                 dest = Path(temp)
                 extract = psn_extractor or extract_psn_with_helper
@@ -404,6 +419,17 @@ def guided_import(paths: list[Path], workspace: Path, fallback: str, binary: Pat
                 converted = stage_ps1_cues(prepared, workspace, binary, progress=phase,
                                           cancel=cancel, converter=converter,
                                           verify_existing=verify_existing)
+                if (not converted['cancelled'] and not converted['errors']
+                        and len(prepared) > 1
+                        and (converted['playlists'] == 1 or converted['playlists_updated'] == 1)):
+                    # A receipt is created only for an entirely completed
+                    # CHD/M3U set; previous/other editions are never overwritten.
+                    try:
+                        record_import(workspace, Path(workspace) / 'ROMs' / 'psx' / title,
+                                      digest, disc_count=len(prepared))
+                    except (OSError, ValueError) as exc:
+                        converted['errors'].append(
+                            f'Source dedupe receipt not saved (CHDs are safe): {exc}')
                 for key in ('copied', 'skipped', 'converted', 'playlists', 'playlists_updated'):
                     out[key] += converted[key]
                 out['errors'].extend(converted['errors'])
