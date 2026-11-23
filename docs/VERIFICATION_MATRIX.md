@@ -1,6 +1,6 @@
 # Verification matrix · Retro Library Studio
 
-## v1.5.7 console shelves (candidate, 2026-11-23)
+## v1.5.7 console shelves (source merged, 2026-11-23)
 
 | Feature | Code change/test | Real Windows/Synology | RG Rotate |
 | --- | --- | --- | --- |
