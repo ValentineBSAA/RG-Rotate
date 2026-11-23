@@ -4,7 +4,7 @@
 
 **Implementation merged into `main` via [PR #11](https://github.com/ValentineBSAA/RG-Rotate/pull/11), squash commit `6515dba`.** display-only system sections with full-width headers, colored console pills and logical game counts; matching gallery/file-list filters; conservative explicit PS2/GameCube folders and experimental-use warnings. No actual RG Rotate support claim or new OS/app installation.
 - [x] Source logic and offline Qt regression cases committed for console group ordering, 100/125/150% scaling, filter synchronization, import folder classification.
-- [x] [GitHub Actions PR run 45155293003](https://github.com/ValentineBSAA/RG-Rotate/actions/runs/45155293003) passed **279 Windows** and **278 Linux + 1 skipped** source tests. **Real Windows/NAS/handheld acceptance remains pending.**
+- [x] GitHub Actions [PR run 45155293003](https://github.com/ValentineBSAA/RG-Rotate/actions/runs/45155293003) **and merged main run 45155602315** passed **279 Windows** and **278 Linux + 1 skipped** source tests. **Real Windows/NAS/handheld acceptance remains pending.**
 - [ ] Real Windows v1.5.7 screenshot at 125%, tabs, grouping, search, file list, artwork and no duplicate discs.
 - [ ] Validate PS2/GameCube isolated test imports with original NAS sources untouched.
 - [ ] Preserve v1.5.5 batch CHD pending verification, v1.5.6 capacity meter pending Windows UI/hardware verification.
