@@ -40,6 +40,12 @@ _Last reviewed 2026-11-23. Only exact observed outcomes are marked **Passed**._
 - **Passed:** Source files and tests from v1.5.1 were pushed as browsable UTF-8 files to `RetroLibraryStudio/` on 2026-11-23 (commit `b458028`). Published `app.py` and `ps1_pipeline.py` were fetched back through the GitHub connector and verified as present. Optional generated cover artwork excluded.
 - **Pending:** GitHub-hosted Windows CI and external release packaging.
 
+## GitHub Actions CI (2026-11-23)
+
+- **Passed:** [CI run 45138220982](https://github.com/ValentineBSAA/RG-Rotate/actions/runs/45138220982), source commit `e51d25a`: **Windows 241 passed**, **Linux 240 passed / 1 skipped**.
+- CI initially exposed a **real Windows ZIP/CUE companion-track alias bug**: BIN files were treated as standalone even after the CUE had been selected. Canonical path match fixed in `89b1b6c`, regression added in `e51d25a`.
+- CI is a **mocked/source test**, not proof of live CHDman, NAS SMB, user monitor DPI, physical card, or RG Rotate emulation.
+
 ## Test runs
 - **v1.4.4**: historical source package reported **180 automated tests** plus the real user NAS transfer outcomes above.
 - **v1.5.0**: uploaded source file was reviewed; in the current environment its Linux run was reported **205 passed, 15 skipped**. Its own release report claims 220 Windows passes; this report is not independent evidence here.
