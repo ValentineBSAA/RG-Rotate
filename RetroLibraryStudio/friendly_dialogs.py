@@ -30,8 +30,12 @@ class DetailsDialog(QDialog):
         super().__init__(parent)
         self.setObjectName('ReadableDetails')
         self.setWindowTitle(title)
-        self.setMinimumSize(540, 350)
-        self.resize(690, 565)
+        # Honor the application's 100-150% View Size setting.
+        scale = min(1.5, max(1.0, float(getattr(parent, 'scale_percent', 100)) / 100))
+        def scaled_label(value, size=13, color='#ebf4ff', bold=False):
+            return _label(value, max(12, round(size * scale)), color, bold)
+        self.setMinimumSize(round(540 * scale), round(350 * scale))
+        self.resize(round(690 * scale), round(565 * scale))
         self.setStyleSheet("""
             QDialog#ReadableDetails {background:#0e192c; color:#eef7ff;}
             QScrollArea {border:0; background:transparent;}
@@ -46,9 +50,9 @@ class DetailsDialog(QDialog):
         root = QVBoxLayout(self)
         root.setContentsMargins(22, 20, 22, 18)
         root.setSpacing(13)
-        heading = _label(title, 23, '#f8fbff', True)
+        heading = scaled_label(title, 23, '#f8fbff', True)
         root.addWidget(heading)
-        sub = _label(subtitle, 14, accent, True)
+        sub = scaled_label(subtitle, 14, accent, True)
         root.addWidget(sub)
 
         scroll = QScrollArea()
@@ -64,14 +68,14 @@ class DetailsDialog(QDialog):
             area = QVBoxLayout(frame)
             area.setContentsMargins(16, 12, 16, 13)
             area.setSpacing(8)
-            area.addWidget(_label(section_title, 15, '#9fc9ff', True))
+            area.addWidget(scaled_label(section_title, 15, '#9fc9ff', True))
             for key, value in rows:
                 line = QHBoxLayout()
                 line.setSpacing(18)
-                first = _label(key, 12, '#aebfda', True)
-                first.setMinimumWidth(118)
-                first.setMaximumWidth(200)
-                second = _label(str(value), 14, '#f5faff')
+                first = scaled_label(key, 12, '#aebfda', True)
+                first.setMinimumWidth(round(118 * scale))
+                first.setMaximumWidth(round(200 * scale))
+                second = scaled_label(str(value), 14, '#f5faff')
                 line.addWidget(first, 1)
                 line.addWidget(second, 3)
                 area.addLayout(line)
@@ -81,12 +85,12 @@ class DetailsDialog(QDialog):
             frame = QFrame(); frame.setObjectName('DetailSection')
             box = QVBoxLayout(frame); box.setContentsMargins(16, 12, 16, 13)
             box.setSpacing(9)
-            box.addWidget(_label('Files in this collection', 15, '#b9a0ff', True))
+            box.addWidget(scaled_label('Files in this collection', 15, '#b9a0ff', True))
             for i, item in enumerate(items, 1):
-                box.addWidget(_label(f'{i}.  {item}', 13))
+                box.addWidget(scaled_label(f'{i}.  {item}', 13))
             layout.addWidget(frame)
         if note:
-            layout.addWidget(_label(note, 12, '#abc1dd'))
+            layout.addWidget(scaled_label(note, 12, '#abc1dd'))
         layout.addStretch(1)
         scroll.setWidget(body)
         root.addWidget(scroll, 1)
@@ -99,8 +103,8 @@ class DetailsDialog(QDialog):
             self.raw = QPlainTextEdit()
             self.raw.setPlainText(technical)
             self.raw.setReadOnly(True)
-            self.raw.setMinimumHeight(130)
-            self.raw.setMaximumHeight(185)
+            self.raw.setMinimumHeight(round(130 * scale))
+            self.raw.setMaximumHeight(round(185 * scale))
             self.raw.setVisible(False)
             root.addWidget(self.raw)
             self.expand.toggled.connect(self._expanded)
