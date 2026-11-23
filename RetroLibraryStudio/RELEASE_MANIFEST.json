@@ -1,26 +1,23 @@
 {
   "version": "1.6.1",
-  "title": "Verified 7Z Import and PS1 Classics PSN EBOOT Bridge",
+  "title": "PS1 Classics EBOOT/PBP + verified 7Z archive handling",
   "build_date": "2026-11-23",
   "platform": "Windows source (PySide6)",
   "source_CI": {
-    "status": "pending exact Windows/Linux v1.6.1 CI"
+    "status": "pending Linux/Windows source CI"
   },
   "local_pytest": {
     "passed": 266,
     "skipped": 25
   },
-  "windows_real_acceptance": "v1.5.9 user verified Resident Evil 2 verified two-disc CHD+M3U and v1.6.0 readable Game Details; PS1 PSN FFVII EBOOT extraction unverified",
-  "device_acceptance": "RG Rotate PSP/PS1 real gameplay, PSN game disc swapping, physical microSD copy pending",
+  "windows_real_acceptance": "v1.6.0 game details verified, real PS1 Classics PSXtract conversion pending",
+  "device_acceptance": "PSXtract not auto-installed; real FFVII PSN extraction and RG Rotate disc switching not verified",
   "source_files": [
     "app.py",
+    "import_worker.py",
     "ps1_pipeline.py",
     "ps1_psn.py",
-    "tool_setup.py",
-    "batch_setup.py",
-    "import_worker.py",
-    "tests/test_v161_psn_and_7z.py",
-    "tests/test_v161_psxtract_setup.py"
+    "tests/test_v161_psn_and_7z.py"
   ],
-  "safety": "Original EBOOT.PBP, KEYS.BIN, DOCUMENT.DAT, source .7z archive, CHDs/M3U on NAS preserved. PSXtract downloaded only by opt-in, pinned to upstream SHA256. Real commercial PSN extraction has not been tested."
+  "safety": "PSN key/manual never transformed into CHD or copied as standalone game; preserves source EBOOT and archive; missing helper refuses, no unverified disc order."
 }
