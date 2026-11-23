@@ -1,5 +1,8 @@
 # Verification matrix · Retro Library Studio
 
+**v1.6.7 key-only integration:** Code now passes authentic adjacent KEYS.BIN through a safe empty optional-document slot **only for receipt-verified has207 PSXtract v3**. Older/custom unverified helpers keep the safe fallback. Synthetic tests cover argument positions and original-file preservation; **real Windows Clock Tower II decryption remains pending**.
+
+
 ## v1.6.7 · PSXtract 0x80 MAC failure
 
 | Check | Synthetic source | Real Windows/NAS |
