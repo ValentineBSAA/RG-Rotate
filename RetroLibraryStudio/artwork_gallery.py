@@ -39,7 +39,11 @@ def clean_title(stem: str) -> str:
 
 
 def key_title(stem: str) -> str:
-    return ' '.join(PUNCT_RE.sub(' ', clean_title(stem).casefold()).split())
+    # Sony PBP metadata may say Crash Bandicoot™ or Crash Bandicoot 2™,
+    # while Libretro names the same cover without a legal trademark glyph.
+    # Strip only standalone legal marks for ARTWORK matching, not game identity.
+    normalized = re.sub(r'[™®℠©]', '', clean_title(stem)).casefold()
+    return ' '.join(PUNCT_RE.sub(' ', normalized).split())
 
 
 def candidate_score(game: str, candidate: str) -> float:
@@ -475,6 +479,9 @@ def process_batch(workspace: Path, games: list[dict], progress=None, cancelled=N
             continue
         seen.add(key)
         status = {'system': system, 'label': stem}
+        if progress:
+            progress(f'Artwork after conversion • {system} • {stem} • searching exact cover',
+                     len(results), min(len(games), max_items))
         try:
             if system not in SYSTEM_ART:
                 status['status'] = 'unsupported'
@@ -517,6 +524,14 @@ def process_batch(workspace: Path, games: list[dict], progress=None, cancelled=N
             index[key] = status
         results.append(status)
         if progress:
-            progress(f'Finding covers: {len(results)} of {min(len(games), max_items)}', len(results), min(len(games), max_items))
+            note = {
+                'downloaded': 'USA/region cover saved',
+                'already present': 'existing cover preserved',
+                'review': 'uncertain edition • manual review available',
+                'error': 'cover unavailable • CHD remains ready',
+                'unsupported': 'no cover source for system'
+            }.get(status.get('status'), status.get('status', 'done'))
+            progress(f'Artwork after conversion • {system} • {stem} • {note}',
+                     len(results), min(len(games), max_items))
     store_local_index(workspace, index)
     return {'stats': stats, 'results': results, 'cancelled': bool(cancelled and cancelled.is_set())}
