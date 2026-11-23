@@ -199,6 +199,104 @@ def stage_ps1_cues(cues: list[Path], workspace: Path, binary: Path, *, progress=
     return out
 
 
+
+def stage_ps1_chds(chds: list[Path], workspace: Path, binary: Path, *, progress=None,
+                   cancel=None, verify_existing=None) -> dict:
+    """Verify existing disc-numbered CHDs and group without recompression.
+
+    Verify source and in-card CHD before publishing a collection M3U.
+    """
+    if verify_existing is None:
+        from chd_convert import verify_existing_chd
+        verify_existing = verify_existing_chd
+    out = {'converted': 0, 'playlists': 0, 'playlists_updated': 0,
+           'copied': 0, 'skipped': 0, 'errors': [], 'artwork_games': [], 'cancelled': False}
+    if not chds:
+        return out
+    if not binary.is_file():
+        out['errors'].append('CHDman is required to verify existing CHDs before adding them to a multi-disc playlist.')
+        return out
+    groups = {}
+    for image in dict.fromkeys(Path(x) for x in chds):
+        base, number = disc_identity(image.stem)
+        if number is None:
+            continue
+        groups.setdefault(base.casefold(), []).append((image, number))
+    occupied = None
+    for parts in groups.values():
+        base = disc_identity(parts[0][0].stem)[0]
+        numbers = [num for _, num in parts]
+        if len(numbers) != len(set(numbers)):
+            out['errors'].append(f'{base}: duplicate disc number; no files combined')
+            continue
+        try:
+            dest = Path(workspace) / 'ROMs' / 'psx' / folder_title(base)
+        except ValueError as exc:
+            out['errors'].append(f'{base}: {exc}')
+            continue
+        staged = []
+        for image, number in sorted(parts, key=lambda item: item[1]):
+            if cancel is not None and cancel.is_set():
+                out['cancelled'] = True
+                return out
+            try:
+                if progress: progress(f'Verifying existing CHD: {image.name}', 0, 0)
+                verify_existing(image, binary, cancel=cancel)
+                target = dest / image.name
+                if occupied is None:
+                    _, occupied, _ = inventory(Path(workspace), cancel=cancel)
+                if not target.exists() and occupied + image.stat().st_size + COMPANION_BUDGET + FREE_RESERVE > CAPACITY:
+                    raise OSError('CHD would exceed protected virtual-card capacity')
+                state = copy_atomic(image, target, cancel=cancel)
+                if not same_file(image, target, cancel=cancel):
+                    raise RuntimeError('CHD transfer SHA-256 mismatch')
+                verify_existing(target, binary, cancel=cancel)
+                if state == 'copied':
+                    out['copied'] += 1
+                    occupied += image.stat().st_size
+                else:
+                    out['skipped'] += 1
+                staged.append((number, target))
+            except InterruptedError:
+                out['cancelled'] = True
+                return out
+            except Exception as exc:
+                out['errors'].append(f'{image.name}: {exc}')
+        if dest.is_dir():
+            already = {f for _, f in staged}
+            for old in dest.glob('*.chd'):
+                other_base, number = disc_identity(old.stem)
+                if number is None or other_base.casefold() != base.casefold() or old in already:
+                    continue
+                try:
+                    verify_existing(old, binary, cancel=cancel)
+                    staged.append((number, old))
+                except InterruptedError:
+                    out['cancelled'] = True
+                    return out
+                except Exception as exc:
+                    out['errors'].append(f'{old.name}: {exc}')
+        if len(staged) >= 2:
+            ordered_pairs = sorted(staged)
+            nums = [num for num, _ in ordered_pairs]
+            if not disc_numbers_are_contiguous(nums):
+                out['errors'].append(f'{base}: incomplete/duplicate disc numbering; no playlist updated')
+                continue
+            try:
+                state = publish_playlist([f for _, f in ordered_pairs], dest / (base + '.m3u'), cancel=cancel)
+                if state == 'created': out['playlists'] += 1
+                if state == 'updated': out['playlists_updated'] += 1
+                out['artwork_games'].append({'system':'PS1', 'label':base})
+            except InterruptedError:
+                out['cancelled'] = True
+                return out
+            except Exception as exc:
+                out['errors'].append(f'{base}: {exc}')
+        elif staged:
+            out['artwork_games'].append({'system':'PS1', 'label':base})
+    return out
+
+
 def guided_import(paths: list[Path], workspace: Path, fallback: str, binary: Path, *,
                   progress=None, cancel=None, auto_artwork=True, converter=None, verify_existing=None,
                   optimize_existing=False) -> dict:
@@ -304,6 +402,12 @@ def guided_import(paths: list[Path], workspace: Path, fallback: str, binary: Pat
     for f in raw_bins:
         out['errors'].append(f'{f.name}: Select its matching CUE file. A BIN track alone cannot become a complete PS1 CHD.')
     remaining = [p for p in remaining if p not in raw_bins]
+    # Already compressed disc-numbered PS1 CHDs share the same collection
+    # folder and verified M3U. They are not needlessly recompressed.
+    direct_chds = [p for p in remaining if p.suffix.lower() == '.chd'
+                   and infer_system(p, fallback) == 'PS1'
+                   and disc_identity(p.stem)[1] is not None]
+    remaining = [p for p in remaining if p not in direct_chds]
     phase('Validating PlayStation disc tracks', 10, 100)
     disc_result = stage_ps1_cues(cue_sources, workspace, binary, progress=lambda msg, c, t: phase(msg, 0 if t == 0 else 10 + round(.55*c),
                                                    0 if t == 0 else 100),
@@ -316,6 +420,16 @@ def guided_import(paths: list[Path], workspace: Path, fallback: str, binary: Pat
     if disc_result['cancelled']:
         out['cancelled'] = True
         return out
+    if direct_chds and not optimize_existing:
+        existing_result = stage_ps1_chds(direct_chds, workspace, binary, progress=phase,
+                                         cancel=cancel, verify_existing=verify_existing)
+        for key in ('copied', 'skipped', 'converted', 'playlists', 'playlists_updated'):
+            out[key] += existing_result[key]
+        out['errors'] += existing_result['errors']
+        out['artwork_games'].extend(existing_result['artwork_games'])
+        if existing_result['cancelled']:
+            out['cancelled'] = True
+            return out
     if remaining and not optimize_existing:
         phase('Importing other recognized games', 70, 100)
         imported = import_grouped(remaining, workspace, fallback, progress=lambda msg, cur, total: phase(msg, 70 + round(15*cur/max(total,1)), 100), cancel=cancel)
