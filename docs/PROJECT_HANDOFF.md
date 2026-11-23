@@ -1,5 +1,10 @@
 # Project handoff · read this before working
 
+## CRITICAL v1.6.4 handoff · Crash Bandicoot™ real CHDman failure
+
+On November 23, 2026, user physically ran v1.6.3 Beta Windows single-file PSN EBOOT import. App correctly recognized **Crash Bandicoot™** but CHDman 0.289 exited 1 during createcd: Error parsing input file `...\\rgl-psn-extract-...\\Crash Bandicoot™ (Disc 1).cue: No such file or directory`. Final dialog: **Added 0 file(s), 0 already present**. No valid converted CHD was observed, so **do not claim success or test duplicate yet**. Likely Unicode (™) unsupported in CHDman CLI path; input CUE may be present to Python but not CHDman. Implemented fix in v1.6.4 branch `fix/v1.6.4-unicode-psn-chdman`: `ps1_chd_bridge.ascii_psn_cue` alias of CUE in disposable local PSXtract temp, ASCII hardlinks for Unicode BIN track names, cleanup in finally. PSN pipeline passes ASCII alias to CHDman and publishes the originally identified Unicode filename AFTER verification; normal hand-picked CUE imports untouched. New tests include synthetic Windows legacy-CLI failure surrogate. **Real Windows CHDman verification is still required.** See [v1.6.4 checklist](PSN_UNICODE_CHDMAN_v164.md). Preserve old anonymous v1.6.2 output for manual inspection.
+
+
 **STATUS UPDATE · 2026-11-23:** v1.6.3 fix was merged to main in [PR #21](https://github.com/ValentineBSAA/RG-Rotate/pull/21) (squash commit f3ec0e8). [Windows/Linux source CI](https://github.com/ValentineBSAA/RG-Rotate/actions/runs/45269373105) passed **379 Windows / 378 Linux and one skipped**. The exact tested code was [packaged successfully](https://github.com/ValentineBSAA/RG-Rotate/actions/runs/45269530914) as RetroLibraryStudio_v1.6.3_Windows_Test_Beta.zip from branch head 788853f (workflow-only change after successful source CI). **The old user NAS batch was defective; REAL v1.6.3 Windows Stop/PSXtract/CHDman acceptance is still PENDING.** Do not delete or relabel the existing generic PS1 CHDs automatically. New-chat first step: test Stop and named imports on a disposable workspace, then review old NAS files. See [v1.6.3 checklist](PS1_BATCH_IDENTITY_AND_STOP_v163.md).
 
 
