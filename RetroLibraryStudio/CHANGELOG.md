@@ -1,5 +1,11 @@
 ## v1.5.6 Beta · Live 512 GB Card Planner (2026-11-23)
 
+## v1.6.1 source candidate · PS1 Classics EBOOT/PBP + 7Z verification
+
+- Identifies PS1 Classics package header, preserves `EBOOT.PBP`, `KEYS.BIN` and `DOCUMENT.DAT` as a unit, and avoids treating key/manual as a standalone disc.
+- Optional third-party PSXtract bridge produces temporary CUE/BIN for existing verified CHDman conversion; ordered CHDs go into one M3U/cover collection. Missing helper or ambiguous disc order fail safely and preserve source data.
+- Real `.7z` extraction regression tests added alongside synthetic PSN and CHDman fixtures. Real encrypted PSN extraction/physical RG Rotate use are not yet verified.
+
 ## v1.6.1 source beta · PS1 Classics PSN EBOOT + 7Z
 
 - Recognizes Sony PS1 Classics EBOOT.PBP, optional KEYS.BIN and DOCUMENT.DAT, and distinguishes this from native PSP EBOOT.
