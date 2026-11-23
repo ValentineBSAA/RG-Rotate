@@ -1,5 +1,15 @@
 # RG Rotate · Retro Library Studio
 
+## v1.6.5 Beta candidate · Select PS1 games by actual title, smart artwork
+
+- **PS1 Classics chooser:** select a NAS parent directory of Sony NPEE/NPUJ folders, read safe public EBOOT metadata, search actual game titles, check only wanted packages, and import with EBOOT+KEYS sidecars handled automatically. Folder codes alone are **not** trusted game titles. ZIP/7Z wrappers not identifiable before extraction are labeled as such.
+- **Last folder remembered** for Add Files, Add Folder and PS1 chooser. Ordinary SNES/GBA/PSP Add Folder behavior is retained if no PS1 EBOOT evidence is found.
+- **In-app progress** names the resolved game and surfaces MD5/PSXtract extraction, CHD conversion and CHD verification. No fabricated conversion percentages.
+- **Automatic covers** for supported console systems: exact normalized matches, USA preferred when source region is unknown, explicit region respected; edition/variant uncertainties still require user review. Original ROMs and existing manually chosen artwork are preserved.
+- **Real v1.6.4 milestone:** Crash Bandicoot™ CHD conversion succeeded and Stop during an extraction worked on Windows. Duplicate skip after *successful* completion is still pending, and generic old v1.6.2 PS1 entries must not be deleted or auto-renamed.
+- **v1.6.5 real acceptance still pending.** [Testing and handoff](docs/PSN_GAME_PICKER_AND_ARTWORK_v165.md).
+
+
 ## v1.6.4 Beta candidate · Crash Bandicoot™ / Unicode CHDman path
 
 **Real Windows failure:** v1.6.3 recognized Crash Bandicoot™ from a PSN EBOOT, but CHDman reported that the Unicode-named temporary CUE did not exist and imported **0 files**. No successful duplicate verification occurred.

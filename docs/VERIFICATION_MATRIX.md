@@ -1,5 +1,21 @@
 # Verification matrix · Retro Library Studio
 
+## v1.6.5 Acceptance status
+
+| Test | Synthetic source | Windows/NAS | Physical RG Rotate |
+| --- | --- | --- | --- |
+| Read Sony-code EBOOT titles | New tests | Pending | N/A |
+| Select subset, include same-folder KEYS automatically | New tests | Pending | N/A |
+| Remember last folder across dialogs/restart | Source setting/test | Pending | N/A |
+| Show MD5 + verified CHD stages on UI | Source/test | Pending | N/A |
+| Strict automatic USA cover when region unknown | New tests | Pending online | N/A |
+| Preserve explicit disc region, avoid fuzzy edition match | New tests | Pending | N/A |
+| Duplicate reimport after actual successful CHD | Existing synthetic | **Pending** | N/A |
+| Crash Bandicoot™ conversion and Stop from v1.6.4 | Existing source | **User passed both** | Pending |
+
+The v1.6.5 candidate is not yet real Windows accepted. Full [checklist](PSN_GAME_PICKER_AND_ARTWORK_v165.md).
+
+
 **STATUS UPDATE 2026-11-23:** [PR #22](https://github.com/ValentineBSAA/RG-Rotate/pull/22) for v1.6.4 Unicode CUE fix merged into main (squash `21c2b5a`). Source CI run [45272838436](https://github.com/ValentineBSAA/RG-Rotate/actions/runs/45272838436) **384 Windows passed; 383 Linux passed, 1 skipped**. The exact branch-head source ZIP [45272820961](https://github.com/ValentineBSAA/RG-Rotate/actions/runs/45272820961) packaged successfully (commit `8d755754`; subsequent merge was squash of same source). Real Windows user **Crash Bandicoot™** CHDman createcd + verify, duplicate retry, and Stop acceptance are **still pending**. v1.6.3 had recognized title correctly but imported zero files because CHDman reported Unicode CUE filename missing. User should use v1.6.4 source ZIP from GitHub Actions, install in new program folder, start with one Crash Bandicoot™ EBOOT, inspect named CHD after verification, then repeat same EBOOT. No big 30-game batch until passes. Retain anonymous v1.6.2 PS1 CHDs untouched. Full [v1.6.4 checklist](PSN_UNICODE_CHDMAN_v164.md).
 
 
