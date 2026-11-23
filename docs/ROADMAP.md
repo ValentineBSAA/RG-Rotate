@@ -37,7 +37,8 @@ Tracked: [#5 app installer](https://github.com/ValentineBSAA/RG-Rotate/issues/5)
 - [ ] Add production-quality artwork retrieval/provider failure messages; prevent repeated NAS scans from locking UI.
 - [ ] Verify home-screen browsing, multi-system game organization, favorites, and navigation for the 720×720 screen.
 - [x] Publish the full **v1.5.1 text source and tests** in this GitHub repo under `RetroLibraryStudio/` (commit `b458028`).
-- [ ] Establish GitHub Actions CI, verify Windows test runner, and tag a versioned source release.
+- [x] GitHub Actions regression CI is green on v1.5.1 source after a Windows ZIP/CUE companion path fix: **Windows 241 passed**, **Linux 240 passed / 1 skipped** ([run](https://github.com/ValentineBSAA/RG-Rotate/actions/runs/45138220982)).
+- [ ] Tag a versioned source release after genuine Windows CHDman and artwork acceptance tests.
 
 ## P2 · Hardware follow-through
 
