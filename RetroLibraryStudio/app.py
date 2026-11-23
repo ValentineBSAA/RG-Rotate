@@ -44,10 +44,10 @@ from storage_probe import (check_space_bounded, is_network_path, usable_stage_by
 from artwork import add_local_cover, fetch_cover_batch, unique_game_art_entries
 from artwork_gallery import clean_title, cached_preview, local_index, game_key
 from chd_convert import convert_cue, verify_tool
-from library_presentation import group_games, preferred_title, gallery_columns
+from library_presentation import group_games, preferred_title, gallery_columns, format_badge_info
 from workspace_setup import suggested_workspace, copy_existing_workspace, count_workspace_files
 
-VERSION = '1.5.2 Beta – Windows PS1 Acceptance'
+VERSION = '1.5.3 Beta – Format Badges & Artwork Fallback'
 SCALE_CHOICES = [('100%', 100), ('110%', 110), ('125%', 125), ('140%', 140), ('150%', 150)]
 MAX_VISIBLE_FILES = 1200
 
@@ -94,6 +94,12 @@ def theme(scale: int) -> str:
              color:#f3f7ff; outline:0;}}
     QLabel#Activity {{color:#a8ddff; font-weight:800; font-size:{px(13)};}}
     QFrame#GameTile {{background:#1b2b46; border:1px solid #395574; border-radius:{px(14)};}}
+    QPushButton#FormatBadge {{background:#29415d; color:#cfe3ff; border:1px solid #698cad;
+               border-radius:{px(8)}; padding:{px(5)} {px(10)}; font-weight:800;}}
+    QPushButton#FormatBadge:hover {{background:#3b628c; color:#ffffff;}}
+    QPushButton#FormatBadge[formatKind="CHD"] {{background:#194d48; color:#aaffdf; border-color:#399e86;}}
+    QPushButton#FormatBadge[formatKind="BIN+CUE"] {{background:#51432b; color:#ffe5ac; border-color:#b9944c;}}
+    QPushButton#FormatBadge[formatKind="M3U"] {{background:#3f3462; color:#e5d2ff; border-color:#9069bd;}}
     QFrame#GameTile:hover {{border:1px solid #6eacff; background:#223756;}}
     QLabel#CoverPreview {{background:#102039; border:1px solid #355276; border-radius:{px(9)};
                           color:#94aed1; font-size:{px(16)}; font-weight:700;}}
@@ -1438,8 +1444,18 @@ class Window(QMainWindow):
             game_name.setMinimumHeight(round(37*self.scale_percent/100))
             game_name.setToolTip(game.label)
             t.addWidget(game_name)
-            t.addWidget(label(f'{game.system}  •  {pretty_bytes(game.size)}', 'Small', True))
             group = self.disc_groups.get(game_key(game.system, game.label), [game])
+            # The badge is based on the scanned file extension, not a promise of conversion.
+            fmt = format_badge_info(game, group)
+            details = QHBoxLayout(); details.setSpacing(6)
+            details.addWidget(label(f'{game.system}  •  {pretty_bytes(game.size)}', 'Small', True), 1)
+            badge = QPushButton(fmt['badge']); badge.setObjectName('FormatBadge')
+            badge.setProperty('formatKind', fmt['kind'])
+            badge.setCursor(Qt.CursorShape.PointingHandCursor)
+            badge.setToolTip('Click to see the actual stored format, files and verification limits')
+            badge.clicked.connect(lambda _=False, g=game, grp=list(group): self.show_game_format(g, grp))
+            details.addWidget(badge)
+            t.addLayout(details)
             if len(group) > 1:
                 discs = label(f'{len(group)} disc / file variants • files kept separate', 'Small', True)
                 discs.setToolTip('\n'.join(str(e.path) for e in group)); t.addWidget(discs)
@@ -1455,6 +1471,21 @@ class Window(QMainWindow):
         missing = len(games) - previews
         self.cover_info.setText(f'{previews} covers visible  •  {missing} without a local cover preview. '
                                 'Use Find missing covers or choose a game to correct its cover.')
+
+    def show_game_format(self, entry, group):
+        info = format_badge_info(entry, group)
+        files = '\n'.join(f'  • {g.path.name} ({pretty_bytes(g.size)})' for g in group[:16])
+        if len(group) > 16:
+            files += f'\n  • … and {len(group)-16} more'
+        QMessageBox.information(self, 'Game file format',
+            f'{preferred_title(self.settings, entry)}\n\n'
+            f'Format: {info["description"]}\n'
+            f'Displayed file: {entry.path.name}\n'
+            f'Listed file size: {pretty_bytes(entry.size)}\n\n'
+            f'{info["verification"]}\n\n'
+            f'Visible disc / playlist entries:\n{files}\n\n'
+            'The badge describes the files in your virtual card. It does not '
+            'claim the RG Rotate has launched this game successfully.')
 
     def edit_game_title(self, entry):
         title, accepted = QInputDialog.getText(self, 'Edit game title',
@@ -1556,6 +1587,7 @@ class Window(QMainWindow):
         layout.addLayout(actions)
         extras = QHBoxLayout()
         extras.addWidget(button('Choose image from PC instead', lambda: self.manual_local_cover(entry)))
+        extras.addWidget(button('Browse Libretro covers', lambda: QDesktopServices.openUrl(QUrl('https://github.com/libretro-thumbnails/' + ('Sony_-_PlayStation' if entry.system == 'PS1' else 'libretro-thumbnails')))))
         extras.addWidget(button('Close', dialog.close))
         layout.addLayout(extras)
         self.manual_cover_dialog = dialog
@@ -2478,7 +2510,7 @@ class Window(QMainWindow):
             else:
                 self.manual_cover_status.setText(
                     'No matches found.' if result.get('catalog_size', 0) else
-                    'The online artwork catalog is unavailable. Try again later or use your own image.')
+                    'The artwork catalog could not be reached from this PC. Try Search again, or choose an image from your PC. No game files were changed.')
                 self.manual_cover_preview.setText('Try a shorter search, such as “Resident Evil”.')
             return
         if mode == 'preview':
