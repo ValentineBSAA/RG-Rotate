@@ -131,3 +131,10 @@ Tracked by [#8](https://github.com/ValentineBSAA/RG-Rotate/issues/8), committed 
 - [ ] Windows PySide6 CI & visual acceptance at 125% scaling.
 - [ ] User verifies bar against Windows card Properties and staged CHD/APK/cover totals; capture screenshot.
 - [ ] First physical-card verified transfer, no unexpected formatting/deletion and 8 GiB free after transfer.
+
+### v1.5.6 acceptance build packaged (2026-11-23)
+
+- [x] Windows test ZIP built: `RetroLibraryStudio_v1.5.6_Windows_Test_Beta.zip` (3,107,017 bytes; SHA-256 `1bf62b798111f9d621ee5fffb07ba37ecfbcc854b1f3c186dc8495cac1efe36f`). ZIP CRC and clean-extraction checked.
+- [x] GitHub [CI run 45152416169](https://github.com/ValentineBSAA/RG-Rotate/actions/runs/45152416169): **274 passed Windows**, **273 passed + 1 skipped Linux**.
+- [x] Downloadable ZIP cleanroom local suite: **255 passed / 19 skipped**.
+- [ ] User tests persistent 512 GB planning bar, Exact sizes details, and read-only measured physical-card preview on real Windows + microSD.

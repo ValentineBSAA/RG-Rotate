@@ -134,3 +134,9 @@ Do not mistake CHD compression for lossy audio/video reduction: conventional CHD
 - **Local source test:** 255 passed / 19 skipped (including the new PySide6 display checks because Qt isn't installed locally).
 - **Pending:** Windows GitHub Actions UI smoke tests, actual formatted microSD capacity, real card filesystem and verified transfer, 125% display screenshot and user acceptance.
 - **Important:** Nominal virtual budget != actual card formatted capacity != backing NAS free space. Display all three separately and never claim bytes copied from preview alone.
+
+### v1.5.6 packaging evidence
+
+- [GitHub Actions 45152416169](https://github.com/ValentineBSAA/RG-Rotate/actions/runs/45152416169): **Windows 274 passed; Linux 273 passed / 1 skipped**.
+- Build ZIP: `RetroLibraryStudio_v1.5.6_Windows_Test_Beta.zip`, SHA-256 `1bf62b798111f9d621ee5fffb07ba37ecfbcc854b1f3c186dc8495cac1efe36f`, 3,107,017 bytes, 76 members, ZIP CRC clean, extracted local source **255 passed / 19 skipped**.
+- **Pending Windows real UI and physical card acceptance**: 125% meter layout, staged file total, actual capacity/preview, bytes remaining, transfer safety.
