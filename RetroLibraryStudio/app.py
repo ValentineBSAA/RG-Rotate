@@ -2400,7 +2400,8 @@ class Window(QMainWindow):
     def ps1_import_options(self):
         return {'auto_ps1_chd': self.auto_ps1_chd.isChecked(),
                 'auto_artwork': self.auto_cover.isChecked(),
-                'binary': str(tools_root() / 'chdman' / 'chdman.exe')}
+                'binary': str(tools_root() / 'chdman' / 'chdman.exe'),
+                'psxtract_binary': str(tools_root() / 'psxtract' / 'psxtract.exe')}
 
     def optimize_existing_ps1(self):
         if not self.ensure_workspace(): return
