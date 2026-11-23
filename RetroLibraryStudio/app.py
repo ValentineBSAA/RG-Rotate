@@ -3249,6 +3249,10 @@ class Window(QMainWindow):
         proc.errorOccurred.connect(self._transfer_start_error)
         request = {'mode':mode, 'workspace':str(self.workspace), 'target':str(self.target),
                    'simulation':bool(simulation)}
+        if mode == 'copy' and not simulation:
+            # Worker enforces this token independently before touching the card
+            # and checks again before each file. A letter/size match is not enough.
+            request['expected_card_identity'] = self.confirmed_card_identity
         payload = (json.dumps(request, ensure_ascii=True, separators=(',', ':')) + '\n').encode('ascii')
         proc.started.connect(lambda p=proc, data=payload: p.write(data))
         if getattr(sys, 'frozen', False):
@@ -3582,6 +3586,7 @@ class Window(QMainWindow):
                     QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
                     QMessageBox.StandardButton.No)
                 if answer != QMessageBox.StandardButton.Yes: return
+        self.confirmed_card_identity = None
         self._reset_copy_display('Reviewing destination again. No files have been transferred in this run.')
         self.start_transfer_process('preview', sim, lambda plan: self.confirm_transfer(plan, sim))
 
@@ -3603,6 +3608,15 @@ class Window(QMainWindow):
             if plan.target_capacity != volume.total:
                 QMessageBox.warning(self, 'Selected drive changed',
                     'The destination capacity changed during preview. Reinsert the intended card and preview again.'); return
+            if not plan.card_identity:
+                QMessageBox.warning(self, 'Cannot identify the card',
+                    'Windows did not return a valid card volume identity. '
+                    'Copy is blocked. Please reconnect the adapter and run Preview again.'); return
+            try:
+                verify_card(self.target, plan.card_identity)
+            except ValueError as exc:
+                QMessageBox.warning(self, 'Wrong card or unsupported format', str(exc))
+                return
         # Never reuse a stale preflight after the user changes the target.
         response = QMessageBox.question(self, 'Confirm verification' if plan.bytes_new == 0 else 'Confirm the destination',
             f'{"PRACTICE COPY" if sim else "REAL microSD COPY"}\n\n'
@@ -3615,12 +3629,31 @@ class Window(QMainWindow):
             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
             QMessageBox.StandardButton.No)
         if response != QMessageBox.StandardButton.Yes: return
+        if not sim:
+            # A drive letter must be typed, not merely selected from suggestions.
+            expected_letter = self.target.drive.upper().rstrip('\\').rstrip(':') + ':'
+            typed, ok = QInputDialog.getText(
+                self, 'Confirm the microSD drive letter',
+                f'Windows identifies your selected exFAT volume as {expected_letter}.\n'
+                f'Type {expected_letter} exactly to approve a verified copy.\n'
+                'If you are unsure which card is connected, cancel now.')
+            if not ok or typed.strip().upper() != expected_letter:
+                self.set_status('Card copy cancelled. No data transferred.')
+                return
+            self.confirmed_card_identity = dict(plan.card_identity)
+            try:
+                verify_card(self.target, self.confirmed_card_identity)
+            except ValueError as exc:
+                self.confirmed_card_identity = None
+                QMessageBox.warning(self, 'Card changed', str(exc))
+                return
         self.copy_meter.setValue(0)
         self.copy_detail.setText('Starting verified copy…')
         self.start_transfer_process('copy', sim)
 
     def transfer_done(self, result):
         summary, title, message, success = copy_explanation(result, self.transfer_simulation)
+        self.confirmed_card_identity = None
         self.copy_detail.setText(summary)
         if self.last_physical_plan is not None:
             self.card_measured.setText('Transfer complete. Preview again to measure the card after copying.')
