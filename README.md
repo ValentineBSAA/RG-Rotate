@@ -2,7 +2,7 @@
 
 **Project home and development handoff** for the Anbernic RG Rotate (Android 12, 720×720, Unisoc T618, 3 GB RAM, 32 GB internal storage) and **Retro Library Studio**, a Windows 11 / PySide6 virtual-microSD preparation utility.
 
-> **Latest packaged source beta: v1.5.6 (512 GB capacity planner).** GitHub candidate v1.5.7 adds per-console My Games shelves, color-coded tabs and PS2/GameCube organization on a development branch, **not yet a Windows release**. Read the [complete testing checklist](docs/FULL_TEST_CHECKLIST.md). Real v1.5.5 batch verified-cleanup, v1.5.6 Windows capacity UI and physical RG Rotate still need acceptance.
+> **Latest packaged source beta: v1.5.6 (512 GB capacity planner).** **v1.5.7 source is now merged into main** (PR #11), adding per-console My Games shelves, colored tabs and PS2/GameCube organization. It is **not yet a packaged Windows release or real NAS/hardware acceptance**. Read the [complete testing checklist](docs/FULL_TEST_CHECKLIST.md). Real v1.5.5 batch verified-cleanup, v1.5.6 Windows capacity UI and physical RG Rotate still need acceptance.
 
 ## Project at a glance
 
