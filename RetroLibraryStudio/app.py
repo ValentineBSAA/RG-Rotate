@@ -53,7 +53,7 @@ from system_shelves import (PRIMARY_SYSTEMS, console_counts, console_order_key,
                             console_visual, grouped_shelves)
 from workspace_setup import suggested_workspace, copy_existing_workspace, count_workspace_files
 
-VERSION = '1.6.4 Beta – Unicode-Safe PSN CHD Conversion'
+VERSION = '1.6.5 Beta – Selectable PS1 Game Browser & Automatic Covers'
 SCALE_CHOICES = [('100%', 100), ('110%', 110), ('125%', 125), ('140%', 140), ('150%', 150)]
 MAX_VISIBLE_FILES = 1200
 
@@ -394,6 +394,9 @@ class Window(QMainWindow):
         if self.previous_location_missing:
             self.needs_workspace_setup = True
         self.incoming = Path(str(self.settings.value('incoming', str(Path.home() / 'Downloads'))))
+        # Remember the actual last browsed game folder independently of the
+        # configured Downloads search location. No NAS stat in Qt's paint path.
+        self.last_game_folder = Path(str(self.settings.value('last_game_folder', str(self.incoming))))
         saved_target = str(self.settings.value('target', '') or '')
         self.target: Path | None = Path(saved_target) if saved_target else None
         self.default_practice_folder = Path.home() / 'Documents' / 'Retro Library Studio' / 'PracticeTransfer'
@@ -777,12 +780,13 @@ class Window(QMainWindow):
         row.addWidget(self.register(button('＋ Add Game Files', self.pick_files, 'Primary')), 0, 0)
         row.addWidget(self.register(button('＋ Add Folder', self.pick_folder, 'Accent')), 0, 1)
         row.addWidget(self.register(button('Find Games in Downloads', self.find_downloads)), 1, 0, 1, 2)
-        row.addWidget(self.register(button('◆ Batch import PS1 Classics (PSN ZIP/7Z/EBOOT) …',
+        row.addWidget(self.register(button('◆ Browse PS1 Classics by game title (select any)…',
                                            self.pick_psn_batch_folder, 'Accent')), 2, 0, 1, 2)
         actions.addLayout(row)
-        actions.addWidget(label('Select a folder containing many PS1 Classics archives or EBOOT.PBP games. '
-                                'Each game is processed separately; existing duplicates are preserved. '
-                                'Native PSP games are not converted into PS1 CHDs.', 'Small', True))
+        actions.addWidget(label('Open a PS1 Classics folder to see game titles instead of Sony product codes. '
+                                'Check only the games you want. EBOOT.PBP automatically includes its nearby '
+                                'KEYS.BIN when needed; original files are never moved. '
+                                'Archives are identified further during import.', 'Small', True))
         game_drop = FileDropZone('Or drop your game files here', 'Game files, ZIP/7Z archives, or one game folder from Windows Explorer')
         game_drop.dropped.connect(self.handle_game_drop)
         actions.addWidget(game_drop)
@@ -2510,18 +2514,29 @@ class Window(QMainWindow):
                                    'auto_artwork': self.auto_cover.isChecked()},
                                   'Converting Earlier PlayStation Games', finished=self.import_completed)
 
+    def _game_picker_start(self) -> str:
+        return str(self.last_game_folder or self.incoming)
+
+    def _remember_game_folder(self, selected: Path, *, is_file=False):
+        folder = Path(selected).parent if is_file else Path(selected)
+        self.last_game_folder = folder
+        self.settings.setValue('last_game_folder', str(folder))
+
     def pick_files(self):
         if not self.ensure_workspace(): return
-        names, _ = QFileDialog.getOpenFileNames(self, 'Choose your existing game files', str(self.incoming),
+        names, _ = QFileDialog.getOpenFileNames(self, 'Choose your existing game files', self._game_picker_start(),
             'Games and archives (*.zip *.7z *.chd *.cue *.bin *.img *.iso *.cso *.pbp *.m3u *.ccd *.ecm *.gba *.gb *.gbc *.nes *.sfc *.smc *.md *.gen *.nds *.n64 *.z64 *.v64 *.gdi *.cdi);;All files (*.*)')
-        if names: self.import_paths([Path(x) for x in names])
+        if names:
+            self._remember_game_folder(Path(names[0]), is_file=True)
+            self.import_paths([Path(x) for x in names])
 
     def pick_ps1_collection(self):
         """One clear import action for complete multi-disc PlayStation game sets."""
         if not self.ensure_workspace(): return
         folder = QFileDialog.getExistingDirectory(
-            self, 'Choose one PlayStation 1 game folder with all CUE/BIN discs', str(self.incoming))
+            self, 'Choose one PlayStation 1 game folder with all CUE/BIN discs', self._game_picker_start())
         if not folder: return
+        self._remember_game_folder(Path(folder))
         self.navigate(1)
         self.set_status('Checking every PS1 disc, converting to verified CHD and preparing one game collection…')
         self.start_import_process({'mode': 'folder', 'folder': str(folder),
@@ -2531,30 +2546,37 @@ class Window(QMainWindow):
                                    'psxtract_binary': str(tools_root() / 'psxtract' / 'psxtract.exe')},
                                   'Importing PS1 Game Collection')
 
+    def _scan_psn_game_folder(self, directory: Path, *, allow_regular_import=False):
+        """Read Sony EBOOT titles in a cancellable worker; never in the Qt UI."""
+        self._remember_game_folder(directory)
+        self.navigate(1)
+        self.set_status('Reading PS1 game titles from EBOOT metadata. No games imported yet.')
+        self.start_import_process({
+            'mode': 'scan_psn_catalog', 'folder': str(directory),
+            'workspace': str(self.workspace), 'fallback': 'PS1'
+        }, 'Identifying PlayStation Classics',
+            finished=lambda result, general=allow_regular_import:
+                self._show_psn_game_picker(result, allow_regular_import=general))
+
     def pick_psn_batch_folder(self):
-        """One explicit opt-in import of multiple PS1 Classics ZIP/7Z/EBOOTs."""
+        """Select named PS1 packages instead of blindly importing everything."""
         if not self.ensure_workspace(): return
         directory = QFileDialog.getExistingDirectory(
-            self, 'Choose folder containing your PS1 Classics ZIP/7Z/EBOOT games',
-            str(self.incoming))
-        if not directory:
-            return
-        self.navigate(1)
-        self.set_status('Batch scanning PS1 Classics packages. Originals and existing games stay safe.')
-        self.start_import_process({
-            'mode': 'batch_psn_folder', 'folder': str(directory),
-            'workspace': str(self.workspace), 'fallback': 'PS1',
-            'auto_ps1_chd': True,
-            'auto_artwork': self.auto_cover.isChecked(),
-            'binary': str(tools_root() / 'chdman' / 'chdman.exe'),
-            'psxtract_binary': str(tools_root() / 'psxtract' / 'psxtract.exe')
-        }, 'Batch Importing PS1 Classics')
+            self, 'Choose PS1 Classics parent folder (contains Sony game-code folders)',
+            self._game_picker_start())
+        if directory:
+            self._scan_psn_game_folder(Path(directory))
 
     def pick_folder(self):
         if not self.ensure_workspace(): return
-        folder = QFileDialog.getExistingDirectory(self, 'Choose a folder containing your existing games', str(self.incoming))
-        if not folder: return
-        self.import_folder_path(Path(folder))
+        directory = QFileDialog.getExistingDirectory(
+            self, 'Choose a folder containing existing games or PS1 Classics',
+            self._game_picker_start())
+        if directory:
+            # A single EBOOT+KEYS folder and a parent with 30 Sony code
+            # folders share the same safe picker; non-PS1 folders keep the
+            # original standard import workflow after a cancellable scan.
+            self._scan_psn_game_folder(Path(directory), allow_regular_import=True)
 
     def import_folder_path(self, path: Path):
         if not self.ensure_workspace(): return
