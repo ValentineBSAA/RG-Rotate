@@ -1,5 +1,8 @@
 # Living Roadmap · RG Rotate / Retro Library Studio
 
+**v1.6.6 completion (November 23, 2026):** [PR #24](https://github.com/ValentineBSAA/RG-Rotate/pull/24) merged into main (squash `23ce722`). Exact branch-head [CI run 45280723949](https://github.com/ValentineBSAA/RG-Rotate/actions/runs/45280723949) passed **398 Windows tests, 397 Linux tests with 1 skipped**. [Windows source ZIP](https://github.com/ValentineBSAA/RG-Rotate/actions/runs/45280714622) at tested commit `2a778d5` packaged successfully (123 internal entries; ZIP CRC good), downloaded as `RetroLibraryStudio_v1.6.6_Windows_Source_Beta.zip`. **Still pending:** physical Windows 11 NAS test of the v1.6.6 single/multi PS1 title picker, real automatic cover after CHDman verify, and real repeat EBOOT skip; do not mark those passed from synthetic CI. v1.6.4 user-tested Crash Bandicoot CHD conversion and Stop are the baseline. Native Windows picker showing NPEE codes is intentionally replaced *inside the app* by a title-aware chooser when last folder is PS1; cannot actually rename Windows file-dialog folders. Verified CHDs remain valid if cover download fails. Old anonymous v1.6.2 PS1 entries remain untouched. [Exact v1.6.6 acceptance checklist](PS1_UNIFIED_PICKER_AND_POST_CHD_ART_v166.md).
+
+
 ## v1.6.6 Beta · Unified PS1 game selection + artwork AFTER CHD
 
 - [x] Diagnose native Windows Add Game Files picker bypass of v1.6.5 PBP-title chooser.
