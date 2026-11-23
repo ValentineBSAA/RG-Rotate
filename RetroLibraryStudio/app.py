@@ -1488,7 +1488,9 @@ class Window(QMainWindow):
             self.home_meter.setValue(min(10000, int(10000 * current/max(1, CAPACITY))))
         else:
             self.set_status(name)
-            if total == 0 and name.lower().startswith(('converting', 'extracting')):
+            if total == 0 and ('converting' in name.lower() or
+                               'extracting' in name.lower() or
+                               'rebuilding game data' in name.lower()):
                 # CHDman does not expose a trustworthy percentage here. Keep
                 # ONE progress bar, animated rather than falsely frozen at 20%.
                 self.bar.setRange(0, 0)
@@ -2614,7 +2616,8 @@ class Window(QMainWindow):
         else:
             self.library_notice.setText(f"✓ Added {result['copied']:,} file(s). {result['skipped']:,} already present. Your originals were not moved or deleted.")
             self.set_status('Import finished. Your new games are in My Games.')
-        if result.get('converted') or result.get('playlists') or result.get('playlists_updated'):
+        if (result.get('batch_items') is None and
+                (result.get('converted') or result.get('playlists') or result.get('playlists_updated'))):
             summary = (f"{result.get('converted', 0)} PS1 disc(s) converted to verified CHD; "
                        f"{result.get('playlists', 0)} M3U playlist(s) created, "
                        f"{result.get('playlists_updated', 0)} extended with new discs.")
