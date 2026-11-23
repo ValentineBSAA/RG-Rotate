@@ -27,7 +27,7 @@ def batch_guided_import(paths, workspace, fallback, binary, *, progress=None,
     loose = [p for p in unique if p not in packages
              and not (p.parent in package_dirs
                       and p.name.casefold() in ('keys.bin', 'document.dat'))]
-    from ps1_psn import is_ps1_classic, package_title
+    from ps1_psn import is_ps1_classic, package_title, meaningful_title
     jobs = []
     for p in packages:
         if p.suffix.casefold() == '.pbp' and is_ps1_classic(p):
@@ -36,7 +36,11 @@ def batch_guided_import(paths, workspace, fallback, binary, *, progress=None,
             except ValueError:
                 visible_name = p.parent.name
         else:
-            visible_name = p.stem
+            # Generic wrapper names are not game titles. The real PSN title
+            # arrives after extraction through package_title/PARAM.SFO.
+            visible_name = (meaningful_title(p.stem) or
+                            meaningful_title(p.parent.name) or
+                            'Unidentified PS1 package')
         jobs.append(('package', visible_name, [p]))
     if loose:
         jobs.append(('loose', f'{len(loose)} loose game/disc file(s)', loose))
@@ -57,9 +61,15 @@ def batch_guided_import(paths, workspace, fallback, binary, *, progress=None,
             progress(f'Batch {number}/{total} • {display} • preparing', number - 1, total)
 
         def child_progress(message, current, length):
-            if progress:
+            nonlocal display
+            # The extractor discovers the real game identity only after
+            # inspecting a PBP. Update the queue label at that point instead
+            # of displaying its generic archive wrapper ("PS1").
+            marker = 'Checking for an existing PS1 collection: '
+            if str(message).startswith(marker):
+                display = str(message)[len(marker):].strip()
+            if progress and not (cancel is not None and cancel.is_set()):
                 # The child stages are NOT percentages of the whole batch.
-                # Keep the overall game count and show actual disc milestones.
                 progress(f'Batch {number}/{total} • {display} • {message}', 0, 0)
         try:
             # Isolate this archive or EBOOT. In particular, never give the
@@ -117,6 +127,7 @@ def batch_guided_import(paths, workspace, fallback, binary, *, progress=None,
             'name': display, 'status': state,
             'discs': int(part.get('converted', 0)),
             'playlists': int(part.get('playlists', 0)),
+            'folder': str(part.get('collection_folder') or ''),
             'message': (errors[0][:350] if errors else
                         (part.get('duplicate_notes') or [''])[0][:350])
         })
