@@ -77,7 +77,12 @@ def test_generic_psp_eboot_names_do_not_block_unrelated_games(tmp_path):
     for index in (1,2):
         directory=tmp_path/f'PSP-GAME{index}';directory.mkdir()
         f=directory/'EBOOT.PBP';f.write_bytes(bytes([index])*128)
-        assert import_files([f],virtual,'PSP')[0] == (1 if index==1 else 0) or True
+        copied, skipped, errors = import_files([f], virtual, 'PSP')
+        if index == 1:
+            assert (copied, skipped, errors) == (1, 0, [])
+        else:
+            assert (copied, skipped) == (0, 0)
+            assert errors and 'Conflicting file exists' in errors[0]
     # Existing filename collision is refused by copy_atomic, not presented as
     # proof that different PSP EBOOTs are duplicates.
     assert (virtual/'ROMs'/'psp'/'EBOOT.PBP').read_bytes()==b'\x01'*128
