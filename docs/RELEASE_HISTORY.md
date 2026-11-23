@@ -1,6 +1,6 @@
 # Release history / regression ledger
 
-This is a **historical summary**, not a claim that all archived builds are on GitHub. Source archives were produced through ChatGPT and tested on the user's Windows PC at various milestones. Latest planned package: v1.5.1.
+This is a **historical summary**, not a claim that all archived builds are on GitHub. Source archives were produced through ChatGPT and tested on the user's Windows PC at various milestones. Latest packaged beta: v1.5.5; real-device batch acceptance remains pending.
 
 | Version | Major milestone or repair | State |
 | --- | --- | --- |
@@ -23,6 +23,7 @@ This is a **historical summary**, not a claim that all archived builds are on Gi
 | 1.4.3 | Differentiate preview and complete transfer, incremental verification | Practice-mode lost on restart |
 | 1.4.4 | Remember Practice/Real Card destination type, safe preflight | **User verified 6-file repeated SHA-256 check, 0 recopy** |
 | 1.5.0 | Codex redesign, improved disc checks/converter/manual M3U, user customization, front-end layout | Source inspected; real Clock Tower library CUE size reported incorrectly |
+| 1.5.5 | Batch CUE/IMG-to-CHD, verified-only virtual-card working-copy deletion or recovery backup choice, backup-folder navigation and artwork preview resizing | Source and tests published; CI passed 264 Windows / 263 Linux (1 skipped); real Windows batch acceptance pending |
 | 1.5.4 | Artwork result auto-previews, polished right-click game menus, verified CHD conversion/tidy from CUE/BIN and safe IMG with off-card recovery backups | Linux 240/15 local; Windows CHDman and UI acceptance pending |
 | 1.5.5 | Batch lossless CHD conversion, explicit verified working-copy cleanup, direct recovery-folder access, responsive artwork preview | Source beta, Linux 248/16; Windows batch test pending |
 | 1.5.4 | User confirmed Clock Tower (55.4 MB) and Resident Evil Gore Edition (311.9 MB) CHDman verification + artwork preserved | Windows user-observed pass for individual conversion only |
