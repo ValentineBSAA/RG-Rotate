@@ -83,3 +83,7 @@ Never infer a PASS from a progress bar screenshot alone when the underlying veri
 - **Observed on v1.5.2 Windows:** Clock Tower reported 118.0 MB with no cover; on-screen search said the artwork catalog was unavailable.
 - **Pending:** The user must test v1.5.3 on Windows 11 and confirm actual CHD vs BIN/CUE badge, clickable metadata dialog, live cover results and NAS behavior; external internet services can be unavailable even with fallback.
 - **Pending:** Actual CHDman verification and game launch on physical RG Rotate. Filename extension is not integrity evidence.
+
+### GitHub v1.5.3 CI (run 45141431778)
+
+- **Passed**: [GitHub Windows job 245 passed](https://github.com/ValentineBSAA/RG-Rotate/actions/runs/45141431778), Linux 244 passed + 1 skipped. Mocked artwork catalog outage fallback and truthful format badges tested. Windows UI and real artwork provider connectivity are **not** acceptance verified.
