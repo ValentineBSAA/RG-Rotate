@@ -1433,7 +1433,7 @@ class Window(QMainWindow):
     def on_progress(self, name, current, total):
         if str(name).startswith('Extracting PS1 Classic •'):
             import re
-            disc_match = re.search(r'Disc (\\d{1,2})', name)
+            disc_match = re.search(r'Disc (\d{1,2})', name)
             if disc_match:
                 num = int(disc_match.group(1))
                 self.ps1_disc_steps[num] = ('✓' if 'reconstructed ✓' in name
