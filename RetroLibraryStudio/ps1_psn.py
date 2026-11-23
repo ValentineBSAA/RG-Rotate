@@ -167,8 +167,26 @@ def package_title(pbp: Path, title_hint: str | None = None) -> str:
         'in PARAM.SFO. Generic PS1/PlayStation/Disc names are not game titles.')
 
 
+def verified_psxtract_v3_key_only(helper: Path) -> bool:
+    """Only app-verified upstream v3 helpers get the empty DOCUMENT slot.
+
+    v3 checks fopen(document_file) for NULL and safely skips an empty path.
+    An older/custom PSXtract may incorrectly fclose(NULL) or interpret the
+    empty arg differently. Never try this with an unknown/unverified binary.
+    """
+    helper = Path(helper)
+    if (helper.name.casefold() != 'psxtract.exe'
+            or helper.parent.name.casefold() != 'psxtract'):
+        return False
+    try:
+        from tool_setup import tool_status
+        return bool(tool_status(helper.parent.parent)['PSXtract']['installed'])
+    except (OSError, KeyError, ValueError, TypeError):
+        return False
+
+
 def describe_extractor_failure(milestone, *, has_document: bool,
-                               has_keys: bool, returncode: int) -> str:
+                               has_keys: bool, returncode: int, key_was_supplied=False) -> str:
     """Explain a failed third-party extraction without echoing key bytes or logs.
 
     A PGD MAC check failure is not a CHDman failure. The old positional CLI
@@ -183,12 +201,20 @@ def describe_extractor_failure(milestone, *, has_document: bool,
             'extractor-compatible package. '
         )
         if has_keys and not has_document:
-            detail += (
-                'A KEYS.BIN was found, but this PSXtract CLI accepts it only '
-                'after a DOCUMENT.DAT argument, so this attempt used the '
-                'helper built-in key calculation. Do not fabricate a manual '
-                'or substitute keys from another game. '
-            )
+            if key_was_supplied:
+                detail += (
+                    'The adjacent KEYS.BIN was passed to the verified v3 '
+                    'helper using an empty optional manual argument, but '
+                    'authentication still failed. Check that the original '
+                    'EBOOT and companion belong together. '
+                )
+            else:
+                detail += (
+                    'A KEYS.BIN was found but the helper could not safely '
+                    'accept a key-only argument, so this attempt used the '
+                    'helper built-in key calculation. Do not fabricate a '
+                    'manual or substitute keys from another game. '
+                )
         elif not has_keys:
             detail += (
                 'No adjacent KEYS.BIN was detected; the helper attempted '
@@ -227,13 +253,21 @@ def extract_psn_with_helper(pbp: Path, output: Path, helper: Path, *,
                          'it will not be converted as a PSP game or renamed blindly')
     document, keys = psn_companions(pbp)
     args = [str(helper.resolve()), '-c', str(pbp.resolve())]
+    key_was_supplied = False
     if document:
         args.append(str(document.resolve()))
         if keys:
             args.append(str(keys.resolve()))
-    # PSXtract accepts positional DOCUMENT.DAT then KEYS.BIN; without a
-    # document, do not misinterpret a KEYS.BIN as a document. The extractor
-    # may use the PBP's internal metadata instead.
+            key_was_supplied = True
+    elif keys and verified_psxtract_v3_key_only(helper):
+        # Verified has207/psxtract-2 v3 checks fopen("") for NULL and skips
+        # the nonexistent optional manual safely. The next argument stays
+        # in the actual KEYS.BIN slot. NEVER do this on unknown older builds,
+        # which may fclose(NULL). No dummy files or key copies are created.
+        args.extend(['', str(keys.resolve())])
+        key_was_supplied = True
+    # If no verified v3 is installed, fall back to the helper's built-in
+    # key calculation rather than forging DOCUMENT.DAT or misplacing keys.
     if cancel is not None and cancel.is_set():
         raise InterruptedError('PSN extraction stopped')
     if progress:
@@ -296,11 +330,13 @@ def extract_psn_with_helper(pbp: Path, output: Path, helper: Path, *,
         if proc.returncode or milestone.pgd_header_failed or milestone.iso_header_failed:
             raise RuntimeError(describe_extractor_failure(
                 milestone, has_document=bool(document), has_keys=bool(keys),
-                returncode=int(proc.returncode or 1)))
+                returncode=int(proc.returncode or 1),
+                key_was_supplied=key_was_supplied))
         if milestone.md5_failed:
             raise RuntimeError(describe_extractor_failure(
                 milestone, has_document=bool(document), has_keys=bool(keys),
-                returncode=int(proc.returncode or 1)))
+                returncode=int(proc.returncode or 1),
+                key_was_supplied=key_was_supplied))
         if progress:
             progress('PS1 Classic extracted • checking each disc before CHD conversion', 0, 0)
     finally:
