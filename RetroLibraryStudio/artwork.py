@@ -20,6 +20,7 @@ SYSTEM_ART = {
   'SNES':'Nintendo - Super Nintendo Entertainment System', 'Genesis':'Sega - Mega Drive - Genesis',
   'Nintendo 64':'Nintendo - Nintendo 64', 'Nintendo DS':'Nintendo - Nintendo DS',
   'Dreamcast':'Sega - Dreamcast',
+  'PS2':'Sony - PlayStation 2', 'GameCube':'Nintendo - GameCube',
 }
 MAX_COVER = 8*1024*1024
 
