@@ -1,6 +1,6 @@
 # Project handoff · read this before working
 
-**Snapshot date:** 2026-11-23, America/Phoenix. **Latest source artifact:** Retro Library Studio **v1.5.1** (automatic PS1 CHD/M3U/artwork beta). **Last broadly user-verified Windows transfer baseline:** **v1.4.4**.
+**Snapshot date:** 2026-11-23, America/Phoenix. **Latest source artifact:** Retro Library Studio **v1.5.2** (Windows acceptance beta, built from v1.5.1 automatic PS1 pipeline). **Last broadly user-verified Windows transfer baseline:** **v1.4.4**.
 
 ## Why this exists
 
@@ -70,3 +70,10 @@ The latest GitHub workflow run [45138220982](https://github.com/ValentineBSAA/RG
 3. Test one genuine multi-disc title and M3U disc-switching.
 4. Validate live Ninite downloads / installed tools and missing-artwork handling.
 5. Once the 512 GB microSD arrives: actual card discovery, preflight, copy, SHA-256 verification, safe eject, Android/Cocoon setup, play a game.
+
+## v1.5.2 source test package (2026-11-23)
+
+- User-facing ZIP prepared: `RetroLibraryStudio_v1.5.2_Windows_Test_Beta.zip`; Windows launcher `Start_Retro_Library_Studio.bat` inside.
+- Fixed canonical CUE-referenced BIN path matching for Windows ZIP imports; regression test in the repository.
+- Clean extracted ZIP local Linux pytest: **226 passed / 15 skipped**. Matching GitHub Windows CI for v1.5.1 core: **241 passed**. Real Clock Tower CHDman on user PC remains pending; this is not a hardware pass.
+- First test: import/convert user's Clock Tower complete CUE + two BIN tracks (or optimize prior import), verify **one CHD, full size, single tile, preserved originals**. Avoid multi-disc testing until single disc succeeds.

@@ -70,3 +70,9 @@ _Last reviewed 2026-11-23. Only exact observed outcomes are marked **Passed**._
 Date, app version/commit, OS/drive/device, input fixture and hashes if applicable, procedure, actual result, evidence (screenshot/log), and status: **Passed / Failed / Pending / Blocked**.
 
 Never infer a PASS from a progress bar screenshot alone when the underlying verification has not completed.
+
+## v1.5.2 package build · 2026-11-23
+
+- **Passed:** source ZIP created, SHA-256 and ZIP member integrity confirmed, clean extracted Linux pytest **226 passed / 15 skipped**.
+- Matching core GitHub Windows CI on v1.5.1 revision: **241 passed**; it does not validate v1.5.2 user GUI execution or CHDman binary.
+- **Pending:** actual Windows 11 v1.5.2 startup, CHDman Clock Tower conversion, artwork, user NAS, physical card and Cocoon.

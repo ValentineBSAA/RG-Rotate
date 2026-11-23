@@ -16,7 +16,7 @@ Tracked: [#1 Clock Tower CHD](https://github.com/ValentineBSAA/RG-Rotate/issues/
 - [x] Code v1.5.1: Fix CUE-only tiny game-size display to account for full referenced BIN set (Linux tests pass).
 - [x] Code v1.5.1: Safe-stop import/CHD worker and report failures without releasing incomplete .chd files (Linux tests pass).
 - [x] Code v1.5.1: Artwork matching retries and manual fallback integrated into PS1 preparation (Linux tests pass).
-- [ ] **Critical:** On Windows 11, launch v1.5.1 at 125% UI scaling, import user's *Clock Tower: The First Fear* English patch (one CUE, two BINs). Confirm CHDman actually runs and the My Games tile shows **one playable CHD and its correct file size**, not a 226–228-byte CUE.
+- [ ] **Critical:** On Windows 11, launch v1.5.2 at 125% UI scaling, import user's *Clock Tower: The First Fear* English patch (one CUE, two BINs). Confirm CHDman actually runs and the My Games tile shows **one playable CHD and its correct file size**, not a 226–228-byte CUE.
 - [ ] On Windows, test failure handling on a deliberately missing/renamed referenced BIN track; original sources intact, helpful visible error, progress returns Ready, no incomplete playable CHD.
 - [ ] On Windows, test a genuine two-disc PS1 title: each disc converted separately, playlist created in correct order, gallery shows one game, changing disc works in emulator.
 - [ ] On Windows, verify artwork automatic search returns a cover where available and preserves user-chosen covers/edition names. Confirm unavailable covers show friendly “Search/Choose Cover” action; no wrong cover silently attached.
@@ -67,3 +67,9 @@ Tracked: [#7 built-in vs custom AI companion](https://github.com/ValentineBSAA/R
 When you or Codex make a change: (1) link an issue/commit/PR, (2) update the relevant check here, (3) update VERIFICATION_MATRIX.md with exact test environment + evidence, (4) update PROJECT_HANDOFF.md with new blockers/current version, (5) record release notes. Never mark physical Windows/Android acceptance complete merely because unit tests pass. When opening a new chat, begin with README → PROJECT_HANDOFF → ROADMAP → latest code.
 
 There is no unattended GitHub update running. “Continuously update” means update this file **with each development change**, not invent scheduled automatic commits.
+
+### v1.5.2 packaging milestone · 2026-11-23
+
+- [x] Built source ZIP with Windows startup launcher, included GitHub CI-tested Windows track-path fix and new source tests; clean extract: **226 passed, 15 skipped** locally.
+- [ ] User confirms actual Windows v1.5.2 launch and Clock Tower two-track CUE conversion with real CHDman.
+- [ ] User confirms cover search, single progress workflow and no tiny-CUE size display in My Games.

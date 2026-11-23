@@ -1,3 +1,11 @@
+# v1.5.2 Beta — Windows acceptance candidate (2026-11-23)
+
+- Packaged the GitHub CI-tested v1.5.1 PS1 CUE/BIN → CHD import pipeline into a Windows launchable source distribution.
+- Canonicalized Windows ZIP/CUE companion paths so referenced BIN tracks do not reappear as standalone game imports, with regression coverage.
+- Preserved tested NAS import/cancellation, verified practice copy, CHD/M3U, artwork and one unified import progress workflow.
+- Local clean-extraction source test: **226 passed, 15 skipped**; matching GitHub CI core: **241 Windows passed; 240 Linux passed, 1 skipped**.
+- **Release gate still open:** real Windows CHDman conversion of Clock Tower with its two BIN tracks, online artwork, mapped NAS behavior for v1.5.2, and RG Rotate device testing.
+
 # v1.5.1 Beta — Automatic PS1 CHD/M3U Import (November 23, 2026)
 
 - Connected existing CUE inspection, CHDman create/verify, M3U generation and safe staging to the **normal Add My Games import**. The game enters My Games as a verified CHD, not an individual CUE/BIN track, when conversion succeeds.

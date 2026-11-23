@@ -1,4 +1,4 @@
-# Retro Library Studio 1.5.1 Beta — Automatic PS1 Import and Disc Preparation
+# Retro Library Studio 1.5.2 Beta — Windows PS1 Acceptance
 
 Windows 11 / PySide6 source release, based on the supplied v1.4.4 project.
 Extract into a **new application folder**. Keep your existing PC/NAS library
