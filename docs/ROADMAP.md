@@ -6,7 +6,7 @@
 - [x] Copy to card scans candidate removable and plausible 512 GB fixed-looking USB reader drives on a background worker, never automatically selecting or copying.
 - [x] Physical transfer preview captures Windows volume GUID/serial, capacity, filesystem and letter. Copy blocked without fresh identity, exFAT and explicit typed drive letter.
 - [x] Worker rechecks card identity before copying and transfer engine verifies again before each file; existing non-overwrite/8 GiB reserve/SHA-256 stays in place.
-- [x] Synthetic and headless Qt tests added; GitHub CI **pending**.
+- [x] [Merged main CI](https://github.com/ValentineBSAA/RG-Rotate/actions/runs/45246376971) passed **311 Windows tests, 310 Linux passed with 1 skipped**; exact final v1.6.0 package CRC verified and clean-extracted (279 local tests passed, 32 skipped without Qt).
 - [ ] User verifies refreshed dialog UI at 125% and connected USB card candidate.
 - [ ] Actual card identity, exFAT, volume capacity and first small verified copy.
 - [ ] Actual RG Rotate emulators/Cocoon and M3U disc swap/saves.
