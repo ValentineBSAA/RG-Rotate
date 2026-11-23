@@ -11,8 +11,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      # v1.6.8 candidate: capture PSXtract v3 console output in hidden NEW
-      # Windows console while keeping stdout=PIPE and original files intact.
+      # v1.6.8 candidate: FreeConsole only in isolated Windows import_worker
+      # so GUI PSXtract cannot reattach terminal and steal its stdout pipe.
       # Never infer actual Clock Tower decryption success from synthetic CI.
       - name: Package checked-out source without altering existing installs
         shell: bash
