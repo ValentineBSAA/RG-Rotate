@@ -1,6 +1,6 @@
-# Retro Library Studio 1.5.6 Beta — Live Virtual 512 GB Card Planner
+# Retro Library Studio v1.5.8 Beta — Smart Multi-disc Collections
 
-> **v1.5.8 source candidate:** Full PS1 game-folder import, one verified CHD per disc, one ordered M3U, one gallery tile and N DISCS badge. Adds existing CHD verification/organization, safe incremental disc additions and conservative naming. Source CI/real Windows and RG Rotate acceptance still pending. See [multi-disc test plan](../docs/MULTIDISC_ACCEPTANCE.md). Do not overwrite your v1.5.7 working folder.
+> **v1.5.8 merged and source CI-tested:** Full PS1 game-folder import, one verified CHD per disc, one ordered M3U, one gallery tile and N DISCS badge. Adds existing CHD verification/organization, safe incremental disc additions and conservative naming. GitHub Windows/Linux source CI passed (289/288 tests plus 1 Linux skip); actual user Windows/Synology multi-disc import and RG Rotate acceptance remain pending. See [multi-disc test plan](../docs/MULTIDISC_ACCEPTANCE.md). Do not overwrite your v1.5.7 working folder.
 
 
 > **v1.5.7 source candidate (branch `feature/v1.5.7-system-shelves`):** My Games adds distinct PSP / PS1 / DS / GBA / PS2 / GameCube shelves, scrollable count tabs and synchronized filters. PS2/GameCube entries organize user-supplied files but RG Rotate emulation is experimental. v1.5.5 batch cleanup and v1.5.6 Windows capacity UI still need acceptance. See [full test checklist](../docs/FULL_TEST_CHECKLIST.md). Not a verified released ZIP.
