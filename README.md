@@ -1,5 +1,8 @@
 # RG Rotate · Retro Library Studio
 
+**v1.6.7 extractor integration update:** A source-level review of the pinned has207 PSXtract v3 confirms it can safely skip an empty optional manual argument while reading an actual adjacent KEYS.BIN. The v1.6.7 wrapper now uses that layout only when the installer receipt validates v3; unknown/helper binaries remain on the older fallback path. This is a real key-only CLI compatibility fix, but Clock Tower II's actual success remains pending a new Windows test. No fabricated DOCUMENT.DAT or changes to source keys.
+
+
 ## v1.6.7 Beta candidate · Clock Tower II PSXtract error + calmer PS1 chooser
 
 - Real v1.6.6 Windows test: the custom chooser correctly identified 30 PS1 Classics, including **Clock Tower II - The Struggle Within** from `SLUS00695`, but PSXtract failed at the encrypted ISO header: `PGD: Invalid 0x80 MAC hash`, `ISO header decryption failed`. **0 imported, 0 verified CHDs**. This is not a CHDman or game-title failure.
