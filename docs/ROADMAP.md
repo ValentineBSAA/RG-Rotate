@@ -105,7 +105,7 @@ Tracked by [#8](https://github.com/ValentineBSAA/RG-Rotate/issues/8), committed 
 - [x] Offer explicit **Keep recovery backups** or **Remove verified virtual-card working copies** with double confirmation for deletion. No deletion of separately stored NAS source originals or old recovery backups.
 - [x] Add **Open conversion backups** action and single conversion dialog buttons linking output/recovery folders.
 - [x] Cover previews now scale the entire image to available space preserving aspect ratio on resize, using an in-memory pixmap (not NAS reads).
-- [x] Linux clean-extracted v1.5.5 package: **248 passed / 16 skipped**, ZIP integrity check passed. GitHub Windows CI pending while packaging.
+- [x] Linux clean-extracted v1.5.5 package: **248 passed / 16 skipped**, ZIP integrity check passed. [GitHub CI run 45148569884](https://github.com/ValentineBSAA/RG-Rotate/actions/runs/45148569884): **Windows 264 passed; Linux 263 passed and 1 skipped**.
 - [ ] **CRITICAL user acceptance:** On Windows, batch convert 2 disposable PS1 discs (with both cleanup choices) and confirm only virtual-card working files are removed after genuine CHDman verification, not external NAS originals.
 - [ ] Verify right-click recovery folder opens, cover preview remains inside frame at 125%, and an interrupted batch preserves failed/unprocessed source tracks.
 - [ ] Review old v1.5.4 conversion backups manually; do **not** auto-delete them from the NAS because provenance is unknown.
