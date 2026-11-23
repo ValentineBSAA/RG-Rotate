@@ -396,7 +396,8 @@ def direct_cover_fallback(workspace: Path, system: str, stem: str, downloader=No
         # User preference: USA is the first automatic fallback when the
         # disc/image metadata does not specify a region.
         options = list(dict.fromkeys([clean + ' (USA)', clean,
-                                      clean + ' (World)', clean + ' (Europe)']))
+                                      clean + ' (Japan)', clean + ' (Europe)',
+                                      clean + ' (World)']))
     for title in options:
         try:
             return downloader(workspace, system, stem, title)
