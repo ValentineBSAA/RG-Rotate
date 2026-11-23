@@ -1,5 +1,19 @@
 # Living Roadmap · RG Rotate / Retro Library Studio
 
+## v1.6.4 · Crash Bandicoot™ conversion failure
+
+- [x] Real Windows 11 v1.6.3 single EBOOT import identified title **Crash Bandicoot™**, then CHDman createcd exited 1: Windows reported temporary `Crash Bandicoot™ (Disc 1).cue` as nonexistent. **Added 0 files**. Exact duplicate test NOT possible yet.
+- [x] Suspected Unicode path handling in Windows CHDman; introduced disposable ASCII-only CUE alias and temporary hardlinked Unicode track aliases, cleaned on cancellation. Original game title preserved in final CHD folder.
+- [x] Added synthetic regression tests for trademark names, Unicode tracks, no-extra-alias ASCII source, cancellation, end-to-end named CHD.
+- [ ] CI Windows and Linux source regression passes on v1.6.4 commit.
+- [ ] Packaging ZIP and manifest integrity pass.
+- [ ] **Critical real-device acceptance**: real CHDman verify, actual named Crash Bandicoot™ CHD, correct tile, same EBOOT duplicate skip, real Stop testing.
+- [ ] Confirm existing generic PS1 folders are unchanged and not assumed to be Crash Bandicoot.
+- [ ] Small multi-game batch only after all above tests pass.
+
+[Full v1.6.4 checklist](PSN_UNICODE_CHDMAN_v164.md).
+
+
 **v1.6.3 source status (2026-11-23):** [PR #21 merged](https://github.com/ValentineBSAA/RG-Rotate/pull/21); [CI 379 Windows / 378 Linux passed, 1 skipped](https://github.com/ValentineBSAA/RG-Rotate/actions/runs/45269373105); [Windows source ZIP packaged and integrity-checked](https://github.com/ValentineBSAA/RG-Rotate/actions/runs/45269530914). Unchecked Windows NAS items below remain pending. Preserve all anonymous v1.6.2 CHDs for manual identification; do not bulk-clean.
 
 
