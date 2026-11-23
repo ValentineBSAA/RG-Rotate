@@ -2,7 +2,7 @@
 
 **Project home and development handoff** for the Anbernic RG Rotate (Android 12, 720×720, Unisoc T618, 3 GB RAM, 32 GB internal storage) and **Retro Library Studio**, a Windows 11 / PySide6 virtual-microSD preparation utility.
 
-> **Current working milestone: v1.5.2 Windows PS1 Acceptance (source beta).** The **full text source and tests** are now published under [RetroLibraryStudio/](RetroLibraryStudio/). The optional generated Resident Evil cover image is not in GitHub. See [Source publication](docs/SOURCE_PUBLICATION.md).
+> **Current working milestone: v1.5.3 Format Badges & Artwork Fallback (source beta).** The **full text source and tests** are now published under [RetroLibraryStudio/](RetroLibraryStudio/). The optional generated Resident Evil cover image is not in GitHub. See [Source publication](docs/SOURCE_PUBLICATION.md).
 
 ## Project at a glance
 

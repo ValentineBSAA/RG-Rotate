@@ -76,3 +76,10 @@ Never infer a PASS from a progress bar screenshot alone when the underlying veri
 - **Passed:** source ZIP created, SHA-256 and ZIP member integrity confirmed, clean extracted Linux pytest **226 passed / 15 skipped**.
 - Matching core GitHub Windows CI on v1.5.1 revision: **241 passed**; it does not validate v1.5.2 user GUI execution or CHDman binary.
 - **Pending:** actual Windows 11 v1.5.2 startup, CHDman Clock Tower conversion, artwork, user NAS, physical card and Cocoon.
+
+## v1.5.3 game format / artwork review (2026-11-23)
+
+- **Passed local source tests:** 230 passed, 15 skipped; included offline Libretro-server outage and GitHub artwork-catalog/image fallback tests, true file-extension badge classification, and unsafe redirect rejection.
+- **Observed on v1.5.2 Windows:** Clock Tower reported 118.0 MB with no cover; on-screen search said the artwork catalog was unavailable.
+- **Pending:** The user must test v1.5.3 on Windows 11 and confirm actual CHD vs BIN/CUE badge, clickable metadata dialog, live cover results and NAS behavior; external internet services can be unavailable even with fallback.
+- **Pending:** Actual CHDman verification and game launch on physical RG Rotate. Filename extension is not integrity evidence.

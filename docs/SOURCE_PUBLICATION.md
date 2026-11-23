@@ -38,3 +38,9 @@ The source is browsable and cloneable, so **Codex and future chats can work agai
 ## License and user files
 
 The repository is public. No license has yet been selected explicitly; do not assume the code is open-source licensed simply because it is visible. Discuss and add an appropriate LICENSE before inviting redistribution. Do not commit games, copyrighted BIOS, downloaded proprietary APKs, keys, personal passwords or device-specific private files. Keep large user assets on their own storage.
+
+## v1.5.3 build and source update
+
+- GitHub source updated with clickable format badges and official Libretro-GitHub artwork fallback. New test file: `RetroLibraryStudio/tests/test_v153_badges_artwork.py`.
+- Local ZIP: `RetroLibraryStudio_v1.5.3_Windows_Test_Beta.zip`, **3,088,444 bytes**, SHA-256 `d33da5e5c182f63c8baf99a988fe492fdaf3ea1d742315a861ce30542ecf7312`. ZIP self-check passed. Clean extracted local test: **230 passed / 15 skipped**.
+- Source/package is **not an independently tested Windows binary EXE**; install dependencies via launcher; test against existing NAS workspace in separate folder.

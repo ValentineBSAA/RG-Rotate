@@ -77,3 +77,11 @@ The latest GitHub workflow run [45138220982](https://github.com/ValentineBSAA/RG
 - Fixed canonical CUE-referenced BIN path matching for Windows ZIP imports; regression test in the repository.
 - Clean extracted ZIP local Linux pytest: **226 passed / 15 skipped**. Matching GitHub Windows CI for v1.5.1 core: **241 passed**. Real Clock Tower CHDman on user PC remains pending; this is not a hardware pass.
 - First test: import/convert user's Clock Tower complete CUE + two BIN tracks (or optimize prior import), verify **one CHD, full size, single tile, preserved originals**. Avoid multi-disc testing until single disc succeeds.
+
+## v1.5.3 update / Clock Tower screenshot review (2026-11-23)
+
+- **Observed:** User's v1.5.2 My Games gallery showed `Clock Tower - The First Fear` at **118.0 MB** rather than 226–228 bytes. This confirms better logical size display, **not** CHD conversion. Cover search dialog returned `The online artwork catalog is unavailable` and no entries.
+- **Implemented v1.5.3:** Actual file-type badge on tile (CHD, BIN/CUE, M3U, ISO, PBP), clickable read-only explanation. Never label a CHD verified just because filename ends in .chd. GUI avoids NAS stat on the paint path.
+- **Artwork:** Libretro catalog is primary. If it fails, try official `api.github.com/repos/libretro-thumbnails/<platform>/git/trees/master?recursive=1`, with limited response size and cached index. Cover retrieval can fall back to official `raw.githubusercontent.com` image. Manual browser/PC image fallback remains.
+- **Build:** `RetroLibraryStudio_v1.5.3_Windows_Test_Beta.zip`, clean extraction tests **230 passed / 15 skipped** on Linux; real online provider and actual Windows UI still require user acceptance.
+- **Next:** Have user click Clock Tower's file-type badge. If BIN/CUE, conversion still pending; run the existing CHDman action on source CUE/track pair with no source-file deletion. Then test artwork search. Do not treat reported size as evidence of successful CHD conversion.
