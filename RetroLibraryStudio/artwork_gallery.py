@@ -111,6 +111,34 @@ def manual_search_results(query: str, catalog: list[str], limit: int = 40) -> li
             for item in scored[:max(0, min(100, limit))]]
 
 
+
+def fetch_artwork_image(system: str, source_title: str, opener=None) -> bytes:
+    """Download from Libretro, then the official GitHub mirror when offline.
+
+    PNG data is validated and bounded; redirects must remain on allowed hosts.
+    """
+    directory = urllib.parse.quote(SYSTEM_ART[system], safe='')
+    name = urllib.parse.quote(source_title + '.png', safe='')
+    repo = urllib.parse.quote(SYSTEM_ART[system].replace(' ', '_'), safe='')
+    urls = [f'{BASE_URL}{directory}/Named_Boxarts/{name}',
+            f'https://raw.githubusercontent.com/libretro-thumbnails/{repo}/master/Named_Boxarts/{name}']
+    open_fn = opener or urllib.request.urlopen
+    last_error = None
+    for url in urls:
+        try:
+            request = urllib.request.Request(url, headers={'User-Agent':'RetroLibraryStudio/1.5.3'})
+            with open_fn(request, timeout=12) as response:
+                if urllib.parse.urlsplit(response.geturl()).hostname not in (
+                    'thumbnails.libretro.com','raw.githubusercontent.com'):
+                    raise ValueError('Unexpected cover redirect')
+                data = response.read(MAX_COVER + 1)
+            _safe_png(data)
+            return data
+        except (OSError, ValueError, urllib.error.URLError) as exc:
+            last_error = exc
+    raise ValueError(f'Artwork unavailable from both official sources: {last_error}')
+
+
 def preview_search_cover(workspace: Path, system: str, source_title: str, opener=None) -> Path:
     """Download only a local Windows preview. Never touch the NAS or ROMs."""
     if system not in SYSTEM_ART:
@@ -121,16 +149,7 @@ def preview_search_cover(workspace: Path, system: str, source_title: str, opener
     preview = local_cache_root(workspace) / 'search-previews' / system / (identity + '.png')
     if preview.is_file():
         return preview
-    directory = urllib.parse.quote(SYSTEM_ART[system], safe='')
-    filename = urllib.parse.quote(source_title + '.png', safe='')
-    request = urllib.request.Request(f'{BASE_URL}{directory}/Named_Boxarts/{filename}',
-                                     headers={'User-Agent':'RetroLibraryStudio/1.3.1'})
-    open_fn = opener or urllib.request.urlopen
-    with open_fn(request, timeout=16) as response:
-        if urllib.parse.urlsplit(response.geturl()).hostname != 'thumbnails.libretro.com':
-            raise ValueError('Unexpected artwork preview redirect')
-        content = response.read(MAX_COVER + 1)
-    _safe_png(content)
+    content = fetch_artwork_image(system, source_title, opener=opener)
     preview.parent.mkdir(parents=True, exist_ok=True)
     temp = preview.with_suffix('.png.tmp')
     try:
@@ -196,6 +215,41 @@ def cached_preview(workspace: Path, system: str, stem: str) -> Path:
     return local_cache_root(workspace) / 'images' / system / (safe_art_name(stem) + '.png')
 
 
+
+def github_catalog_for(system: str, opener=None) -> list[str]:
+    """Fallback index from Libretro's official per-platform GitHub tree.
+
+    Github supplies only file paths, never executable code. Capped to 36 MiB
+    and deliberately not fetched on the GUI thread. Caller handles rate limits.
+    """
+    if system not in SYSTEM_ART:
+        return []
+    repo = SYSTEM_ART[system].replace(' ', '_')
+    url = f'https://api.github.com/repos/libretro-thumbnails/{repo}/git/trees/master?recursive=1'
+    request = urllib.request.Request(url, headers={
+        'User-Agent':'RetroLibraryStudio/1.5.3', 'Accept':'application/vnd.github+json'})
+    open_fn = opener or urllib.request.urlopen
+    with open_fn(request, timeout=15) as response:
+        if urllib.parse.urlsplit(response.geturl()).hostname != 'api.github.com':
+            raise ValueError('Unexpected artwork index redirect')
+        data = response.read(36 * 1024 * 1024 + 1)
+    if len(data) > 36 * 1024 * 1024:
+        raise ValueError('Artwork index too large')
+    content = json.loads(data)
+    if not isinstance(content, dict) or content.get('truncated'):
+        raise ValueError('Incomplete artwork index')
+    found = []
+    for item in content.get('tree', []):
+        if not isinstance(item, dict) or item.get('type') != 'blob':
+            continue
+        path = str(item.get('path',''))
+        if path.startswith('Named_Boxarts/') and path.lower().endswith('.png'):
+            title = path[len('Named_Boxarts/'):-4]
+            if title and '/' not in title and '\\' not in title:
+                found.append(title)
+    return found
+
+
 def catalog_for(system: str, workspace: Path, opener=None) -> list[str]:
     if system not in SYSTEM_ART:
         return []
@@ -231,7 +285,12 @@ def catalog_for(system: str, workspace: Path, opener=None) -> list[str]:
             except (OSError, ValueError, urllib.error.URLError):
                 continue
         if not names:
-            raise ValueError('Artwork catalog not reachable')
+            try:
+                names = github_catalog_for(system, opener=opener)
+            except (OSError, ValueError, urllib.error.URLError, json.JSONDecodeError):
+                names = []
+        if not names:
+            raise ValueError('Artwork catalogs not reachable')
         directory.mkdir(parents=True, exist_ok=True)
         temp = file.with_suffix('.json.tmp')
         temp.write_text(json.dumps(names, ensure_ascii=False), encoding='utf-8')
@@ -297,15 +356,7 @@ def stage_online_cover(workspace: Path, system: str, stem: str, source_title: st
             cache.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(target, cache)
         return {'status': 'already present', 'preview': str(cache), 'target': str(target)}
-    directory = urllib.parse.quote(SYSTEM_ART[system], safe='')
-    image_name = urllib.parse.quote(source_title + '.png', safe='')
-    url = f'{BASE_URL}{directory}/Named_Boxarts/{image_name}'
-    open_fn = opener or urllib.request.urlopen
-    req = urllib.request.Request(url, headers={'User-Agent': 'RetroLibraryStudio/1.3.0'})
-    with open_fn(req, timeout=16) as response:
-        if urllib.parse.urlsplit(response.geturl()).hostname != 'thumbnails.libretro.com':
-            raise ValueError('Unexpected cover redirect')
-        data = response.read(MAX_COVER + 1)
+    data = fetch_artwork_image(system, source_title, opener=opener)
     return save_cover_bytes(workspace, system, stem, data, replace=replace, source=source_title)
 
 
