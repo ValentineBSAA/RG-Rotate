@@ -73,7 +73,7 @@ def safe_walk(base: Path, cancel=None) -> Iterable[Path]:
                 yield p
 
 
-def inventory(workspace: Path, cancel=None, progress: Progress | None = None) -> tuple[list[Entry], int, int]:
+def inventory(workspace: Path, cancel=None, progress: Progress | None = None, metrics: dict | None = None) -> tuple[list[Entry], int, int]:
     entries, total, count = [], 0, 0
     for file in safe_walk(workspace, cancel=cancel):
         if cancel is not None and cancel.is_set():
@@ -84,6 +84,13 @@ def inventory(workspace: Path, cancel=None, progress: Progress | None = None) ->
             continue
         total += size
         count += 1
+        if metrics is not None:
+            # Accumulated during the existing single read-only scan. Estimate
+            # allocation slack only: no NAS file or filesystem is modified.
+            cluster = int(metrics.get('allocation_unit', 128 * 1024))
+            if cluster < 512 or cluster & (cluster - 1):
+                raise ValueError('Invalid simulated allocation unit')
+            metrics['cluster_padding'] = metrics.get('cluster_padding', 0) + (-size % cluster)
         if progress is not None and count % 200 == 0:
             progress(f'Checking your virtual card: {count:,} files found', count, 0)
         parts = file.relative_to(workspace).parts
