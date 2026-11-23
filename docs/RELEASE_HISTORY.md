@@ -1,6 +1,6 @@
 # Release history / regression ledger
 
-This is a **historical summary**, not a claim that all archived builds are on GitHub. Source archives were produced through ChatGPT and tested on the user's Windows PC at various milestones. Latest packaged source beta: v1.5.6; v1.5.7 system-shelf work is a branch candidate, not a packaged release. Real-device and batch cleanup acceptance remain pending.
+This is a **historical summary**, not a claim that all archived builds are on GitHub. Source archives were produced through ChatGPT and tested on the user's Windows PC at various milestones. Latest packaged Windows source beta: **v1.5.8** with one-tile PS1 multi-disc collections; v1.5.7 console shelves are included. Real Windows multi-disc and RG Rotate gameplay still require testing. Real-device and batch cleanup acceptance remain pending.
 
 | Version | Major milestone or repair | State |
 | --- | --- | --- |
@@ -23,7 +23,8 @@ This is a **historical summary**, not a claim that all archived builds are on Gi
 | 1.4.3 | Differentiate preview and complete transfer, incremental verification | Practice-mode lost on restart |
 | 1.4.4 | Remember Practice/Real Card destination type, safe preflight | **User verified 6-file repeated SHA-256 check, 0 recopy** |
 | 1.5.0 | Codex redesign, improved disc checks/converter/manual M3U, user customization, front-end layout | Source inspected; real Clock Tower library CUE size reported incorrectly |
-| 1.5.7 candidate | Visual per-console shelves and count tabs; PS2/GameCube library folders; regression tests and full test list | Source branch; CI/Windows UI/physical device acceptance pending |
+| 1.5.8 | One parent folder/cover for verified per-disc PS1 CHDs, ordered M3U and later-disc updates | CI 289 Windows / 288 Linux + 1 skip; user Windows and handheld pending |
+| 1.5.7 | Visual console shelves/count tabs; PS2/GameCube folders | User verified filters, 125% UI, gallery/list, NAS and capacity meter; handheld pending |
 | 1.5.6 | 512 GB virtual/real capacity meter; measured card preflight and 8 GiB budgets | CI 274 Windows/273 Linux + 1 skipped; actual Windows meter and real microSD pending |
 | 1.5.5 | Batch CUE/IMG-to-CHD, verified-only virtual-card working-copy deletion or recovery backup choice, backup-folder navigation and artwork preview resizing | Source and tests published; CI passed 264 Windows / 263 Linux (1 skipped); real Windows batch acceptance pending |
 | 1.5.4 | Artwork result auto-previews, polished right-click game menus, verified CHD conversion/tidy from CUE/BIN and safe IMG with off-card recovery backups | Linux 240/15 local; Windows CHDman and UI acceptance pending |
