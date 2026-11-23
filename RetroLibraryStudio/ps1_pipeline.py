@@ -300,7 +300,7 @@ def stage_ps1_chds(chds: list[Path], workspace: Path, binary: Path, *, progress=
 def guided_import(paths: list[Path], workspace: Path, fallback: str, binary: Path, *,
                   progress=None, cancel=None, auto_artwork=True, converter=None, verify_existing=None,
                   optimize_existing=False, psxtract_binary=None, psn_extractor=None,
-                  psn_title_hint=None) -> dict:
+                  psn_title_hint=None, reject_generic_ps1_cues=False) -> dict:
     """One coherent progress-driven task for copy, CHD, M3U, and artwork."""
     paths = list(dict.fromkeys(Path(p) for p in paths))
     archives = [p for p in paths if p.suffix.lower() in ('.zip', '.7z')]
@@ -376,7 +376,8 @@ def guided_import(paths: list[Path], workspace: Path, fallback: str, binary: Pat
                                 converter=converter, verify_existing=verify_existing,
                                 optimize_existing=optimize_existing,
                                 psxtract_binary=psxtract_binary,
-                                psn_extractor=psn_extractor, psn_title_hint=title_hint)
+                                psn_extractor=psn_extractor, psn_title_hint=title_hint,
+                                reject_generic_ps1_cues=reject_generic_ps1_cues)
     out = {'copied': 0, 'skipped': 0, 'converted': 0, 'playlists': 0, 'playlists_updated': 0,
            'errors': [], 'cancelled': False, 'artwork_attempted': False,
            'artwork': {}, 'artwork_games': [], 'duplicate_notes': []}
@@ -480,6 +481,26 @@ def guided_import(paths: list[Path], workspace: Path, fallback: str, binary: Pat
     excluded.update(unsafe_pbp)
     paths = [p for p in paths if p not in excluded]
     cue_sources = _unique_cues(paths)
+    if reject_generic_ps1_cues:
+        # Explicit PSN batch intake must never publish an anonymous PS1
+        # collection, even when a ZIP contains bare CUE/BIN/CHD instead of
+        # an identifiable PBP. The normal hand-picked CUE import is unchanged.
+        from ps1_psn import meaningful_title
+        anonymous = [
+            p.name for p in cue_sources
+            if meaningful_title(disc_identity(p.stem)[0]) is None
+        ]
+        anonymous += [
+            p.name for p in paths if p.suffix.lower() == '.chd'
+            and infer_system(p, fallback) == 'PS1'
+            and meaningful_title(disc_identity(p.stem)[0]) is None
+        ]
+        if anonymous:
+            out['errors'].append(
+                'Anonymous PS1 disc title in batch: ' + ', '.join(anonymous[:3]) +
+                '. No files from this package were imported. Rename the source '
+                'with an identifiable game title and retry.')
+            return out
     # Exclude BIN tracks that are companions to any CUE/M3U. Standalone BINs
     # cannot be converted reliably and must not show up as separate PS1 games.
     from core import _cue_companions
