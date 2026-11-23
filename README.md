@@ -1,5 +1,14 @@
 # RG Rotate · Retro Library Studio
 
+## v1.6.7 Beta candidate · Clock Tower II PSXtract error + calmer PS1 chooser
+
+- Real v1.6.6 Windows test: the custom chooser correctly identified 30 PS1 Classics, including **Clock Tower II - The Struggle Within** from `SLUS00695`, but PSXtract failed at the encrypted ISO header: `PGD: Invalid 0x80 MAC hash`, `ISO header decryption failed`. **0 imported, 0 verified CHDs**. This is not a CHDman or game-title failure.
+- New milestone interpreter reports the cryptographic-header issue clearly, explains that CHD conversion never began, and notes whether expected EBOOT companion files were present, without showing key bytes or raw console output. If KEYS exists but DOCUMENT is absent, the old positional CLI cannot receive that key from the current wrapper; this is a possible compatibility factor, not proven as the specific cause.
+- PS1 picker text is compact for 125% Windows scaling: short title, `30 games found • Source: PS1`, concise instruction and selected count, full NAS path in tooltip. The batch results use shorter wording and don't imply an incomplete game was converted.
+- Existing working Crash Bandicoot v1.6.4 conversion, v1.6.6 post-CHD cover flow, Stop and duplicate safety are preserved. No original EBOOT, keys or old generic CHDs modified.
+- **This beta cannot guarantee Clock Tower II decryption.** Do not force a bad CHD or invent companion files. [Acceptance checklist](docs/PSXTRACT_PGD_AND_PICKER_POLISH_v167.md).
+
+
 ## v1.6.6 Beta candidate · One PS1 chooser; exact artwork after CHD
 
 - **Unified single/multi-game PS1 selection:** Add Game Files / PS1 Titles from a remembered `PS1/NPEE...` location opens the custom searchable picker showing actual PBP metadata, not the native Windows folder-code-only window. Browse other ROM files remains available. All selected EBOOT.PBP packages find adjacent KEYS automatically.
