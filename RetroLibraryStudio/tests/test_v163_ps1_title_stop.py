@@ -18,7 +18,7 @@ from core import inventory
 from library_presentation import group_games
 
 
-def fake_pbp(path: Path, title: str | None, marker: bytes = b'X') -> Path:
+def fake_pbp(path: Path, title: str | None, marker: bytes = b'X', *, multi=True) -> Path:
     path.parent.mkdir(parents=True, exist_ok=True)
     sfo = b''
     if title is not None:
@@ -31,7 +31,7 @@ def fake_pbp(path: Path, title: str | None, marker: bytes = b'X') -> Path:
     path.write_bytes(
         b'\0PBP' + struct.pack('<I', 0x10000)
         + struct.pack('<8I', 40, *([psar_start] * 7))
-        + sfo + b'PSTITLEIMG000000' + marker * 128
+        + sfo + (b'PSTITLEIMG000000' if multi else b'PSISOIMG00000000') + marker * 128
     )
     return path
 
@@ -152,7 +152,7 @@ def test_cancel_mid_first_game_never_starts_second_package(tmp_path):
 
 
 def test_verified_single_disc_gets_fingerprint_receipt_and_skips_repeat(tmp_path):
-    pbp = fake_pbp(tmp_path / 'src' / 'NPEF00069' / 'EBOOT.PBP', 'Clock Tower')
+    pbp = fake_pbp(tmp_path / 'src' / 'NPEF00069' / 'EBOOT.PBP', 'Clock Tower', multi=False)
     first = archive_game(pbp, tmp_path / 'first' / 'PS1.zip')
     second = archive_game(pbp, tmp_path / 'second' / 'PS1.zip')
     card = tmp_path / 'virtual'
