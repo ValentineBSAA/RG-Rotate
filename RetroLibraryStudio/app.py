@@ -30,6 +30,7 @@ from core import (CAPACITY, COMPANION_BUDGET, FREE_RESERVE, SYSTEM_DIR, SUPPORTE
                   pretty_bytes, safe_walk, within)
 from sync_engine import SyncPlan, make_plan, transfer_verified
 from transfer_feedback import preview_explanation, copy_explanation
+from card_capacity import planned_card_budget, physical_card_preview, decimal_gb, binary_gib
 from drives import list_windows_volumes, validate_physical_root
 from destination_mode import is_volume_root, restore_destination_mode
 from software import SOFTWARE, download_selected
@@ -47,7 +48,7 @@ from chd_convert import convert_cue, verify_tool
 from library_presentation import group_games, preferred_title, gallery_columns, format_badge_info
 from workspace_setup import suggested_workspace, copy_existing_workspace, count_workspace_files
 
-VERSION = '1.5.5 Beta – Batch Lossless PS1 CHD & Cleanup'
+VERSION = '1.5.6 Beta – Live 512 GB Card Planner'
 SCALE_CHOICES = [('100%', 100), ('110%', 110), ('125%', 125), ('140%', 140), ('150%', 150)]
 MAX_VISIBLE_FILES = 1200
 
@@ -318,6 +319,55 @@ class FittedCoverPreview(QLabel):
         self._fit()
 
 
+class CardFillMeter(QWidget):
+    """Read-only segmented storage meter. Rendering never performs file I/O."""
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.capacity = CAPACITY
+        self.used = 0
+        self.queued = 0
+        self.ai_remaining = COMPANION_BUDGET
+        self.reserve = FREE_RESERVE
+        self.setMinimumHeight(21)
+        self.setMaximumHeight(26)
+        self.setToolTip('Blue: files already staged; teal: pending copy; purple: AI budget; gold: free-space reserve.')
+
+    def set_bytes(self, capacity, used, queued=0, ai_remaining=0, reserve=FREE_RESERVE):
+        self.capacity = max(1, int(capacity))
+        self.used = max(0, int(used))
+        self.queued = max(0, int(queued))
+        self.ai_remaining = max(0, int(ai_remaining))
+        self.reserve = max(0, int(reserve))
+        self.update()
+
+    def paintEvent(self, event):
+        p = QPainter(self)
+        p.setRenderHint(QPainter.RenderHint.Antialiasing)
+        rect = self.rect().adjusted(0, 1, -1, -2)
+        if rect.width() <= 0 or rect.height() <= 0:
+            p.end(); return
+        p.setPen(Qt.PenStyle.NoPen)
+        p.setBrush(QColor('#263950'))
+        p.drawRoundedRect(rect, 7, 7)
+        p.setClipRect(rect)
+        w, y, h = rect.width(), rect.y(), rect.height()
+        denominator = max(1, self.capacity)
+        used_width = min(w, round(w * self.used / denominator))
+        queued_width = min(max(0, w - used_width), round(w * self.queued / denominator))
+        ai_width = min(w, round(w * self.ai_remaining / denominator))
+        reserved_width = min(w, round(w * self.reserve / denominator))
+        if self.used and used_width == 0: used_width = 1
+        if self.queued and queued_width == 0 and used_width < w: queued_width = 1
+        if used_width: p.fillRect(0, y, used_width, h, QColor('#4DA8FF'))
+        if queued_width: p.fillRect(used_width, y, queued_width, h, QColor('#3ED1B6'))
+        ai_left = min(w, max(used_width + queued_width, w - reserved_width - ai_width))
+        if ai_width and ai_left < w - reserved_width:
+            p.fillRect(ai_left, y, min(ai_width, w - reserved_width - ai_left), h, QColor('#AA83DE'))
+        if reserved_width:
+            p.fillRect(w - reserved_width, y, reserved_width, h, QColor('#D5AB64'))
+        p.end()
+
+
 class Window(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -352,6 +402,8 @@ class Window(QMainWindow):
         self.incoming_entries: list[Entry] = []
         self.staged_bytes = 0
         self.staged_files = 0
+        self.staged_companion = 0
+        self.last_physical_plan = None
         self.current_task = False
         self.current_task_name = ''
         self.scan_process = None  # Disposable child; safe to terminate for READ-ONLY scans.
@@ -503,8 +555,25 @@ class Window(QMainWindow):
         self.capacity_button = button('Check storage', self.check_workspace_space)
         loc_layout.addWidget(self.capacity_button)
         r.addWidget(location)
+        # The plan is VIRTUAL and visible on every page. No NAS disk scan to paint.
+        plan_strip = QFrame(); plan_strip.setObjectName('Card')
+        plan_box = QVBoxLayout(plan_strip); plan_box.setContentsMargins(13, 8, 13, 9); plan_box.setSpacing(4)
+        plan_heading = QHBoxLayout()
+        self.card_plan_name = label('512 GB virtual microSD • capacity preview', 'Small', True)
+        self.card_plan_amount = label('0 B staged', 'Small')
+        plan_heading.addWidget(self.card_plan_name)
+        plan_heading.addStretch()
+        plan_heading.addWidget(self.card_plan_amount)
+        plan_heading.addWidget(button('Exact sizes…', self.show_card_plan_details))
+        plan_box.addLayout(plan_heading)
+        self.card_plan_bar = CardFillMeter()
+        plan_box.addWidget(self.card_plan_bar)
+        self.card_plan_note = label('Blue: staged files • Purple: AI space • Gold: protected free space', 'Small', True)
+        plan_box.addWidget(self.card_plan_note)
+        r.addWidget(plan_strip)
         self.stack = QStackedWidget(); r.addWidget(self.stack, 1)
         self.make_home(); self.make_library(); self.make_apps(); self.make_copy(); self.make_health(); self.make_prefs()
+        self.update_card_plan()
         # Primary actions stay outside page scroll areas at every scale.
         self.command_host = QWidget()
         commands = QGridLayout(self.command_host); commands.setContentsMargins(0, 0, 0, 0)
@@ -843,6 +912,11 @@ class Window(QMainWindow):
         first = card_layout(c, '1. Choose where to copy',
             'Select the real card drive. If your RG Rotate has not arrived, use “Try a practice copy” to safely test with an ordinary folder.')
         self.dest_name = label('No card selected yet', 'Subtitle', True); first.addWidget(self.dest_name)
+        self.card_measured = label('Real microSD capacity not measured yet. Select the card and run Preview.', 'Small', True)
+        first.addWidget(self.card_measured)
+        self.real_card_bar = CardFillMeter(); self.real_card_bar.setVisible(False)
+        first.addWidget(self.real_card_bar)
+        self.card_measured_details = label('', 'Small', True); first.addWidget(self.card_measured_details)
         r = QHBoxLayout()
         r.addWidget(self.register(button('Find inserted card', self.detect_card, 'Primary')))
         r.addWidget(self.register(button('Choose drive or folder…', self.choose_destination)))
@@ -1285,6 +1359,8 @@ class Window(QMainWindow):
 
     def on_progress(self, name, current, total):
         if name == '@capacity':
+            self.staged_bytes = max(0, int(current))
+            self.update_card_plan()
             self.home_used.setText(pretty_bytes(current))
             self.home_meter.setValue(min(10000, int(10000 * current/max(1, CAPACITY))))
         else:
@@ -1353,6 +1429,90 @@ class Window(QMainWindow):
         self.set_status('Checking files inside your virtual card only. Downloads are not being scanned.')
         self.start_readonly_scan('inventory', active_workspace, self.render_scan)
 
+    def show_card_plan_details(self):
+        """Details from cached inventory/preview only; no GUI-thread NAS I/O."""
+        model = planned_card_budget(self.staged_bytes, self.staged_companion)
+        message = (
+            'VIRTUAL 512 GB CARD (advertised planning size, not real capacity)\n\n'
+            f'Nominal capacity: {model.capacity:,} bytes ({binary_gib(model.capacity)})\n'
+            f'Currently staged: {model.staged:,} bytes ({decimal_gb(model.staged)})\n'
+            f'AI companion already included: {model.companion_used:,} bytes\n'
+            f'Additional AI allowance: {model.companion_remaining:,} bytes\n'
+            f'Protected free space: {model.protected_free:,} bytes (8 GiB)\n'
+            f'Remaining room for new games: {model.game_room:,} bytes ({decimal_gb(model.game_room)})\n\n'
+            'Only actual files use NAS space. Nothing reserves or creates 512 GB. '
+            'The formatted capacity of the real card may be smaller.\n'
+        )
+        if self.last_physical_plan is not None:
+            real = self.last_physical_plan
+            message += (
+                '\nPHYSICAL CARD (preview only, no copying yet)\n'
+                f'Measured capacity: {real.capacity:,} bytes ({binary_gib(real.capacity)})\n'
+                f'Already occupied: {real.occupied_before:,} bytes\n'
+                f'New bytes to copy: {real.queued_new_bytes:,} bytes\n'
+                f'Estimated free after copy: {real.free_after:,} bytes\n'
+                'Same-size files must be SHA-256 verified before counting as identical.\n'
+            )
+        else:
+            message += '\nReal microSD capacity not measured yet. Choose the card and run Preview on Copy to card.'
+        QMessageBox.information(self, 'Card capacity & exact byte counts', message)
+
+    def update_card_plan(self):
+        if not hasattr(self, 'card_plan_bar'):
+            return
+        model = planned_card_budget(self.staged_bytes, self.staged_companion)
+        self.card_plan_bar.set_bytes(model.capacity, model.staged,
+                                     ai_remaining=model.companion_remaining,
+                                     reserve=model.protected_free)
+        self.card_plan_amount.setText(
+            f'{decimal_gb(model.staged)} staged / 512.00 GB  •  {model.staged_percent:.2f}%')
+        self.card_plan_amount.setToolTip(
+            f'Exact staged data: {model.staged:,} bytes = {binary_gib(model.staged)}. '
+            f'Nominal 512 GB = {binary_gib(CAPACITY)}; real formatted card may differ.')
+        self.card_plan_note.setText(
+            f'Room for new game files: {decimal_gb(model.game_room)}  •  '
+            f'AI budget remaining: {binary_gib(model.companion_remaining)}  •  '
+            f'Keep {binary_gib(FREE_RESERVE)} free')
+        if model.over_budget or model.companion_over_budget:
+            self.card_plan_note.setText('⚠ Planned card exceeds its safe budget. ' + self.card_plan_note.text())
+        self.card_plan_bar.setToolTip('512 GB advertised-size preview, NOT an allocated file or actual card reading. '
+            f'{model.staged:,} staged bytes; {model.companion_remaining:,} future AI bytes budgeted; '
+            f'{model.protected_free:,} protected free bytes. Storage is measured from virtual-card files.')
+
+    def reset_physical_plan(self, note=None):
+        self.last_physical_plan = None
+        if hasattr(self, 'card_measured'):
+            self.card_measured.setText(note or 'Real microSD not measured yet. Select the card and click Preview.')
+            self.real_card_bar.setVisible(False)
+            self.card_measured_details.setText('')
+
+    def show_physical_preview(self, plan):
+        # Target probe happens in isolated transfer helper, not the GUI.
+        if plan.is_simulation:
+            self.reset_physical_plan('Practice folder only. This is NOT the real microSD capacity.')
+            return
+        try:
+            physical = physical_card_preview(plan.target_capacity, plan.current_target_free,
+                                             plan.bytes_new)
+        except ValueError:
+            self.reset_physical_plan('Could not measure the selected card. Do not copy until a valid preview succeeds.')
+            return
+        self.last_physical_plan = physical
+        self.card_measured.setText(
+            f'REAL CARD • {decimal_gb(physical.capacity)} formatted ({binary_gib(physical.capacity)})  •  '
+            'Preview only, not yet transferred')
+        self.real_card_bar.set_bytes(physical.capacity, physical.occupied_before,
+                                     queued=physical.queued_new_bytes, reserve=physical.protected_free)
+        self.real_card_bar.setVisible(True)
+        self.card_measured_details.setText(
+            f'Currently used on card: {decimal_gb(physical.occupied_before)}  •  '
+            f'New transfer: {decimal_gb(physical.queued_new_bytes)}  •  '
+            f'Free afterward: {decimal_gb(physical.free_after)}  •  '
+            + ('8 GiB safety reserve maintained' if physical.fits else '⚠ Free-space reserve NOT met'))
+        self.real_card_bar.setToolTip('Blue: already occupied on card (including files not managed by app). '
+             'Teal: estimated new data. Gold: protected free space. Preview is size-based; '
+             'already-present files still require SHA-256 checking during copying.')
+
     def render_scan(self, result):
         if result is None or result[4] is None:
             self.set_status('Virtual-card check stopped. Your files were not changed.')
@@ -1362,6 +1522,10 @@ class Window(QMainWindow):
             self.refresh()
             return
         self.card_entries, self.staged_bytes, self.staged_files = entries, size, count
+        self.staged_companion = companion
+        self.update_card_plan()
+        if self.last_physical_plan is not None:
+            self.reset_physical_plan('Staged files changed or were rescanned. Preview the card again for current numbers.')
         available = max(0, CAPACITY - size - FREE_RESERVE - max(0, COMPANION_BUDGET - companion))
         self.home_used.setText(pretty_bytes(size))
         self.home_room.setText(f'{pretty_bytes(available)} virtual-card budget remaining')
@@ -2961,6 +3125,7 @@ class Window(QMainWindow):
         self.simulation.setChecked(mode == 'practice')
         self.simulation.blockSignals(False)
         self.update_destination_hint()
+        self.reset_physical_plan('Destination selected. Run Preview to measure its formatted capacity.')
         self.preflight_text.setText('Destination selected. Preview again before copying or verifying.')
         self._reset_copy_display('Destination or destination type changed. Previous results no longer apply.')
 
@@ -2982,6 +3147,7 @@ class Window(QMainWindow):
         self.settings.setValue('target_mode', 'practice' if practice else 'unconfirmed')
         self.saved_destination_mode = 'practice' if practice else 'unconfirmed'
         self.update_destination_hint()
+        self.reset_physical_plan('Destination type changed. Run Preview again.')
         self.preflight_text.setText('Destination mode changed. Run a new preview before copying.')
         self._reset_copy_display('Destination mode changed. Previous progress does not apply.')
 
@@ -3079,6 +3245,7 @@ class Window(QMainWindow):
     def preflight_done(self, plan):
         details, action, status = preview_explanation(plan, pretty_bytes)
         self.preflight_text.setText(details)
+        self.show_physical_preview(plan)
         self._reset_copy_display('PREVIEW ONLY: No files transferred or SHA-256 verified by this preview.')
         self.transfer_btn.setText(action)
         self.set_status(status)
@@ -3144,6 +3311,11 @@ class Window(QMainWindow):
     def transfer_done(self, result):
         summary, title, message, success = copy_explanation(result, self.transfer_simulation)
         self.copy_detail.setText(summary)
+        if self.last_physical_plan is not None:
+            self.card_measured.setText('Transfer complete. Preview again to measure the card after copying.')
+            self.card_measured_details.setText('The prior bar was an estimate before transfer; actual new contents must be rechecked.')
+            self.last_physical_plan = None
+            self.real_card_bar.setVisible(False)
         self.last_transfer_note.setText(('Last completed run: ' if success else 'Last transfer attempt: ') + summary.replace('\n', '  '))
         if success:
             self.copy_meter.setValue(1000)

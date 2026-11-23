@@ -94,6 +94,10 @@ def make_plan(workspace: Path, target: Path, free_reserve: int = FREE_RESERVE,
     # The 512 GB simulation includes both companion files and regular files.
     if not simulation and byte_total + max(0, companion_budget - companion_used) + free_reserve > CAPACITY:
         conflicts.append('Virtual card exceeds 512 GB profile after protected budgets')
+    if not simulation and byte_total + max(0, companion_budget - companion_used) + free_reserve > usage.total:
+        conflicts.append('Real microSD formatted capacity is too small for staged files and both protected budgets')
+    if not simulation and byte_new + free_reserve > usage.free:
+        conflicts.append('Real microSD does not have sufficient free space for new transfer data plus 8 GiB protected reserve')
     return SyncPlan(len(source_files), byte_total, byte_new, existing, conflicts,
                     usage.free, usage.total, simulation, existing_files)
 
