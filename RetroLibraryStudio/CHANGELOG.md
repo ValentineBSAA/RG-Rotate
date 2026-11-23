@@ -1,3 +1,11 @@
+# v1.5.3 Beta — File format badges and artwork fallback (2026-11-23)
+
+- My Games cover tiles show actual **CHD, BIN/CUE, M3U, ISO, PBP**, etc. file-format badges. Click for the stored filename, type and truthful verification limits. A CHD extension is **not** proof of CHDman verification or successful game launch.
+- Legacy CUE/BIN imports display BIN/CUE until a CHD is actually present. M3U indicates a playlist of separate discs, not a combined CHD.
+- Artwork catalog now falls back from the Libretro thumbnail site to the official Libretro per-platform GitHub tree when the primary index fails. PNG download/preview also falls back to the official GitHub raw mirror. User can still browse or import their own cover. These paths are tested with simulated outages but real network availability is external.
+- A new regression suite covers badge classification, artwork fallback, and unsafe redirects.
+- Local clean-extraction: **230 passed, 15 skipped**. Actual Windows artwork/CHDman/NAS acceptance remains pending.
+
 # v1.5.2 Beta — Windows acceptance candidate (2026-11-23)
 
 - Packaged the GitHub CI-tested v1.5.1 PS1 CUE/BIN → CHD import pipeline into a Windows launchable source distribution.
