@@ -2543,13 +2543,11 @@ class Window(QMainWindow):
         self.settings.setValue('last_game_folder', str(folder))
 
     def pick_files(self):
-        """One or many PS1 games always enter the same named selection screen.
-
-        The standard Windows picker cannot relabel Sony product-code folders.
-        Use our title-aware dialog when the user's saved location is PS1 and
-        keep an explicit option for ordinary standalone ROM files.
-        """
         if not self.ensure_workspace(): return
+        # One or many PS1 games use the same named selection screen. The
+        # native Windows file dialog cannot relabel Sony product-code folders.
+        # Preserve the configured virtual-card safety guard as the FIRST step.
+        # Other consoles can always browse their original ROM files.
         from psn_picker import ps1_parent_from_last_location
         root = ps1_parent_from_last_location(self.last_game_folder)
         if root:
