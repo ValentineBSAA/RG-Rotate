@@ -1,5 +1,8 @@
 # Project handoff · read this before working
 
+**IMPORTANT v1.6.7 enhancement after original diagnosis:** Confirmed against has207/psxtract-2 v3 source: its command-line `psxtract_main` guards a missing optional document, so `-c EBOOT.PBP "" KEYS.BIN` is safe on the receipt-verified v3 helper, letting it use the **actual adjacent** key rather than defaulting to derived-key mode. Added `verified_psxtract_v3_key_only` to `ps1_psn.py` and tests covering v3-only arguments, key privacy and conservative fallback for any unverified/custom older binary. This MAY resolve the Clock Tower II PGD MAC error but cannot be called successful until real EBOOT conversion verifies; never invent DOCUMENT or substitute keys. [v1.6.7 checklist](PSXTRACT_PGD_AND_PICKER_POLISH_v167.md).
+
+
 ## v1.6.7 critical handoff · Clock Tower II PGD failure in successful title-aware picker
 
 User's actual Windows v1.6.6 photo shows the custom PS1 chooser **WORKS**: 30 packages identified by EBOOT metadata, game names and Sony folder IDs visible, with Clock Tower II - The Struggle Within (SLUS00695) selected. The imported game failed before CHDman: console after PBP unpacking says `Single disc game detected`, `Decrypting ISO header`, `PGD: Invalid 0x80 MAC hash!`, `ERROR: ISO header decryption failed!`. Final summary: 1 checked, **0 imported / 0 already present / 1 needs attention / 0 verified CHDs**. This is PSXtract encrypted-header authentication failure, not the artwork or title picker. Actual helper outcome for Clock Tower II remains unverified despite other Crash Bandicoot imports succeeding. The app's old generic negative exit message is bad UX.
