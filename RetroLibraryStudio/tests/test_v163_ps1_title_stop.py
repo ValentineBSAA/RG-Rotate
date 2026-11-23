@@ -169,3 +169,27 @@ def test_verified_single_disc_gets_fingerprint_receipt_and_skips_repeat(tmp_path
     root = card / 'ROMs' / 'psx' / 'Clock Tower'
     assert (root / 'Clock Tower (Disc 1).chd').is_file()
     assert not list(root.glob('*.m3u'))
+
+
+def test_ps1_batch_rejects_raw_generic_cue_disc_from_zip(tmp_path):
+    src = tmp_path / 'source'
+    src.mkdir()
+    track = src / 'PS1 (Disc 1).bin'
+    track.write_bytes(b'\x00' * (2352 * 4))
+    cue = src / 'PS1 (Disc 1).cue'
+    cue.write_text('FILE "PS1 (Disc 1).bin" BINARY\n'
+                   ' TRACK 01 MODE2/2352\n INDEX 01 00:00:00\n',
+                   encoding='utf-8')
+    archive = tmp_path / 'input' / 'PS1.zip'
+    archive.parent.mkdir()
+    with zipfile.ZipFile(archive, 'w') as z:
+        z.write(cue, cue.name)
+        z.write(track, track.name)
+    card = tmp_path / 'virtual'
+    result = batch_guided_import([archive], card, 'PS1', mock_binary(tmp_path),
+        auto_artwork=False, converter=mock_convert)
+    assert result['batch_completed'] == 0
+    assert result['batch_needs_attention'] == 1
+    assert 'Anonymous PS1 disc title' in result['errors'][0]
+    assert not list(card.glob('**/*.chd'))
+    assert archive.is_file()
