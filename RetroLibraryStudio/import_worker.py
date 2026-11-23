@@ -34,6 +34,11 @@ def _listen_for_stop(cancel: threading.Event) -> None:
 
 def handle(request: dict, cancel: threading.Event) -> dict:
     mode = request.get('mode')
+    if mode == 'scan_psn_catalog':
+        from psn_picker import scan_psn_sources
+        return scan_psn_sources(Path(request['folder']), cancel=cancel,
+            progress=lambda msg, cur, total: emit('progress',
+                message=str(msg), current=int(cur), total=int(total)))
     if mode in ('inspect_discs', 'convert_discs', 'playlist', 'setup', 'optimize_existing_ps1', 'convert_selected_ps1', 'batch_convert_ps1'):
         def progress(message, current, total):
             emit('progress', message=str(message), current=int(current), total=int(total))
@@ -75,8 +80,14 @@ def handle(request: dict, cancel: threading.Event) -> dict:
         return stage_local_apks([Path(p) for p in request['paths']], workspace,
                                 progress=apk_progress, cancel=cancel)
     fallback = str(request['fallback'])
-    if mode == 'files':
-        files = [Path(p) for p in request['paths']]
+    if mode in ('files', 'batch_psn_selected'):
+        files = list(dict.fromkeys(Path(p) for p in request['paths']))
+        if mode == 'batch_psn_selected':
+            if not files or len(files) > 1500 or any(
+                p.suffix.casefold() not in ('.zip', '.7z', '.pbp')
+                or not p.is_file() or p.is_symlink() for p in files
+            ):
+                raise ValueError('Select existing PS1 EBOOT or ZIP/7Z packages, not KEYS.BIN')
     elif mode in ('folder', 'batch_psn_folder'):
         folder = Path(request['folder'])
         # Check overlap inside worker, not the GUI. Avoid blocking on NAS path.resolve().
@@ -110,7 +121,7 @@ def handle(request: dict, cancel: threading.Event) -> dict:
         # Run a separate game job for each archive/PBP when batch is requested
         # or there are multiple package inputs. Direct CUE/BIN files remain a
         # single set so their existing M3U collection semantics don't change.
-        if mode == 'batch_psn_folder' or len(archives_or_pbps) > 1:
+        if mode in ('batch_psn_folder', 'batch_psn_selected') or len(archives_or_pbps) > 1:
             from ps1_batch import batch_guided_import
             return batch_guided_import(files, workspace, fallback, Path(request['binary']),
                                        progress=progress, cancel=cancel,
