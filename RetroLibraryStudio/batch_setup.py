@@ -14,17 +14,18 @@ import software
 import tool_setup
 
 RECOMMENDED = ('Cocoon Shell', 'PPSSPP', 'RetroArch', 'Android Platform Tools', 'CHDman')
-OPTIONAL = ('DuckStation',)
+OPTIONAL = ('DuckStation', 'PSXtract')
 DESCRIPTION = {
     'Cocoon Shell': 'Default RG Rotate launcher',
     'PPSSPP': 'PlayStation Portable games',
     'RetroArch': 'Retro console emulation',
     'Android Platform Tools': 'USB setup utility for Windows',
     'CHDman': 'PS1 disc-image utility for Windows',
+    'PSXtract': 'Optional PSN EBOOT.PBP extractor (community release; checksum-verified)',
     'DuckStation': 'Optional PS1 emulator; Cocoon launch compatibility warning',
 }
 ANDROID = ('Cocoon Shell', 'PPSSPP', 'RetroArch')
-WINDOWS = ('Android Platform Tools', 'CHDman')
+WINDOWS = ('Android Platform Tools', 'CHDman', 'PSXtract')
 
 
 
@@ -162,10 +163,12 @@ def prepare_batch(
                             on_state(name, f'Downloading {percent}%' if percent is not None else 'Downloading…')
                 if name == 'Android Platform Tools':
                     answer = tool_setup.install_adb(host_tools, progress=tool_progress, cancel=cancel)
+                elif name == 'PSXtract':
+                    answer = tool_setup.install_psxtract(host_tools, progress=tool_progress, cancel=cancel)
                 else:
                     answer = tool_setup.install_chdman(host_tools, progress=tool_progress, cancel=cancel)
                 item = {'name': name, 'ok': bool(answer['ok']),
-                        'state': 'Ready on Windows' if answer['ok'] else answer['state']}
+                        'state': (answer['state'] if name == 'PSXtract' else 'Ready on Windows') if answer['ok'] else answer['state']}
             else:
                 item = {'name': name, 'ok': False,
                         'state': 'Needs compatibility review • use official download page'}
