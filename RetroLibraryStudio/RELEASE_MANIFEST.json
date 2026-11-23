@@ -1,23 +1,26 @@
 {
-  "version": "1.6.1",
-  "title": "PS1 Classics EBOOT/PBP + verified 7Z archive handling",
+  "version": "1.6.2",
+  "title": "Live PS1 Classic Disc Progress + 13-console Exact-Content Dedupe",
   "build_date": "2026-11-23",
   "platform": "Windows source (PySide6)",
   "source_CI": {
-    "status": "pending Linux/Windows source CI"
+    "status": "pending final v1.6.2 Windows/Linux GitHub CI"
   },
   "local_pytest": {
     "passed": 266,
     "skipped": 25
   },
-  "windows_real_acceptance": "v1.6.0 game details verified, real PS1 Classics PSXtract conversion pending",
-  "device_acceptance": "PSXtract not auto-installed; real FFVII PSN extraction and RG Rotate disc switching not verified",
+  "windows_real_acceptance": "v1.6.1 real 7Z/PBP PSXtract extraction reached Disc 3 and CHDman Disc 1; user final three-CHD/M3U completion not yet supplied. v1.6.2 UI and duplicate checks need user 125% screenshots.",
+  "device_acceptance": "Real RG Rotate multi-disc launch, saves, physical card copy and USB detection pending",
   "source_files": [
     "app.py",
-    "import_worker.py",
-    "ps1_pipeline.py",
+    "core.py",
     "ps1_psn.py",
-    "tests/test_v161_psn_and_7z.py"
+    "ps1_progress.py",
+    "ps1_pipeline.py",
+    "ps1_duplicates.py",
+    "library_duplicates.py",
+    "tests/test_v162_library_duplicates.py"
   ],
-  "safety": "PSN key/manual never transformed into CHD or copied as standalone game; preserves source EBOOT and archive; missing helper refuses, no unverified disc order."
+  "safety": "Exact SHA-256 content matches only within same console skipped; matching titles with different data need user review. No source ROMs, keys, archives, existing CHD/M3Us or artwork deleted or overwritten. PSN receipts live in ignored metadata."
 }
