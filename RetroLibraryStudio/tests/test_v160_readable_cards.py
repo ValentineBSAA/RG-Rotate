@@ -9,7 +9,7 @@ from drives import Volume
 from sync_engine import SyncPlan
 
 
-def card(root='E:\\', *, guid=r'\\?\Volume{abc}\', serial=982127,
+def card(root='E:\\', *, guid='volume-abc', serial=982127,
          filesystem='exFAT', removable=True, size=511_800_000_000):
     return Volume(Path(root), 'MICROSD', filesystem, size, size-1000,
                   removable, guid, serial)
@@ -21,7 +21,7 @@ def test_512gb_usb_card_detected_and_identity_is_not_just_the_drive_letter():
     assert f['filesystem'] == 'EXFAT' and f['serial'] == 982127
     assert card_candidate(actual, Path('C:\\'))
     assert matches(f, actual)
-    assert not matches(f, card(guid=r'\\?\Volume{swapped}\'))
+    assert not matches(f, card(guid='volume-swapped'))
     assert not matches(f, card(serial=982128))
     assert not matches(f, card(size=511_800_000_001))
     assert not matches(f, card(filesystem='FAT32'))
