@@ -6,7 +6,7 @@
 | --- | --- | --- |
 | PS1 picker 30 titles correctly displayed | Existing v1.6.6 | **Passed in user's photos** |
 | Clock Tower II successful EBOOT extraction | Impossible with synthetic ROMs | **Still failed in v1.6.7** |
-| Hide separate PSXtract console, capture PGD logs via stdout pipe | New Win32 AttachConsole smoke tests | Pending user's v1.6.8 |
+| Detach disposable import worker console to preserve direct PSXtract stdout pipe | New Windows parent-worker → GUI-helper process-chain smoke test | Pending user's v1.6.8 |
 | Report PGD versus generic helper status -1 | New parser/diagnostic tests | Pending v1.6.8 |
 | Adjacent KEYS length-only verification (without disclosing bytes) | New synthetic tests | Pending |
 | V3-only KEYS without manual support | v1.6.7 synthetic tests | Physical source pending |
