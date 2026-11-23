@@ -10,7 +10,7 @@ import re
 import tempfile
 import shutil
 import zipfile
-from contextlib import ExitStack
+from contextlib import ExitStack, nullcontext
 from pathlib import Path
 from typing import Callable
 
@@ -53,7 +53,8 @@ def _source_checks(cues: list[Path], cancel) -> None:
 
 
 def stage_ps1_cues(cues: list[Path], workspace: Path, binary: Path, *, progress=None,
-                   cancel=None, converter=None, verify_existing=None, optimize_existing=False) -> dict:
+                   cancel=None, converter=None, verify_existing=None,
+                   optimize_existing=False, disposable_psn_source=False) -> dict:
     """Convert every input disc, verify, then publish only a verified CHD.
 
     Existing virtual-card BIN/CUE sets are preserved (and still occupy card space).
@@ -126,10 +127,21 @@ def stage_ps1_cues(cues: list[Path], workspace: Path, binary: Path, *, progress=
                     tmp = Path(d)
                     if progress:
                         progress(f'Converting {cue.stem} to CHD (this can take a while)', 0, 0)
-                    result = converter(cue, tmp, binary, cancel=cancel,
-                        progress=lambda desc, current, total: progress(
-                            f'Converting {cue.name}: {desc}', 0, 0) if 'Converting' in desc else progress(
-                            f'{cue.name}: {desc}', disc_percent(60), 100) if progress else None)
+                    # Windows CHDman may fail to open Unicode CLI paths (™
+                    # in Crash Bandicoot™). Only extracted PSN CUEs are safe
+                    # to alias in-place; never write to user source folders.
+                    if disposable_psn_source:
+                        from ps1_chd_bridge import ascii_psn_cue
+                        source_context = ascii_psn_cue(cue, cancel=cancel)
+                    else:
+                        source_context = nullcontext(cue)
+                    with source_context as chd_input:
+                        if chd_input != cue and progress:
+                            progress(f'Preparing a CHDman-compatible temporary filename for {cue.stem}', 0, 0)
+                        result = converter(chd_input, tmp, binary, cancel=cancel,
+                            progress=lambda desc, current, total: progress(
+                                f'Converting {cue.name}: {desc}', 0, 0) if 'Converting' in desc else progress(
+                                f'{cue.name}: {desc}', disc_percent(60), 100) if progress else None)
                     if result.get('cancelled'):
                         out['cancelled'] = True
                         return out
@@ -430,7 +442,8 @@ def guided_import(paths: list[Path], workspace: Path, fallback: str, binary: Pat
                     extracted, title, multi_expected=pbp_disc_signature(pbp) == 'multi')
                 converted = stage_ps1_cues(prepared, workspace, binary, progress=phase,
                                           cancel=cancel, converter=converter,
-                                          verify_existing=verify_existing)
+                                          verify_existing=verify_existing,
+                                          disposable_psn_source=True)
                 # Only expose a finished collection folder as a successful
                 # import; do not direct the user to an unverified partial.
                 finished = (not converted['cancelled'] and not converted['errors']
