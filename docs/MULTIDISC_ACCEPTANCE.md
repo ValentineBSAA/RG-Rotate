@@ -1,6 +1,6 @@
 # v1.5.8 · One artwork tile, multiple PS1 discs
 
-**Status:** Source beta candidate. Automated tests use synthetic CHDman fixtures. No user Windows 11 / Synology batch import or actual RG Rotate/Cocoon disc swapping has been verified for this version.
+**Status:** Packaged v1.5.8 Windows source beta. GitHub CI passed 289 Windows and 288 Linux tests (1 Linux skip); downloaded ZIP clean-extraction passed 264 local tests, 25 skipped. Automated tests use synthetic CHDman fixtures. No user Windows 11 / Synology batch import or actual RG Rotate/Cocoon disc swapping has been verified for this version.
 
 ## What the software should do
 
