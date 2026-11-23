@@ -1,5 +1,15 @@
 ## v1.5.6 Beta · Live 512 GB Card Planner (2026-11-23)
 
+## v1.5.8 source beta candidate · Smart Multi-disc Collections (2026-11-23)
+
+- One new button **Import complete PS1 game folder…** to inspect complete CUE/BIN disc sets in an isolated worker, verify each lossless CHD, and stage into `ROMs/psx/<Game Title>/`.
+- Disc tags and editions handled conservatively. Resident Evil 2 (USA) Disc 1 and 2 join their edition, Final Fantasy VII (3 discs) and VIII (4 discs) remain separate; track files are not discs.
+- Existing disc-numbered CHDs are verified then staged without conversion. Partial/incomplete tracks, out-of-order/missing/duplicate disc numbers and unsafe CUE references are rejected.
+- M3U creation requires consecutive discs; later additions can extend only a non-conflicting ordered subset by atomic replacement. Custom/alternate playlists are preserved.
+- My Games shows one gallery tile for a complete scanned M3U collection, with N DISCS badge, file details and artwork fallback to prior disc cache. Individual disc entries remain visible in advanced File List; broken playlists do not hide discs.
+- Added regression tests `test_v158_collections.py`; real Windows/Synology and RG Rotate disc swap are **pending**. Existing PS1 conversion cleanup remains opt-in; originals and memory unaffected.
+
+
 ## v1.5.7 source candidate · Console Shelves (2026-11-23)
 
 - Added scrollable premium console pills with **logical game counts**, synchronizing My Games cover gallery and file list filters. Gallery displays distinct full-width console headers and organizes games by PSP, PS1, Nintendo DS, GBA, PS2, GameCube, then remaining supported systems. Existing game cards keep artwork, title edits, CHD format badges, contextual actions and Show More paging.
