@@ -1,5 +1,14 @@
 # Project handoff · read this before working
 
+## v1.6.1 source candidate | PSN PS1 Classics + 7Z
+
+Real user photo shows Final Fantasy VII (English)(PSN)/NPEF00069 with EBOOT.PBP, KEYS.BIN and DOCUMENT.DAT. It is an official PS1 Classics PSN-style package, not a native PSP ISO. KEYS.BIN is companion key material; DOCUMENT.DAT is a manual. They should never become CHD files or be stored in the virtual ROMs. Final Fantasy VII original PS1 = 3 discs.
+
+Branch feature/v1.6.1-psn-eboot-and-7z-verification, PR #17. Files: ps1_psn.py new PSAR signature/classification, optional PSXtract bridge and careful disc naming; ps1_pipeline.py new PSN extraction stage and .7z document forwarding; tool_setup.py pinned upstream v3.0 PSXtract ZIP+SHA-256 safe install; batch_setup.py and app.py optional checkbox (off by default), proper binary path forwarding; tests/test_v161_psn_and_7z.py creates REAL .7z archives with fake disc contents; tests/test_v161_psxtract_setup.py covers ZIP safety.
+
+Windows release user must opt in to downloading a THIRD-PARTY helper with pinned SHA-256. Helper is not bundled, not run on install. The exact real Sony encrypted EBOOT was not provided, so real extraction/audio quality are UNVERIFIED. Once extracted CUE/BIN are complete, existing real user verified CHDman + M3U + artwork stage runs. Originals and old RE2 untouched. [Acceptance](PS1_CLASSICS_7Z_ACCEPTANCE.md).
+
+
 ## v1.6.0 candidate · Clear dialogs and USB card identity gates
 
 User-supplied **real v1.5.9 screenshots verified** one Resident Evil 2 M3U cover tile with 2 DISCS badge, correct two CHD entries in the detail popup, and two distinct capacity bars at 125%. The dialog was deemed too text-heavy. A real branded 512 GB microSD is arriving and will be inserted into Windows 11 via microSD-to-USB adapter.
