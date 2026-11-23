@@ -87,3 +87,11 @@ The latest GitHub workflow run [45138220982](https://github.com/ValentineBSAA/RG
 - **Next:** Have user click Clock Tower's file-type badge. If BIN/CUE, conversion still pending; run the existing CHDman action on source CUE/track pair with no source-file deletion. Then test artwork search. Do not treat reported size as evidence of successful CHD conversion.
 
 - **CI after v1.5.3 badge/artwork changes:** [run 45141431778](https://github.com/ValentineBSAA/RG-Rotate/actions/runs/45141431778) passed **245 tests on Windows**, **244 pass and 1 skip on Linux**; unit tests use mocked artwork endpoints, so user screenshot verification is still required.
+
+## v1.5.4 (2026-11-23) · artwork preview + contextual CHD organization
+
+- **Actual observed v1.5.3 Windows passes:** Clock Tower `BIN/CUE` badge showed **118.0 MB**; online artwork search returned USA/Japan/Ghost Head results and user successfully applied selected cover. Empty preview section was the new bug.
+- **v1.5.4 implementation:** result selection automatically starts an async artwork preview after 260 ms debounce, before apply. Double-click previews rather than blindly applies. Styled right-click menu on gallery and file list supports format/details/title/cover and conversion.
+- **Conversion:** For in-card PS1 CUE/BIN and safe single-track IMG, do CHDman createcd → verify → reverify CHD in existing game folder → move legacy original tracks into adjacent `<virtual card name> - Conversion Backups` **outside card**. No file is deleted; existing CHD can be reverified and tidied. Invalid/ambiguous IMG or CloneCD CCD/IMG/SUB is refused rather than guessed. The action runs in isolated import worker to protect Qt and NAS Stop.
+- **Current code:** commit `b0c02214`; local tests 240 passed, 15 skipped; source ZIP `RetroLibraryStudio_v1.5.4_Windows_Test_Beta.zip`. Actual Windows conversion acceptance still **pending**. See [issue #8](https://github.com/ValentineBSAA/RG-Rotate/issues/8).
+- **Important:** Backups are outside the virtual card (same parent NAS folder). If user wants to reclaim their NAS disk later, provide a separate carefully verified recovery cleanup workflow, never auto-delete original source files.

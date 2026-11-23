@@ -87,3 +87,10 @@ Never infer a PASS from a progress bar screenshot alone when the underlying veri
 ### GitHub v1.5.3 CI (run 45141431778)
 
 - **Passed**: [GitHub Windows job 245 passed](https://github.com/ValentineBSAA/RG-Rotate/actions/runs/45141431778), Linux 244 passed + 1 skipped. Mocked artwork catalog outage fallback and truthful format badges tested. Windows UI and real artwork provider connectivity are **not** acceptance verified.
+
+## v1.5.4 code vs real Windows verification · 2026-11-23
+
+- **Observed v1.5.3 GUI pass:** Clock Tower format is `BIN/CUE`, size **118.0 MB**, cover search returned multiple titles, selected cover appeared in gallery. Automatic visual preview on selecting candidate was missing in this build.
+- **v1.5.4 local source test:** **240 passed, 15 skipped** including 10 new organizer tests: CUE/BIN conversion/tidy, existing CHD, verify failure safety, cancel safety, external path refusal, shared BIN refusal, raw IMG, ambiguous IMG, CloneCD metadata blocking, and no single-disc M3U.
+- **Windows CI:** Pending at time of source publication. This is not evidence of actual user Windows interaction.
+- **User acceptance still pending:** 125% context menu, async artwork previews, real CHDman conversion, NAS file moves/recovery, real physical microSD and Cocoon playback. See [#8](https://github.com/ValentineBSAA/RG-Rotate/issues/8).

@@ -82,3 +82,16 @@ There is no unattended GitHub update running. “Continuously update” means up
 - [ ] **User acceptance:** Confirm Clock Tower shows BIN/CUE until an actual CHD is stored, then CHD after Refresh. A 118.0 MB reported size alone is not proof of CHD.
 - [ ] **User acceptance:** Perform live artwork search on Windows; if both public providers fail, capture exact network status/error.
 - [ ] User confirms genuine CHDman conversion and verified card transfer with the real files.
+
+### v1.5.4 · Artwork previews + contextual PS1 CHD organizer (2026-11-23)
+
+Tracked by [#8](https://github.com/ValentineBSAA/RG-Rotate/issues/8), committed as [b0c02214](https://github.com/ValentineBSAA/RG-Rotate/commit/b0c02214917e0356d6c00645a40b7ef26090ac30).
+
+- [x] Code: Automatically preview selected Libretro artwork in the search dialog; keep explicit confirmation before using a cover, and make double-click preview rather than apply.
+- [x] Code: Context menu on game tiles and file-list entries with title edit, cover search/preview, format details, PS1 CHD/tidy and open folder.
+- [x] Code: CUE/BIN disc and safe recognizable raw IMG → verified CHD **in the existing PSX folder**. Reverify CHD on NAS; only then move source tracks into a sibling recovery folder **outside the virtual card**. Originals are preserved, not deleted.
+- [x] Code: Reject ambiguous IMG, CloneCD CCD/IMG/SUB, and shared-disc track references when safe reconstruction/cleanup cannot be established.
+- [x] Package `RetroLibraryStudio_v1.5.4_Windows_Test_Beta.zip`; local regression tests **240 passed, 15 skipped** (Qt OS-specific tests skipped locally).
+- [ ] User Windows acceptance: browse/select covers and observe full preview **before applying**; confirm attractive context menu at 125%.
+- [ ] User Windows acceptance: Convert Clock Tower real CUE + two BINs with CHDman and NAS, confirm CHD badge, only CHD in PSX directory, recovery outside virtual card, and preserved artwork.
+- [ ] User Windows acceptance: IMG raw-track test, verification failure rollback, incremental NAS practice transfer, and physical microSD/Cocoon later.

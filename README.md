@@ -2,7 +2,7 @@
 
 **Project home and development handoff** for the Anbernic RG Rotate (Android 12, 720×720, Unisoc T618, 3 GB RAM, 32 GB internal storage) and **Retro Library Studio**, a Windows 11 / PySide6 virtual-microSD preparation utility.
 
-> **Current working milestone: v1.5.3 Format Badges & Artwork Fallback (source beta).** The **full text source and tests** are now published under [RetroLibraryStudio/](RetroLibraryStudio/). The optional generated Resident Evil cover image is not in GitHub. See [Source publication](docs/SOURCE_PUBLICATION.md).
+> **Current working milestone: v1.5.4 Artwork Preview & PS1 CHD Organizer (source beta).** The **full text source and tests** are now published under [RetroLibraryStudio/](RetroLibraryStudio/). The optional generated Resident Evil cover image is not in GitHub. See [Source publication](docs/SOURCE_PUBLICATION.md).
 
 ## Project at a glance
 
@@ -47,3 +47,5 @@
 | [SOURCE_PUBLICATION.md](docs/SOURCE_PUBLICATION.md) | How to add the ZIP's actual code and keep it current |
 
 **Maintenance rule:** Every meaningful project change must update the roadmap status and tests; report whether it was unit-tested, Windows-tested, or RG Rotate-tested. No silent completion claims.
+
+**Latest Windows testing:** [v1.5.4 right-click CHD & cover-preview acceptance issue](https://github.com/ValentineBSAA/RG-Rotate/issues/8). Source published under `RetroLibraryStudio/`; real CHDman conversion and RG Rotate device testing still pending.

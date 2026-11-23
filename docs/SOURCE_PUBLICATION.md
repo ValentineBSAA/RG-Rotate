@@ -44,3 +44,9 @@ The repository is public. No license has yet been selected explicitly; do not as
 - GitHub source updated with clickable format badges and official Libretro-GitHub artwork fallback. New test file: `RetroLibraryStudio/tests/test_v153_badges_artwork.py`.
 - Local ZIP: `RetroLibraryStudio_v1.5.3_Windows_Test_Beta.zip`, **3,088,444 bytes**, SHA-256 `d33da5e5c182f63c8baf99a988fe492fdaf3ea1d742315a861ce30542ecf7312`. ZIP self-check passed. Clean extracted local test: **230 passed / 15 skipped**.
 - Source/package is **not an independently tested Windows binary EXE**; install dependencies via launcher; test against existing NAS workspace in separate folder.
+
+## v1.5.4 publication
+
+- Source files and tests published to main [b0c02214](https://github.com/ValentineBSAA/RG-Rotate/commit/b0c02214917e0356d6c00645a40b7ef26090ac30).
+- Windows test ZIP: `RetroLibraryStudio_v1.5.4_Windows_Test_Beta.zip`, **3,094,825 bytes**, SHA-256 `86687bdf34c69a33cd93733311b36b2c86f6ca9ee81a2f82bd853caf99d4cc15`.
+- Local tests: 240 passed, 15 skipped. Physical Windows CHDman and user NAS acceptance remains pending.
