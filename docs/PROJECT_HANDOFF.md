@@ -1,5 +1,8 @@
 # Project handoff · read this before working
 
+**Additional user requirement:** user has many PSN PS1 Classics packaged for PSP and wants a **one-folder batch import**, no duplicates, in addition to the all-console duplicate guard. Implemented `ps1_batch.py` with per-archive/PBP isolated `guided_import` calls, source receipt duplicate skip, per-game errors/queue counts, and an existing-games-first rule. `import_worker.py` exposes `batch_psn_folder` and routes multiple selected archives/PBPs to the batch queue. `app.py` adds **Batch import PS1 Classics (PSN ZIP/7Z/EBOOT)**, GAME N/TOTAL status, and a friendly end-of-batch summary; native PSP EBOOTs remain separate from PS1 Classics. Synthetic ZIP/7Z and per-package failure-isolation tests are in `tests/test_v162_psn_batch.py`. Never pretend PSP-native EBOOTs can be blindly converted into PS1 CHDs. Real user FFVII final CHD conversion, physical handheld acceptance, and actual batch screenshots remain pending.
+
+
 ## v1.6.2 branch handoff | all-console duplicate guard + user-friendly disc extraction
 
 User real v1.6.1 Windows screenshots show **7Z extracting**, PSXtract multi-disc identified, Final Fantasy VII SCES Europe discs 1-3 reconstructing data tracks, PSXtract MD5 pass reported, then CHDman converting Disc 1. Final 3 CHDs/M3U/gameplay **not yet observed**. User requests one clear PS1 disc 1/2/3 extraction stage, and adds **IMPORTANT: duplicate detection must cover every console, not PS1 alone**.
