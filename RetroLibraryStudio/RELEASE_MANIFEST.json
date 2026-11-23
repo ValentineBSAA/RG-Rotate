@@ -1,25 +1,25 @@
 {
-  "version": "1.5.9",
-  "title": "Virtual Windows 11 exFAT Card Preview + 2 DISCS Gallery Fix",
+  "version": "1.6.0",
+  "title": "Readable Game/Card Details and Safe USB microSD Identification",
   "build_date": "2026-11-23",
   "platform": "Windows source (PySide6)",
   "source_CI": {
-    "status": "pending GitHub Windows/Linux CI for v1.5.9"
+    "status": "pending Windows/Linux source CI for v1.6.0"
   },
   "local_pytest": {
     "passed": 266,
     "skipped": 25
   },
-  "windows_real_acceptance": "v1.5.8 user confirmed RE2 real CHDman conversion and ordered CHD/M3U folder; v1.5.9 display/exFAT screenshots pending",
-  "device_acceptance": "512 GB physical microSD not yet measured by Windows; RG Rotate playback pending",
+  "windows_real_acceptance": "v1.5.9 2 DISCS and virtual exFAT UI user confirmed; new v1.6.0 dialog and USB card tests pending",
+  "device_acceptance": "USB microSD detection, physical card formatted capacity, first verified transfer and RG Rotate game launches pending",
   "source_files": [
     "app.py",
-    "readonly_scan.py",
-    "core.py",
-    "virtual_exfat.py",
-    "ps1_collections.py",
-    "library_presentation.py",
-    "tests/test_v159_exfat_and_playlist.py"
+    "drives.py",
+    "card_identity.py",
+    "friendly_dialogs.py",
+    "transfer_worker.py",
+    "sync_engine.py",
+    "tests/test_v160_readable_cards.py"
   ],
-  "safety": "Model only, no formatting/writes/deletes/preallocation. Source NAS ROMs, CHDs, M3U, artwork and CompanionData preserved."
+  "safety": "No formatting, partitioning, automatic copying or deletion. Physical transfer requires Windows volume GUID/serial identity, exFAT, explicit user drive-letter confirmation and per-file identity recheck."
 }
