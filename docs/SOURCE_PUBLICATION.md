@@ -1,47 +1,39 @@
-# Source publication and GitHub workflow
-_Last checked 2026-11-23._
+# Source publication and continuing development
+_Last updated 2026-11-23._
 
-## Current limitation (important)
+## Publication status
 
-The GitHub repository currently has **project documentation and roadmap**, not the complete Python source. The latest complete source was assembled as:
+**COMPLETE for text source:** The original v1.5.1 Python modules, Windows launch scripts, requirements, README/changelog, tool setup code, and test suite are now committed as **64 UTF-8 files** under [RetroLibraryStudio/](../RetroLibraryStudio/) in GitHub commit [b458028](https://github.com/ValentineBSAA/RG-Rotate/commit/b458028436426d859c7847da2fb8129b3b556661).
 
-`RetroLibraryStudio_v1.5.1_Automatic_CHD_M3U_Artwork_Windows_Source.zip`
+The source is browsable and cloneable, so **Codex and future chats can work against GitHub directly**. The optional generated *Resident Evil: Gore Edition* example cover (PNG) was excluded from the public source upload. Commercial ROMs, BIOS, downloaded APKs, saves, settings and personal NAS credentials were not pushed.
 
-- SHA-256: `abc1fb3496826357e27aebf463c26453d381b6fba3f275f6bffba70e7e464001`
-- Size: **3,074,882 bytes**.
-- ZIP structure: **65 files** under `RetroLibraryStudio_1.5.1/` (plus tests and optional custom cover).
-- ZIP self-check: pass.
-- `python -m pytest -q --disable-warnings --maxfail=1` on Linux: **225 passed, 15 skipped**.
-- Windows CHDman conversion and live RG Rotate testing: **not performed on this v1.5.1 artifact**.
+### Source archive provenance
+- Full ChatGPT build ZIP: `RetroLibraryStudio_v1.5.1_Automatic_CHD_M3U_Artwork_Windows_Source.zip`.
+- Original ZIP SHA-256: `abc1fb3496826357e27aebf463c26453d381b6fba3f275f6bffba70e7e464001`
+- Original ZIP: 3,074,882 bytes and 65 archive members. This includes the optional example cover.
+- GitHub code is a text-source-only equivalent, without that optional cover. Do **not** expect its ZIP checksum to match the original binary archive.
+- `python -m pytest -q --disable-warnings --maxfail=1` run on Linux: **225 passed, 15 skipped**.
+- v1.5.1 **real Windows CHDman / Synology NAS / physical RG Rotate acceptance remains pending**.
 
-The connected GitHub write API supports UTF-8 files, but this session has not transferred the ZIP's binary bytes or the entire source tree. **Do not infer that a document about v1.5.1 means v1.5.1 code has been pushed.**
+## Clone on Windows
 
-## Publish source with GitHub Desktop (recommended)
+1. Clone `https://github.com/ValentineBSAA/RG-Rotate.git` in GitHub Desktop.
+2. Open the `RetroLibraryStudio` folder.
+3. Run `Start_Retro_Library_Studio.bat` to install required Python packages and launch, or `RUN_TESTS_Windows.bat` to test.
+4. **Do not overwrite the existing working app folder or virtual NAS card.** Use a separate application checkout and point it to the already selected NAS workspace only after confirming the path.
+5. Verify actual CHDman installation and conversion on Windows before importing an entire PS1 library.
 
-1. Download the ZIP artifact from the producing chat and extract it **into a NEW folder**, keeping the existing working installed v1.4.4 and virtual NAS workspace intact.
-2. Open **GitHub Desktop**, choose **File → Clone repository**, choose `ValentineBSAA/RG-Rotate`.
-3. In the clone create the subfolder `RetroLibraryStudio/`; copy the **contents** of extracted `RetroLibraryStudio_1.5.1/` into it. Include Python modules, Windows batch launchers, tests, docs, requirements, `.gitignore`. Optional cover is user-created but need not be included if privacy/licensing uncertain.
-4. Never copy actual `ROMs/`, `BIOS/`, `SetupPackages/`, `WindowsTools/`, `CompanionData/`, saves, downloaded proprietary APKs, tokens, credentials, personal NAS paths, or local `.venv/` and Python caches.
-5. Commit as `feat: import Retro Library Studio v1.5.1 source baseline` and push to `main`.
-6. Confirm the repository displays `RetroLibraryStudio/app.py`, `ps1_pipeline.py`, `tests/`, and `requirements.txt`; run the tests on Windows using the included test runner.
-7. Update the README statement that source publication is pending and check the [roadmap](ROADMAP.md) publication item once GitHub files are actually visible.
+## Required update process
 
-Alternative: use the Git CLI in the repository clone, then `git add RetroLibraryStudio`, `git commit`, and `git push`, but only after reviewing the staged file list.
+1. Start from **GitHub main**, reading README → PROJECT_HANDOFF → ROADMAP → VERIFICATION_MATRIX.
+2. Make modifications via an issue/branch/PR or a clearly described main commit.
+3. Run tests and document which passed on Linux, Windows with the Synology NAS, or actual hardware.
+4. Update **ROADMAP.md + PROJECT_HANDOFF.md + VERIFICATION_MATRIX.md + app CHANGELOG.md** with the code change. Never leave the new features untracked.
+5. Test the **full ZIP distribution** separately from the source tree if packaging a release.
+6. Do not check “Complete” for anything not verified at its stated acceptance level.
 
-## Ongoing maintenance contract
+“Continuously update the roadmap” means updating it whenever development or tests change the project. This is not a background service that commits on its own between conversations.
 
-For **every** feature, bugfix, test, new build or real-device acceptance:
-- Work against the latest actual published source branch and create an issue/PR or identifiable commit.
-- Run tests and capture environment-dependent passes/failures.
-- Update [ROADMAP.md](ROADMAP.md), [PROJECT_HANDOFF.md](PROJECT_HANDOFF.md), [VERIFICATION_MATRIX.md](VERIFICATION_MATRIX.md), and app version/changelog *in the same PR/commit*.
-- Keep a current release ZIP/checksum and state exactly which Windows/hardware tests remain.
-- Never mark tasks done only because code was written or mocked tests passed.
+## License and user files
 
-This is **commit-by-commit maintenance**, not an unattended background service. A new ChatGPT session should read the repo at the beginning of work and finish by updating it.
-
-## Security and compatibility
-
-- Public repository: source, documentation, and appropriately licensed original assets only.
-- Commercial games, copyrighted firmware, private device identifiers, saves, API keys, user chats, NAS credentials and network shares stay out.
-- Do not confuse adding an APK file to a staging folder with installing it on Android.
-- Avoid pushing incomplete CHDs or source game tracks; keep game conversion output on the user's card/NAS.
+The repository is public. No license has yet been selected explicitly; do not assume the code is open-source licensed simply because it is visible. Discuss and add an appropriate LICENSE before inviting redistribution. Do not commit games, copyrighted BIOS, downloaded proprietary APKs, keys, personal passwords or device-specific private files. Keep large user assets on their own storage.
