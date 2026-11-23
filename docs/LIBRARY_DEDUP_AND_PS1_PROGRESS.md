@@ -37,3 +37,21 @@ All platform directories listed in `core.SYSTEM_DIR` participate: **PS1, PSP, PS
 - An existing title with different contents might be a version/edition or an actual duplicate. We choose preservation over destructive guessing.
 - Old PS1 collections lacking original EBOOT receipt may be flagged for review even if they are in fact the same game. No forced bulk migration/deletion.
 - No copyrighted game image, BIOS, PSN key, or Sony EBOOT is in this repository or test suite.
+
+
+## Batch importing PS1 Classics that were distributed for PSP
+
+- From **My Games → More import options → Batch import PS1 Classics (PSN ZIP/7Z/EBOOT)**, select a folder containing several ZIP/7Z PSN archives and/or individual EBOOT.PBP packages in game folders. The folder is scanned in the isolated worker, not the UI.
+- The other **Add Game Files** chooser already supports choosing multiple archives. When two or more ZIP/7Z/PBP inputs are selected, the importer now queues them as separate games, with its own title hint and temporary extraction directory. This fixes the old multi-archive path where multiple EBOOTs could share one archive title.
+- The progress footer says **GAME 2/15** (etc) and shows each current PS1 disc reconstruction stage; completion reports a readable per-game result: **imported**, **already present**, **needs attention**. One broken package does not abort unrelated packages.
+- Source SHA-256 fingerprints are calculated on EBOOT.PBP only. A repeated archive, a renamed ZIP or a differently-compressed 7Z containing that *exact same EBOOT* is skipped as an already imported PS1 Classic once a verified CHD/M3U receipt exists. Existing unproven PS1 same-title collections are held for review rather than overwritten. No KEYS.BIN contents are ever hashed, logged, or staged.
+- **Native PSP games are different.** A non-PS1-Classics EBOOT.PBP in the batch is flagged for review; it is not forced through PSXtract/CHDman. Native PSP ISO/CSO/homebrew import through the normal PSP option and the same all-console game-file duplicate checks.
+- Archive extraction stays local, bounded and disposable; no automatic deletion of originals, existing CHDs, existing playlists, or other ROMs.
+- Batch tests use two synthetically-generated PSN packages and real ZIP/7Z archives, include a broken archive and native PSP EBOOT, and assert failure isolation and no duplicate tiles. Real Sony PSN encryption remains a user-controlled acceptance test, not proven by synthetic fixtures.
+
+### Additional batch acceptance checks
+- [ ] V162-B01 Select a folder of 3–10 PSN games in ZIP/7Z and EBOOT.PBP form; verify game count and that one bad archive does not stop the others.
+- [ ] V162-B02 Confirm GAME N / TOTAL and per-disc stages are readable at 125% with a one-page imported/skipped/attention summary.
+- [ ] V162-B03 Import the same PS1 Classic once in ZIP and once in 7Z with identical EBOOT payload; no second PSXtract/CHDman run and only one M3U/gallery tile.
+- [ ] V162-B04 Confirm two different PS1 Classics in the same queue have distinct game titles, disc numbering and folder paths.
+- [ ] V162-B05 Include one native PSP EBOOT and confirm safe rejection in PS1 Classics batch; import native PSP files separately in PSP mode.
