@@ -1,4 +1,16 @@
 # Verification matrix · Retro Library Studio
+
+## v1.5.7 console shelves (candidate, 2026-11-23)
+
+| Feature | Code change/test | Real Windows/Synology | RG Rotate |
+| --- | --- | --- | --- |
+| PSP/PS1/DS/GBA/PS2/GameCube visual sections, count pills, search/filter/file list | Source and regression tests added to feature branch; CI **pending** | **Pending** A01-A09 | Not applicable |
+| Explicit PS2 and GameCube import organization | Source folder map + GCM classification test; CI **pending** | **Pending** A10 | Experimental gameplay F12 |
+| Library titles, CHDs, covers, cancellation, backup safety | Existing behavior preserved by design; regression rerun **pending** | v1.5.4 single-disc CHDs observed; newer v1.5.5 batch safety **pending** | **Pending** |
+| v1.5.6 512 GB virtual + real capacity meter | CI passed on prior v1.5.6 commit | **Pending** 125% Windows UX and physical-card comparison | **Pending** |
+
+See [full testing checklist](FULL_TEST_CHECKLIST.md) for reproducible steps and exact prior observed passes. This candidate is **source-only**, not a new downloadable Windows ZIP/EXE.
+
 _Last reviewed 2026-11-23. Only exact observed outcomes are marked **Passed**._
 
 ## Acceptance tiers
