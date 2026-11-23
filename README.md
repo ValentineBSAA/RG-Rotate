@@ -1,5 +1,14 @@
 # RG Rotate · Retro Library Studio
 
+## v1.6.3 fix candidate · PS1 Classics real titles, reliable Stop, game folder access
+
+- **Real 30-package Windows batch exposed v1.6.2 failure:** archive name PS1 was used as game identity, creating generic PS1/Disc 1 CHDs and cover tiles; Stop task reportedly failed to stop reliably. **Do not rerun the v1.6.2 batch** on the existing virtual card.
+- Fix candidate rejects generic PS1/PSX/PlayStation labels, tries bounded public PBP PARAM.SFO TITLE metadata, and flags unknown titles without publishing anonymous CHDs. The batch queue displays the resolved title and final folder, My Games tiles expose Open game folder.
+- Stop now escalates from a cooperative command to worker termination/kill while locking new imports until process exit. Exact-byte duplicates for completed single-disc PSN imports also have receipts.
+- **Already mislabeled legacy files are not renamed, merged or deleted automatically.** Review the actual CHDs and original source before deciding what to reimport; use a disposable workspace for first tests.
+- **Source candidate only; actual Windows NAS Stop, PSXtract/CHDman and RG Rotate gameplay not yet verified.** [Required v1.6.3 tests](docs/PS1_BATCH_IDENTITY_AND_STOP_v163.md).
+
+
 ## v1.6.2 source beta · PS1 disc-by-disc progress + all-console duplicate prevention
 
 - A live PlayStation Classics extraction strip now shows each detected disc and its stage; CHDman verification retains its own progress, without pretending to know extractor percentages.
