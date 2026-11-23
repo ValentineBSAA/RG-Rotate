@@ -1,0 +1,1 @@
+225 passed, 15 skipped (Linux). Windows Qt / real CHDman / NAS / real-device checks are still pending.
