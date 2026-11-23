@@ -59,6 +59,10 @@ Another reported example: **Resident Evil 2**, where one disc's CHD conversion f
 6. Give user one compact Windows checklist with expected pass/fail, not an endless cascade of tiny patches.
 7. Publish a validated full ZIP or EXE only when verified to exist; no invented download links.
 
+## Fresh CI evidence (2026-11-23)
+
+The latest GitHub workflow run [45138220982](https://github.com/ValentineBSAA/RG-Rotate/actions/runs/45138220982) **passed on both platforms** after a Windows ZIP-import bug was detected and fixed: **241 passed Windows; 240 passed, 1 skipped Linux**. This does **not** prove conversion via real CHDman on the user's Windows PC or test against the Synology NAS; retain P0 Clock Tower acceptance as open.
+
 ## Next actions in order
 
 1. **DONE:** Publish the actual v1.5.1 text source and tests (commit `b458028`). Next: establish CI, no ROMs, keys or personal NAS addresses.
