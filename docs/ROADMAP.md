@@ -1,5 +1,19 @@
 # Living Roadmap · RG Rotate / Retro Library Studio
 
+## v1.6.2 · Live PS1 disc extraction + cross-console deduplication
+
+- [x] Live PSXtract output drain with bounded memory; translate only non-sensitive disc/milestone lines into user-facing progress. Do not expose keys, offsets, PSN IDs or stdout logs.
+- [x] Game import SHA-256 identity checks across all 13 platform roots, for both ordinary files and ZIP/7Z members.
+- [x] Exact duplicates skipped; same title with different data held for review; different regions/revisions preserved; ignore CUE/BIN/M3U companions to protect multi-track discs.
+- [x] PSN EBOOT source fingerprint receipt under ignored .retro-library metadata (no spurious extra ROM tile); old and unproven same-title CHD sets preserved.
+- [x] Added synthetic tests: all-platform duplicate handling, 7Z/ZIP, game formats, safe read-only receipts, PSXtract console milestones.
+- [ ] GitHub Windows + Linux CI green for exact candidate.
+- [ ] User 125% screenshots of per-disc extraction, skipped duplicates, no new tiles for reimports.
+- [ ] Actual real FFVII triple-CHD/M3U gallery and RG Rotate gameplay verification.
+
+[Full v1.6.2 checklist](LIBRARY_DEDUP_AND_PS1_PROGRESS.md).
+
+
 ## v1.6.1 · Final Fantasy VII PSN EBOOT and real 7Z import
 
 - [x] Source: PS1 Classics PBP header detection including multi-disc signatures; `KEYS.BIN` and `DOCUMENT.DAT` are PSN companions, not convert-to-CHD inputs.
