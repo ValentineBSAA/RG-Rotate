@@ -46,9 +46,11 @@ from artwork import add_local_cover, fetch_cover_batch, unique_game_art_entries
 from artwork_gallery import clean_title, cached_preview, local_index, game_key
 from chd_convert import convert_cue, verify_tool
 from library_presentation import group_games, preferred_title, gallery_columns, format_badge_info
+from system_shelves import (PRIMARY_SYSTEMS, console_counts, console_order_key,
+                            console_visual, grouped_shelves)
 from workspace_setup import suggested_workspace, copy_existing_workspace, count_workspace_files
 
-VERSION = '1.5.6 Beta – Live 512 GB Card Planner'
+VERSION = '1.5.7 Beta – Console Shelves & Card Planner'
 SCALE_CHOICES = [('100%', 100), ('110%', 110), ('125%', 125), ('140%', 140), ('150%', 150)]
 MAX_VISIBLE_FILES = 1200
 
@@ -94,6 +96,10 @@ def theme(scale: int) -> str:
     QListView#SystemOptions {{background:#172944; border:2px solid #6caeff;
              color:#f3f7ff; outline:0;}}
     QLabel#Activity {{color:#a8ddff; font-weight:800; font-size:{px(13)};}}
+    QFrame#ConsoleSection {{background:#16283f; border:1px solid #334d70; border-radius:{px(11)};}}
+    QPushButton#SystemPill {{background:#1c2d47; border:1px solid #36516f;
+                             border-radius:{px(14)}; padding:{px(9)} {px(13)};}}
+    QPushButton#SystemPill:hover {{background:#2a476b; border-color:#72baff;}}
     QFrame#GameTile {{background:#1b2b46; border:1px solid #395574; border-radius:{px(14)};}}
     QPushButton#FormatBadge {{background:#29415d; color:#cfe3ff; border:1px solid #698cad;
                border-radius:{px(8)}; padding:{px(5)} {px(10)}; font-weight:800;}}
@@ -763,9 +769,22 @@ class Window(QMainWindow):
         self.game_filter = QComboBox()
         self.game_filter.addItem('All systems')
         self.game_filter.addItems(SYSTEM_DIR.keys())
+        self.game_filter.addItem('Other')
         self.game_filter.currentIndexChanged.connect(lambda _index: self.fill_card())
         options.addWidget(self.game_filter, 1)
         content.addLayout(options)
+        self.console_nav = QScrollArea()
+        self.console_nav.setWidgetResizable(True)
+        self.console_nav.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.console_nav.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        self.console_nav.setMinimumHeight(76)
+        self.console_nav.setMaximumHeight(95)
+        self.console_nav_page = QWidget()
+        self.console_nav_layout = QHBoxLayout(self.console_nav_page)
+        self.console_nav_layout.setContentsMargins(2, 5, 2, 5)
+        self.console_nav_layout.setSpacing(8)
+        self.console_nav.setWidget(self.console_nav_page)
+        content.addWidget(self.console_nav)
         self.cover_info = label('Your cover gallery will appear here after importing games.', 'Small', True)
         content.addWidget(self.cover_info)
         art_actions = QHBoxLayout()
@@ -1575,7 +1594,7 @@ class Window(QMainWindow):
         self.gallery_visible_cap += 48
         self.fill_card()
 
-    def _visible_games(self):
+    def _visible_games(self, ignore_system=False):
         term = self.card_search.text().casefold().strip()
         system = self.game_filter.currentText()
         tracks = getattr(self, 'cue_tracks', set())
@@ -1592,10 +1611,40 @@ class Window(QMainWindow):
         for group in group_games(games):
             entry = group[0]
             self.disc_groups[game_key(entry.system, entry.label)] = group
-            if (system == 'All systems' or entry.system == system) and any(
+            if (ignore_system or system == 'All systems' or entry.system == system) and any(
                 term in (preferred_title(self.settings, e) + ' ' + e.label + ' ' + str(e.path)).casefold() for e in group):
                 visible.append(entry)
         return visible
+
+    def _render_console_nav(self, all_games):
+        """Scrollable, synchronized console filters; count logical games only."""
+        while self.console_nav_layout.count():
+            item = self.console_nav_layout.takeAt(0)
+            widget = item.widget()
+            if widget is not None: widget.deleteLater()
+        counts = console_counts(all_games)
+        selected = self.game_filter.currentText()
+        systems = sorted(set(PRIMARY_SYSTEMS) | set(counts), key=console_order_key)
+        for system in ['All systems'] + systems:
+            visual = console_visual(system)
+            active = system == selected
+            count = len(all_games) if system == 'All systems' else counts.get(system, 0)
+            short = 'ALL' if system == 'All systems' else visual['short']
+            pill = QPushButton(f'{short}   {count}')
+            pill.setObjectName('SystemPill')
+            pill.setProperty('active', active)
+            accent = '#80BCFF' if system == 'All systems' else visual['accent']
+            pill.setStyleSheet(
+                f"QPushButton#SystemPill {{border:1px solid {accent};"
+                f"background:{'#274464' if active else '#1c2d47'};"
+                f"color:{'#ffffff' if active else accent};font-weight:750;}}"
+            )
+            desc = 'All available systems' if system == 'All systems' else visual['name']
+            if visual['experimental']: desc += ' • Experimental on RG Rotate; performance not guaranteed'
+            pill.setToolTip(f'{desc} • {count} games')
+            pill.clicked.connect(lambda _checked=False, choice=system: self.game_filter.setCurrentText(choice))
+            self.console_nav_layout.addWidget(pill)
+        self.console_nav_layout.addStretch(1)
 
     def _clear_gallery(self):
         while self.gallery_grid.count():
@@ -1608,8 +1657,9 @@ class Window(QMainWindow):
         if not hasattr(self, 'game_views'): return
         term = self.card_search.text().casefold()
         system = self.game_filter.currentText()
-        entries = [e for e in self.card_entries if term in (e.label + str(e.path)).casefold()
-                   and (system == 'All systems' or e.system == system)]
+        entries = sorted((e for e in self.card_entries if term in (e.label + str(e.path)).casefold()
+                   and (system == 'All systems' or e.system == system)),
+                   key=lambda e: (console_order_key(e.system), e.label.casefold()))
         shown = entries[:MAX_VISIBLE_FILES]
         self.card_table_entries = shown
         self.card_table.setUpdatesEnabled(False)
@@ -1620,74 +1670,95 @@ class Window(QMainWindow):
             for col, txt in enumerate((e.path.name, e.system, pretty_bytes(e.size), relative)):
                 self.card_table.setItem(r, col, QTableWidgetItem(str(txt)))
         self.card_table.setUpdatesEnabled(True)
-        games = self._visible_games()
+        all_games = self._visible_games(ignore_system=True)
+        self._render_console_nav(all_games)
+        games = [g for g in all_games if system == 'All systems' or g.system == system]
         self.library_count.setText(f'{len(games):,} games shown  •  {pretty_bytes(self.staged_bytes)} used on virtual card')
         if self.gallery_mode == 'Gallery':
             self._render_gallery(games)
 
     def _render_gallery(self, games):
         self._clear_gallery()
-        shown = games[:self.gallery_visible_cap]
-        tile_width = round(190 * self.scale_percent / 100)
+        ordered = [g for _, shelf in grouped_shelves(games) for g in shelf]
+        shown = ordered[:self.gallery_visible_cap]
         cols = gallery_columns(self.gallery_scroll.viewport().width(), self.scale_percent)
         previews = 0
-        for i, game in enumerate(shown):
-            tile = QFrame(); tile.setObjectName('GameTile')
-            tile.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
-            tile.customContextMenuRequested.connect(
-                lambda pos, g=game, frame=tile: self.show_game_context_menu(g, frame.mapToGlobal(pos)))
-            tile.setMinimumWidth(round(158*self.scale_percent/100))
-            t = QVBoxLayout(tile); t.setContentsMargins(10, 10, 10, 10); t.setSpacing(7)
-            image = QLabel(); image.setObjectName('CoverPreview')
-            image.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            image.setMinimumHeight(round(185*self.scale_percent/100))
-            image.setMaximumHeight(round(208*self.scale_percent/100))
-            preview = cached_preview(self.workspace, game.system, game.label)
-            # Load local PC image only, never request SMB data in the GUI.
-            if preview.is_file():
-                pixmap = QPixmap(str(preview))
-                if not pixmap.isNull():
-                    image.setPixmap(pixmap.scaled(round(152*self.scale_percent/100),
-                             round(198*self.scale_percent/100),
-                             Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation))
-                    previews += 1
+        row = 0
+        for system, shelf in grouped_shelves(shown):
+            visual = console_visual(system)
+            header = QFrame(); header.setObjectName('ConsoleSection')
+            header.setStyleSheet(
+                f"QFrame#ConsoleSection {{border-left:4px solid {visual['accent']};}}"
+            )
+            h = QHBoxLayout(header); h.setContentsMargins(16, 11, 15, 11)
+            name = QLabel(f"{visual['short']}   {visual['name']}")
+            name.setStyleSheet(f"font-weight:850;color:{visual['accent']};")
+            h.addWidget(name)
+            h.addStretch(1)
+            note = f"{len(shelf)} games"
+            if visual['experimental']:
+                note += '  •  Experimental device support'
+            h.addWidget(label(note, 'Small'))
+            self.gallery_grid.addWidget(header, row, 0, 1, cols)
+            row += 1
+            for i, game in enumerate(shelf):
+                tile = QFrame(); tile.setObjectName('GameTile')
+                tile.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+                tile.customContextMenuRequested.connect(
+                    lambda pos, g=game, frame=tile: self.show_game_context_menu(g, frame.mapToGlobal(pos)))
+                tile.setMinimumWidth(round(158*self.scale_percent/100))
+                t = QVBoxLayout(tile); t.setContentsMargins(10, 10, 10, 10); t.setSpacing(7)
+                image = QLabel(); image.setObjectName('CoverPreview')
+                image.setAlignment(Qt.AlignmentFlag.AlignCenter)
+                image.setMinimumHeight(round(185*self.scale_percent/100))
+                image.setMaximumHeight(round(208*self.scale_percent/100))
+                preview = cached_preview(self.workspace, game.system, game.label)
+                # Load local PC image only, never request SMB data in the GUI.
+                if preview.is_file():
+                    pixmap = QPixmap(str(preview))
+                    if not pixmap.isNull():
+                        image.setPixmap(pixmap.scaled(round(152*self.scale_percent/100),
+                                 round(198*self.scale_percent/100),
+                                 Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation))
+                        previews += 1
+                    else:
+                        image.setText('Cover unavailable')
                 else:
-                    image.setText('Cover unavailable')
-            else:
-                image.setText(f'{game.system}\n\nNo cover yet')
-            t.addWidget(image)
-            game_name = label(preferred_title(self.settings, game), '', True)
-            game_name.setMinimumHeight(round(37*self.scale_percent/100))
-            game_name.setToolTip(game.label)
-            t.addWidget(game_name)
-            group = self.disc_groups.get(game_key(game.system, game.label), [game])
-            # The badge comes from the actual scanned file extension, not the
-            # expected converter output or a stale task status.
-            fmt = format_badge_info(game, group)
-            details = QHBoxLayout(); details.setSpacing(6)
-            details.addWidget(label(f'{game.system}  •  {pretty_bytes(game.size)}', 'Small', True), 1)
-            badge = QPushButton(fmt['badge']); badge.setObjectName('FormatBadge')
-            badge.setProperty('formatKind', fmt['kind'])
-            badge.setCursor(Qt.CursorShape.PointingHandCursor)
-            badge.setToolTip('Click to see the actual stored format, files and verification limits')
-            badge.clicked.connect(lambda _=False, g=game, grp=list(group): self.show_game_format(g, grp))
-            details.addWidget(badge)
-            t.addLayout(details)
-            if len(group) > 1:
-                discs = label(f'{len(group)} disc / file variants • files kept separate', 'Small', True)
-                discs.setToolTip('\n'.join(str(e.path) for e in group)); t.addWidget(discs)
-            t.addWidget(button('Edit display title…', lambda _=False, g=game: self.edit_game_title(g)))
-            info = self.cover_index.get(game_key(game.system, game.label), {})
-            st = info.get('status', '')
-            if not preview.is_file() and st in ('review', 'not found'):
-                t.addWidget(label('Match needs review', 'Small'))
-            t.addWidget(button('Change cover' if preview.is_file() else 'Search for cover',
-                               lambda _=False, g=game: self.open_manual_cover_search(g)))
-            self.gallery_grid.addWidget(tile, i//cols, i%cols)
+                    image.setText(f'{game.system}\n\nNo cover yet')
+                t.addWidget(image)
+                game_name = label(preferred_title(self.settings, game), '', True)
+                game_name.setMinimumHeight(round(37*self.scale_percent/100))
+                game_name.setToolTip(game.label)
+                t.addWidget(game_name)
+                group = self.disc_groups.get(game_key(game.system, game.label), [game])
+                # The badge comes from the actual scanned file extension, not the
+                # expected converter output or a stale task status.
+                fmt = format_badge_info(game, group)
+                details = QHBoxLayout(); details.setSpacing(6)
+                details.addWidget(label(f'{game.system}  •  {pretty_bytes(game.size)}', 'Small', True), 1)
+                badge = QPushButton(fmt['badge']); badge.setObjectName('FormatBadge')
+                badge.setProperty('formatKind', fmt['kind'])
+                badge.setCursor(Qt.CursorShape.PointingHandCursor)
+                badge.setToolTip('Click to see the actual stored format, files and verification limits')
+                badge.clicked.connect(lambda _=False, g=game, grp=list(group): self.show_game_format(g, grp))
+                details.addWidget(badge)
+                t.addLayout(details)
+                if len(group) > 1:
+                    discs = label(f'{len(group)} disc / file variants • files kept separate', 'Small', True)
+                    discs.setToolTip('\n'.join(str(e.path) for e in group)); t.addWidget(discs)
+                t.addWidget(button('Edit display title…', lambda _=False, g=game: self.edit_game_title(g)))
+                info = self.cover_index.get(game_key(game.system, game.label), {})
+                st = info.get('status', '')
+                if not preview.is_file() and st in ('review', 'not found'):
+                    t.addWidget(label('Match needs review', 'Small'))
+                t.addWidget(button('Change cover' if preview.is_file() else 'Search for cover',
+                                   lambda _=False, g=game: self.open_manual_cover_search(g)))
+                self.gallery_grid.addWidget(tile, row + i//cols, i%cols)
+            row += (len(shelf) + cols - 1) // cols
         self.gallery_more.setVisible(len(games) > len(shown))
-        missing = len(games) - previews
+        missing = len(shown) - previews
         self.cover_info.setText(f'{previews} covers visible  •  {missing} without a local cover preview. '
-                                'Use Find missing covers or choose a game to correct its cover.')
+                                 'Use Find missing covers or choose a game to correct its cover.')
 
     def show_file_row_context_menu(self, position):
         row = self.card_table.rowAt(position.y())
