@@ -80,7 +80,8 @@ def batch_guided_import(paths, workspace, fallback, binary, *, progress=None,
                                  psxtract_binary=psxtract_binary,
                                  converter=converter,
                                  verify_existing=verify_existing,
-                                 psn_extractor=psn_extractor)
+                                 psn_extractor=psn_extractor,
+                                 reject_generic_ps1_cues=True)
         except InterruptedError:
             result['cancelled'] = True
             break
