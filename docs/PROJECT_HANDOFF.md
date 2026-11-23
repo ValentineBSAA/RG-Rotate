@@ -1,12 +1,12 @@
 # Project handoff · read this before working
 
-## v1.5.8 source candidate · Multi-disc collection workflow (2026-11-23)
+## v1.5.8 packaged source beta · Multi-disc collection workflow (2026-11-23)
 
-Development branch: `feature/v1.5.8-multidisc-collections`, based on v1.5.7 main. The user successfully tested v1.5.7 console pills/gallery-list toggling, 125% scaling, NAS location persistence and 512 GB virtual meter, then requested a full PS1 collection workflow: **one cover, one library entry, one parent game folder, CHD per disc and one ordered M3U**. RE2 Disc 1/2 should be one game; FFVII's 3 and FFVIII's 4 remain distinct.
+Merged to main as [PR #13](https://github.com/ValentineBSAA/RG-Rotate/pull/13), commit `c063450`; developed on `feature/v1.5.8-multidisc-collections` from v1.5.7. The user successfully tested v1.5.7 console pills/gallery-list toggling, 125% scaling, NAS location persistence and 512 GB virtual meter, then requested a full PS1 collection workflow: **one cover, one library entry, one parent game folder, CHD per disc and one ordered M3U**. RE2 Disc 1/2 should be one game; FFVII's 3 and FFVIII's 4 remain distinct.
 
 Implementation: `ps1_collections.py` supplies conservative explicit disc numbering, folder/title validation, scan-worker-only valid playlist membership and atomic subset-only M3U extension. `ps1_pipeline.py` routes CUE/BIN conversion via CHDman and direct pre-existing CHD verification into per-title folders; each disc has its own .chd. `core.Entry.members` stores verified references during worker inventory to avoid GUI-thread NAS reads. `library_presentation.py` hides member CHD tiles ONLY when an M3U references a validated consecutive disc set, while retaining raw file-list visibility. `app.py` adds a dedicated folder import and N DISCS badge and displays the main game cover. `disc_sets.py` refuses escaping/unsafe CUE references.
 
-Original BIN/CUE/CHD archives, existing virtual-card CHDs, backups, CompanionData and custom artwork are protected; corrupted or incomplete sources are never automatically repaired/renamed. Conversion cleanup is separately opt-in. This is **synthetic code test** status until GitHub CI and real Windows user screenshots; emulator M3U disc changing is not yet hardware verified. [Acceptance](MULTIDISC_ACCEPTANCE.md), [Full checklist](FULL_TEST_CHECKLIST.md), [Verification matrix](VERIFICATION_MATRIX.md).
+Original BIN/CUE/CHD archives, existing virtual-card CHDs, backups, CompanionData and custom artwork are protected; corrupted or incomplete sources are never automatically repaired/renamed. Conversion cleanup is separately opt-in. **Source CI is green**: Windows 289 passed, Linux 288 passed/1 skipped; downloaded ZIP clean-extract local tests 264 passed/25 skipped. **Real Windows/Synology M01–M09 and RG Rotate emulator disc switching M10 are still pending.** [Acceptance](MULTIDISC_ACCEPTANCE.md), [Full checklist](FULL_TEST_CHECKLIST.md), [Verification matrix](VERIFICATION_MATRIX.md).
 
 
 ## 2026-11-23 · v1.5.7 source candidate: system shelves
@@ -18,7 +18,7 @@ Now **merged to `main`** from branch `feature/v1.5.7-system-shelves` in `Valenti
 Do not regress prior user-observed v1.5.4 Clock Tower 55.4 MB and Resident Evil 311.9 MB CHDman-verified Windows conversions, v1.4.x NAS Stop and practice 6/6 SHA-256 verification. **v1.5.5 batch-delete/backup modes and v1.5.6 Windows capacity-bar UI remain pending user acceptance.** Preserve originals on Synology, historical backup folders, existing virtual card and CompanionData. Do not touch physical card until actual device arrives.
 
 
-**Snapshot date:** 2026-11-23, America/Phoenix. **Latest source artifact:** Retro Library Studio **v1.5.5** (batch lossless PS1 CHD, verified virtual-card cleanup and cover preview sizing). **Last broadly user-verified Windows transfer baseline:** **v1.4.4**.
+**Snapshot date:** 2026-11-23, America/Phoenix. **Latest packaged source beta:** Retro Library Studio **v1.5.8** (multi-disc collections, source tests passed; real NAS and handheld still pending). **Last broadly user-verified Windows transfer baseline:** **v1.4.4**.
 
 ## Why this exists
 
