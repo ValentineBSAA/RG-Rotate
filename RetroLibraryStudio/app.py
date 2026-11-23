@@ -47,7 +47,7 @@ from chd_convert import convert_cue, verify_tool
 from library_presentation import group_games, preferred_title, gallery_columns, format_badge_info
 from workspace_setup import suggested_workspace, copy_existing_workspace, count_workspace_files
 
-VERSION = '1.5.4 Beta – Covers & PS1 CHD Tools'
+VERSION = '1.5.5 Beta – Batch Lossless PS1 CHD & Cleanup'
 SCALE_CHOICES = [('100%', 100), ('110%', 110), ('125%', 125), ('140%', 140), ('150%', 150)]
 MAX_VISIBLE_FILES = 1200
 
@@ -282,6 +282,40 @@ def scroll_page(widget: QWidget) -> QScrollArea:
     return view
 
 
+
+
+class FittedCoverPreview(QLabel):
+    """Scale cached cover image to the *actual* preview space, without clipping.
+
+    Only an in-memory pixmap is used during resize: no network/SMB operations.
+    """
+    def __init__(self, text=''):
+        super().__init__(text)
+        self._original = QPixmap()
+        self.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Expanding)
+
+    def set_cover(self, image):
+        self._original = QPixmap(image)
+        self._fit()
+
+    def clear_cover(self, text=''):
+        self._original = QPixmap()
+        self.setPixmap(QPixmap())
+        self.setText(text)
+
+    def _fit(self):
+        if self._original.isNull():
+            return
+        available = self.contentsRect().size()
+        if available.width() < 10 or available.height() < 10:
+            return
+        self.setPixmap(self._original.scaled(available, Qt.AspectRatioMode.KeepAspectRatio,
+                                            Qt.TransformationMode.SmoothTransformation))
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        self._fit()
 
 
 class Window(QMainWindow):
@@ -680,6 +714,13 @@ class Window(QMainWindow):
         disc_actions.addWidget(self.auto_ps1_chd, 1)
         disc_actions.addWidget(self.register(button('Convert earlier PS1 imports…', self.optimize_existing_ps1)))
         content.addLayout(disc_actions)
+        batch_actions = QHBoxLayout()
+        batch_actions.addWidget(self.register(button('◆ Batch convert remaining PS1 discs…', self.batch_convert_ps1, 'Accent')))
+        batch_actions.addWidget(self.register(button('Open conversion backups', self.open_conversion_backups)))
+        content.addLayout(batch_actions)
+        content.addWidget(label('Batch conversion uses CHDman lossless CD codecs, verifies each CHD and lets you choose '
+            'whether to keep or remove only the virtual-card CUE/BIN/IMG working copies. '
+            'Your separate source library on the NAS is never touched.', 'Small', True))
         self.game_views = QStackedWidget()
         self.card_table = self.file_table(['Game / file', 'System', 'Size', 'Location'])
         self.card_table.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
@@ -1507,6 +1548,7 @@ class Window(QMainWindow):
             disabled_action.setEnabled(False)
         menu.addSeparator()
         folder_action = menu.addAction('▣  Open game folder')
+        originals_action = menu.addAction('▣  Open conversion backups (old tracks)') if entry.system == 'PS1' else None
         chosen = menu.exec(global_pos)
         if chosen is None: return
         if chosen is title_action: self.edit_game_title(entry)
@@ -1515,6 +1557,8 @@ class Window(QMainWindow):
             self.show_game_format(entry, self.disc_groups.get(game_key(entry.system, entry.label), [entry]))
         elif chosen is convert_action: self.convert_game_to_chd(candidate)
         elif chosen is folder_action: self.open_path(entry.path.parent)
+        elif originals_action is not None and chosen is originals_action:
+            self.open_conversion_backups()
 
     def ps1_legacy_source_for(self, entry):
         """Find a source inside our already scanned inventory, not with NAS stat calls."""
@@ -1557,12 +1601,98 @@ class Window(QMainWindow):
             QMessageBox.warning(self, 'CHD needs attention', '\n'.join(result['errors'][:6]))
             self.set_status('Conversion could not finish safely; sources kept.')
         else:
-            QMessageBox.information(self, 'PS1 game prepared',
-                'Verified CHD is ready in the original PSX game folder.\n\n'
-                f"Format: CHD\nOutput: {result.get('output','')}\n"
-                f"Recovery backup: {result.get('backup','')}\n\n"
-                'Only the verified CHD remains in the game folder; originals can be restored from the backup.')
-            self.set_status('CHD verified; original tracks moved to recovery outside the virtual card.')
+            notice = QMessageBox(self)
+            notice.setWindowTitle('PS1 game prepared')
+            notice.setIcon(QMessageBox.Icon.Information)
+            notice.setText('The CHD passed verification and is ready in the PSX folder.')
+            notice.setInformativeText(
+                f"CHD: {result.get('output','')}\n\n"
+                f"Recovery originals: {result.get('backup','')}\n\n"
+                'Only the verified CHD remains on your virtual card. Recovery copies '
+                'still use NAS storage until you review and remove them.')
+            open_chd = notice.addButton('Open CHD folder', QMessageBox.ButtonRole.ActionRole)
+            open_old = notice.addButton('Open recovery originals', QMessageBox.ButtonRole.ActionRole)
+            notice.addButton('Done', QMessageBox.ButtonRole.AcceptRole)
+            notice.exec()
+            if notice.clickedButton() is open_chd and result.get('output'):
+                self.open_path(Path(result['output']).parent)
+            elif notice.clickedButton() is open_old and result.get('backup'):
+                self.open_path(Path(result['backup']))
+            self.set_status('CHD verified; old tracks moved to recovery outside the virtual card.')
+        self.refresh()
+
+    def conversion_recovery_root(self):
+        return self.workspace.parent / (self.workspace.name + ' - Conversion Backups')
+
+    def open_conversion_backups(self):
+        """Old converted tracks live next to, not inside, the virtual card."""
+        if self.current_task:
+            QMessageBox.information(self, 'Task running', 'Wait until the current operation finishes.')
+            return
+        recovery = self.conversion_recovery_root()
+        # Opening an existing recovery folder is read-only. Do not create or
+        # scan an SMB folder from the GUI just to check if it exists.
+        QDesktopServices.openUrl(QUrl.fromLocalFile(str(recovery)))
+
+    def batch_convert_ps1(self):
+        if self.current_task or not self.ensure_workspace():
+            return
+        dialog = QMessageBox(self)
+        dialog.setWindowTitle('Batch convert PS1 discs · lossless CHD')
+        dialog.setIcon(QMessageBox.Icon.Information)
+        dialog.setText('Convert all remaining CUE/BIN and supported IMG discs in your virtual PSX folder?')
+        dialog.setInformativeText(
+            'Every disc is converted with the normal lossless CD codecs and verified by CHDman. '
+            'The source library you imported from elsewhere on your NAS will NEVER be changed.\n\n'
+            'Choose what happens to the COPIES already inside your virtual-card ROMs/psx folder. '
+            'Unknown/ambiguous IMG images and broken disc sets will be skipped, not deleted.')
+        keep = dialog.addButton('Keep recovery backups', QMessageBox.ButtonRole.AcceptRole)
+        delete = dialog.addButton('Remove verified working copies', QMessageBox.ButtonRole.DestructiveRole)
+        dialog.addButton('Cancel', QMessageBox.ButtonRole.RejectRole)
+        dialog.setDefaultButton(keep)
+        dialog.exec()
+        selected = dialog.clickedButton()
+        if selected not in (keep, delete): return
+        mode = 'delete' if selected is delete else 'backup'
+        if mode == 'delete':
+            confirm = QMessageBox.question(self, 'Confirm deleting only virtual-card working tracks',
+                'After EACH CHD passes verification, the app will permanently remove its '
+                'old CUE/BIN/IMG working files INSIDE this virtual card only.\n\n'
+                f'Virtual-card PSX folder: {self.workspace / "ROMs" / "psx"}\n\n'
+                'The source game collection elsewhere on your NAS is NOT accessed or deleted. '
+                'This option does NOT delete existing recovery backups from older conversions.\n\n'
+                'Only a verified CHD will remain for each successfully converted single disc. Continue?',
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                QMessageBox.StandardButton.No)
+            if confirm != QMessageBox.StandardButton.Yes: return
+        self.start_import_process({'mode':'batch_convert_ps1', 'workspace':str(self.workspace),
+            'binary':str(tools_root()/'chdman'/'chdman.exe'), 'cleanup_mode':mode},
+            'Batch Converting PS1 Discs', finished=self.batch_chd_completed)
+
+    def batch_chd_completed(self, result):
+        done, total = result.get('completed',0), result.get('total',0)
+        removed = result.get('deleted_files',0)
+        bytes_removed = result.get('nas_bytes_reclaimed',0)
+        errors = result.get('errors',[])
+        message = (f'Processed {done} of {total} disc(s).\n'
+                   f'New verified CHDs: {result.get("converted",0)}\n'
+                   f'Previously existing verified CHDs: {result.get("skipped",0)}\n')
+        if result.get('cleanup_mode') == 'delete':
+            message += (f'Working files removed from virtual card: {removed}\n'
+                        f'Approximate source bytes deleted: {pretty_bytes(bytes_removed)}\n')
+        else:
+            message += f'Recovery folders created: {len(result.get("backups",[]))}\n'
+        if result.get('cancelled'):
+            message += '\nStopped. Already completed and verified CHDs remain. '
+        if errors:
+            message += '\nThese discs need review (their originals were not deleted):\n' + '\n'.join(errors[:8])
+        if not total and not errors:
+            message += '\nNo CUE/IMG sources remain to convert in the PSX folder.'
+        if result.get('cleanup_mode') == 'backup':
+            message += '\n\nExisting and new recovery backups are outside the virtual card.'
+        QMessageBox.warning(self, 'Batch PS1 conversion finished with warnings', message) if errors else \
+            QMessageBox.information(self, 'Batch PS1 conversion finished', message)
+        self.set_status('Batch PS1 conversion finished; review results above.')
         self.refresh()
 
     def show_game_format(self, entry, group):
@@ -1668,10 +1798,10 @@ class Window(QMainWindow):
         self.manual_cover_preview_timer.setSingleShot(True)
         self.manual_cover_preview_timer.setInterval(260)
         self.manual_cover_preview_timer.timeout.connect(self.preview_manual_cover)
-        self.manual_cover_preview = QLabel('Select a result and click Preview. No cover will be applied automatically.')
+        self.manual_cover_preview = FittedCoverPreview('Select an edition to see the artwork. Nothing is applied automatically.')
         self.manual_cover_preview.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.manual_cover_preview.setObjectName('CoverPreview')
-        self.manual_cover_preview.setMinimumHeight(210)
+        self.manual_cover_preview.setMinimumHeight(250)
         layout.addWidget(self.manual_cover_preview, 1)
         self.manual_cover_status = label('Edit the title and press Search to find artwork.', 'Small', True)
         layout.addWidget(self.manual_cover_status)
@@ -1709,9 +1839,8 @@ class Window(QMainWindow):
         selected = bool(self.manual_cover_results.selectedItems())
         self.manual_preview_button.setEnabled(selected and not self.current_task)
         self.manual_apply_button.setEnabled(selected and not self.current_task)
-        self.manual_cover_preview.setPixmap(QPixmap())
-        self.manual_cover_preview.setText('Loading artwork preview for the selected edition…' if selected else
-                                         'Select an edition to preview its cover.')
+        self.manual_cover_preview.clear_cover('Loading artwork preview for the selected edition…' if selected else
+                                             'Select an edition to preview its cover.')
         self.manual_cover_preview_timer.stop()
         if selected and not self.current_task:
             self.manual_cover_preview_timer.start()
@@ -1730,8 +1859,7 @@ class Window(QMainWindow):
             return
         self.manual_cover_results.clear()
         self.manual_cover_status.setText(f'Searching for: {query}…')
-        self.manual_cover_preview.setPixmap(QPixmap())
-        self.manual_cover_preview.setText('Searching the artwork catalog…')
+        self.manual_cover_preview.clear_cover('Searching the artwork catalog…')
         self.manual_preview_button.setEnabled(False)
         self.manual_apply_button.setEnabled(False)
         entry = self.manual_cover_entry
@@ -1744,7 +1872,7 @@ class Window(QMainWindow):
         if not title or self.current_task or self.manual_cover_entry is None: return
         entry = self.manual_cover_entry
         self.manual_cover_status.setText(f'Loading cover preview for {title}…')
-        self.manual_cover_preview.setText('Loading cover preview…')
+        self.manual_cover_preview.clear_cover('Loading cover preview…')
         self.start_artwork_process({'mode':'preview', 'workspace':str(self.workspace),
             'system':entry.system, 'label':entry.label, 'source_title':title},
             'Previewing Artwork')
@@ -2630,9 +2758,7 @@ class Window(QMainWindow):
                 self.manual_cover_preview.setText('Preview could not be displayed.')
             else:
                 self.manual_cover_preview.setText('')
-                self.manual_cover_preview.setPixmap(image.scaled(270, 250,
-                    Qt.AspectRatioMode.KeepAspectRatio,
-                    Qt.TransformationMode.SmoothTransformation))
+                self.manual_cover_preview.set_cover(image)
                 self.manual_cover_status.setText(f'Previewing “{result.get("source_title", "")}”. '
                     'Use selected cover when it is the correct game.')
             return
