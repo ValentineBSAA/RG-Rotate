@@ -11,8 +11,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      # v1.6.7 source: short PS1 picker labels, safe PSXtract PGD failure
-      # diagnostics and sidecar presence hints. Real decryption still unverified.
+      # v1.6.7 final candidate: clear PS1 picker, PGD diagnostics, and
+      # receipt-gated verified PSXtract v3 EBOOT+KEYS without manual.
+      # Only physical Windows conversion can establish actual game compatibility.
       - name: Package checked-out source without altering existing installs
         shell: bash
         run: |
@@ -38,7 +39,8 @@ jobs:
               '11. Check ONE real game and import it with same-folder KEYS handled automatically.\n'
               '12. Confirm the next picker opens at the previously selected folder.\n'
               '13. For Clock Tower II, observe PGD authentication failure messaging: CHD must NOT start.\n'
-              '14. Check only genuine companions; never invent DOCUMENT or substitute key files.\n'
+              '14. With receipt-verified PSXtract v3, adjacent KEYS.BIN without DOCUMENT should be passed safely.\n'
+              '15. Never invent DOCUMENT or substitute key files; if header still fails, retain originals.\n'
               '15. For another proven EBOOT, CHD must VERIFY before exact USA art is applied.\n'
               '16. After one verified CHD, reimport same EBOOT; it should SKIP.\n'
               '15. Test Stop during a safe disposable batch; do not resume 30 games yet.\n'
