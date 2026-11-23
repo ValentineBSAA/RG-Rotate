@@ -1,5 +1,14 @@
 ## v1.5.6 Beta · Live 512 GB Card Planner (2026-11-23)
 
+## v1.6.1 source beta · PS1 Classics PSN EBOOT + 7Z
+
+- Recognizes Sony PS1 Classics EBOOT.PBP, optional KEYS.BIN and DOCUMENT.DAT, and distinguishes this from native PSP EBOOT.
+- Adds opt-in PSXtract v3.0 helper from upstream GitHub release, pinned to published SHA-256; helper not bundled or automatically executed at installation.
+- Routes extracted, validated CUE/BIN discs through existing CHDman verify, one title folder, consecutive M3U and one gallery tile.
+- Keeps PSN key and manual files in original user source only. Rejects missing extractor, invalid PBP, incomplete/ambiguous discs and unsafe 7z entries rather than importing corrupt discs.
+- Adds actual py7zr compression/extraction tests of synthetic three-disc games; real commercial PSN EBOOT extraction is **NOT verified** by tests.
+
+
 ## v1.6.0 merged source beta · Friendly Detail Panels & Card Detection
 
 - Replaced three dense modal text dumps with accessible dark-themed information cards, clear game/file names and memory figures, collapsible technical bytes and Copy details.
