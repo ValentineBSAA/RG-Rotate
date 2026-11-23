@@ -1,5 +1,12 @@
 # Release history / regression ledger
 
+## 2026-11-23 · v1.6.3 source fix candidate
+
+- Regression discovered during real v1.6.2 30-game PSN batch: the title field was generic PS1; CHD appeared as a PS1 tile/Disc 1 instead of an identifiable game. Stop task did not reliably stop according to user report.
+- Corrected title resolution: generic wrappers invalid; bounded PARAM.SFO public TITLE fallback; ambiguous packages held for review. Added named progress, per-game results/folder and visible Open game folder. Strengthened import Stop worker shutdown and single-disc EBOOT receipts.
+- New tests and explicit real Windows checklist. No cleanup or relabeling of existing generic CHDs. Not stable until Windows/NAS acceptance passes.
+
+
 This is a **historical summary**, not a claim that all archived builds are on GitHub. Source archives were produced through ChatGPT and tested on the user's Windows PC at various milestones. Latest packaged Windows source beta: **v1.5.8** with one-tile PS1 multi-disc collections; v1.5.7 console shelves are included. Real Windows multi-disc and RG Rotate gameplay still require testing. Real-device and batch cleanup acceptance remain pending.
 
 | Version | Major milestone or repair | State |

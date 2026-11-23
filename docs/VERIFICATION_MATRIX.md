@@ -1,5 +1,19 @@
 # Verification matrix · Retro Library Studio
 
+## v1.6.3 · Real Windows identity and Stop bug (acceptance open)
+
+| Requirement | Code / synthetic test | Real Windows 11 NAS | RG Rotate |
+| --- | --- | --- | --- |
+| Never publish a generic PS1/Disc 1 from PS1.zip | Fix candidate and new tests | v1.6.2 FAILED; v1.6.3 pending | Pending |
+| Read accurate PBP TITLE and separate CHD/M3U folders | Fix candidate and new tests | Pending | Pending |
+| Queue title, game folder details, visible Open folder | Source changed | Pending 125% screenshot | N/A |
+| Stop during active PSXtract/CHDman and prevent next batch job | Escalation code; unit-cancel fixture | v1.6.2 reported failure; v1.6.3 pending | N/A |
+| Single PS1 EBOOT duplicate receipt | New source and test | Pending real CHD verification | N/A |
+| Preserve anonymous v1.6.2 output for manual review | Code does not modify old output | Pending folder audit | Pending |
+
+Status: v1.6.3 fix branch, no real Windows user pass. [Acceptance checklist](PS1_BATCH_IDENTITY_AND_STOP_v163.md).
+
+
 ## v1.6.1 candidate | PS1 Classics PSN EBOOT and 7Z
 
 | Feature | Source/mock test | Real Windows PSN FFVII | Physical RG Rotate |

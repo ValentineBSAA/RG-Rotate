@@ -300,7 +300,7 @@ def stage_ps1_chds(chds: list[Path], workspace: Path, binary: Path, *, progress=
 def guided_import(paths: list[Path], workspace: Path, fallback: str, binary: Path, *,
                   progress=None, cancel=None, auto_artwork=True, converter=None, verify_existing=None,
                   optimize_existing=False, psxtract_binary=None, psn_extractor=None,
-                  psn_title_hint=None) -> dict:
+                  psn_title_hint=None, reject_generic_ps1_cues=False) -> dict:
     """One coherent progress-driven task for copy, CHD, M3U, and artwork."""
     paths = list(dict.fromkeys(Path(p) for p in paths))
     archives = [p for p in paths if p.suffix.lower() in ('.zip', '.7z')]
@@ -361,18 +361,23 @@ def guided_import(paths: list[Path], workspace: Path, fallback: str, binary: Pat
             # actual game title and becomes an anonymous game-code folder.
             # An archive can contain several different PSN EBOOT games.
             # Never force the single archive filename on every game in it.
-            from ps1_psn import is_ps1_classic
+            from ps1_psn import is_ps1_classic, meaningful_title
             eboots = [p for p in unpacked if p.suffix.lower() == '.pbp'
                       and is_ps1_classic(p)]
-            title_hint = psn_title_hint or (archives[0].stem
-                         if len(archives) == 1 and len(eboots) == 1 else None)
+            # Generic archives ('PS1.7z') must use PBP metadata or an
+            # inner per-game folder, NEVER the shared parent batch/download
+            # directory; that would falsely merge unrelated PS1 games.
+            title_hint = psn_title_hint
+            if not title_hint and len(archives) == 1 and len(eboots) == 1:
+                title_hint = meaningful_title(archives[0].stem)
             return guided_import([p for p in paths if p not in archives] + unpacked,
                                 workspace, fallback, binary, progress=progress,
                                 cancel=cancel, auto_artwork=auto_artwork,
                                 converter=converter, verify_existing=verify_existing,
                                 optimize_existing=optimize_existing,
                                 psxtract_binary=psxtract_binary,
-                                psn_extractor=psn_extractor, psn_title_hint=title_hint)
+                                psn_extractor=psn_extractor, psn_title_hint=title_hint,
+                                reject_generic_ps1_cues=reject_generic_ps1_cues)
     out = {'copied': 0, 'skipped': 0, 'converted': 0, 'playlists': 0, 'playlists_updated': 0,
            'errors': [], 'cancelled': False, 'artwork_attempted': False,
            'artwork': {}, 'artwork_games': [], 'duplicate_notes': []}
@@ -399,6 +404,7 @@ def guided_import(paths: list[Path], workspace: Path, fallback: str, binary: Pat
         psn_related.update(p for p in (doc, keys) if p is not None)
         try:
             title = package_title(pbp, psn_title_hint)
+            out['collection_title'] = title
             phase(f'Checking for an existing PS1 collection: {title}', 0, 0)
             digest = fingerprint_pbp(pbp, cancel=cancel)
             decision, note = decide_repeat(workspace, title, digest)
@@ -425,11 +431,20 @@ def guided_import(paths: list[Path], workspace: Path, fallback: str, binary: Pat
                 converted = stage_ps1_cues(prepared, workspace, binary, progress=phase,
                                           cancel=cancel, converter=converter,
                                           verify_existing=verify_existing)
-                if (not converted['cancelled'] and not converted['errors']
-                        and len(prepared) > 1
-                        and (converted['playlists'] == 1 or converted['playlists_updated'] == 1)):
-                    # A receipt is created only for an entirely completed
-                    # CHD/M3U set; previous/other editions are never overwritten.
+                # Only expose a finished collection folder as a successful
+                # import; do not direct the user to an unverified partial.
+                finished = (not converted['cancelled'] and not converted['errors']
+                            and len(prepared) > 0
+                            and (converted['copied'] > 0 or converted['skipped'] > 0))
+                if finished:
+                    out['collection_folder'] = str(Path(workspace) / 'ROMs' / 'psx' / title)
+                if (finished and
+                        ((len(prepared) == 1 and converted['converted'] == 1)
+                         or (len(prepared) > 1 and
+                             (converted['playlists'] == 1 or
+                              converted['playlists_updated'] == 1)))):
+                    # Create a receipt only for completed verified singles or
+                    # a complete CHD/M3U set; never for a partial conversion.
                     try:
                         record_import(workspace, Path(workspace) / 'ROMs' / 'psx' / title,
                                       digest, disc_count=len(prepared))
@@ -466,6 +481,26 @@ def guided_import(paths: list[Path], workspace: Path, fallback: str, binary: Pat
     excluded.update(unsafe_pbp)
     paths = [p for p in paths if p not in excluded]
     cue_sources = _unique_cues(paths)
+    if reject_generic_ps1_cues:
+        # Explicit PSN batch intake must never publish an anonymous PS1
+        # collection, even when a ZIP contains bare CUE/BIN/CHD instead of
+        # an identifiable PBP. The normal hand-picked CUE import is unchanged.
+        from ps1_psn import meaningful_title
+        anonymous = [
+            p.name for p in cue_sources
+            if meaningful_title(disc_identity(p.stem)[0]) is None
+        ]
+        anonymous += [
+            p.name for p in paths if p.suffix.lower() == '.chd'
+            and infer_system(p, fallback) == 'PS1'
+            and meaningful_title(disc_identity(p.stem)[0]) is None
+        ]
+        if anonymous:
+            out['errors'].append(
+                'Anonymous PS1 disc title in batch: ' + ', '.join(anonymous[:3]) +
+                '. No files from this package were imported. Rename the source '
+                'with an identifiable game title and retry.')
+            return out
     # Exclude BIN tracks that are companions to any CUE/M3U. Standalone BINs
     # cannot be converted reliably and must not show up as separate PS1 games.
     from core import _cue_companions

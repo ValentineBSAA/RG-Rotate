@@ -1,5 +1,10 @@
 # Project handoff · read this before working
 
+## CRITICAL handoff 2026-11-23 · v1.6.3 stop/title regression
+
+Real user imported a folder of 30 PS1 Classics with v1.6.2. Main GUI showed GAME 1/30 • PS1 and later GAME 2/30 • PS1, PS1 extraction/CHD conversion. User reports converted files were published with a generic PS1 cover and PS1/Disc 1.chd instead of actual game identity, and Stop task did not reliably stop. **v1.6.2 real NAS acceptance FAILED.** The root cause was package_title trusting wrapper stem PS1 as a valid title. v1.6.3 fix branch: fix/v1.6.3-psn-title-stop-safety. Source changes: bounded PBP PARAM.SFO TITLE fallback, generic-name rejection, batch relabel, verified result folders, direct Open game folder, Stop escalation, single-disc duplicate receipts, new tests/docs and 1.6.3 source ZIP workflow. **Do not claim verified until CI AND actual Windows Stop test.** Do not automatically delete/relabel existing generic PS1 CHDs because their source identity is unproven. The safest next step is to stop the old running v1.6.2 batch, inspect originals and generic output, test 1.6.3 on disposable workspace. Exact steps: [v1.6.3 acceptance](PS1_BATCH_IDENTITY_AND_STOP_v163.md).
+
+
 **Additional user requirement:** user has many PSN PS1 Classics packaged for PSP and wants a **one-folder batch import**, no duplicates, in addition to the all-console duplicate guard. Implemented `ps1_batch.py` with per-archive/PBP isolated `guided_import` calls, source receipt duplicate skip, per-game errors/queue counts, and an existing-games-first rule. `import_worker.py` exposes `batch_psn_folder` and routes multiple selected archives/PBPs to the batch queue. `app.py` adds **Batch import PS1 Classics (PSN ZIP/7Z/EBOOT)**, GAME N/TOTAL status, and a friendly end-of-batch summary; native PSP EBOOTs remain separate from PS1 Classics. Synthetic ZIP/7Z and per-package failure-isolation tests are in `tests/test_v162_psn_batch.py`. Never pretend PSP-native EBOOTs can be blindly converted into PS1 CHDs. Real user FFVII final CHD conversion, physical handheld acceptance, and actual batch screenshots remain pending.
 
 

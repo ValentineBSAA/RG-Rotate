@@ -71,24 +71,100 @@ def is_ps1_classic(pbp: Path) -> bool:
     return False
 
 
+_GENERIC_TITLES = {
+    'eboot', 'ps1', 'psx', 'psp', 'playstation', 'playstation 1',
+    'playstation one', 'psn', 'game', 'games', 'content', 'data',
+    'rom', 'roms', 'archive', 'archives', 'source', 'unpacked',
+    'download', 'downloads', 'batch', 'packages', 'imports', 'incoming',
+    'tmp', 'temp', 'cache', 'collection', 'ps1 classics',
+    'psn collection', 'ps1 collection',
+    'ps1 game', 'ps1 games', 'disc', 'disk', 'cd', 'unknown',
+}
+_GENERIC_DISC = re.compile(
+    r'(?i)^(?:(?:ps1|psx|playstation(?:[ _-]*(?:1|one))?|game|disc|disk|cd)'
+    r'[\s._-]*)*(?:disc|disk|cd)?[\s._-]*\d{1,2}$')
+
+
+def meaningful_title(raw: str | None) -> str | None:
+    """A generic storage name is NEVER evidence of a game's identity."""
+    name = str(raw or '').strip()
+    while True:
+        new = _STRIP_STORE_TAGS.sub('', name).strip()
+        if new == name:
+            break
+        name = new
+    if (not name or name.casefold() in _GENERIC_TITLES
+            or _GENERIC_DISC.fullmatch(name)
+            or re.fullmatch(r'(?i)(?:ps1|psx|playstation(?:[ _-]*(?:1|one))?)'
+                            r'\s*\((?:disc|disk|cd)\s*\d{1,2}\)', name)
+            or _GAME_CODE.fullmatch(name)
+            or name.casefold().startswith(('rgl-archive-', 'rgl-psn-extract-',
+                                          'retro-ps1-chd-'))):
+        return None
+    return folder_title(name)
+
+
+def pbp_metadata_title(pbp: Path) -> str | None:
+    """Read only the public TITLE string in PARAM.SFO inside a PBP.
+
+    No game payload, PSAR encryption, DRM keys or personal identifiers are read.
+    Invalid and oversized SFO tables are ignored rather than guessed.
+    """
+    try:
+        with Path(pbp).open('rb') as stream:
+            header = stream.read(40)
+            if len(header) != 40 or header[:4] != b'\0PBP':
+                return None
+            offsets = struct.unpack('<8I', header[8:])
+            size = Path(pbp).stat().st_size
+            start, end = offsets[:2]
+            if start < 40 or end <= start or end > size or end - start > 1024 * 1024:
+                return None
+            stream.seek(start)
+            data = stream.read(end - start)
+        if len(data) < 20:
+            return None
+        magic, _version, keys_at, values_at, count = struct.unpack_from('<4sIIII', data)
+        if magic != b'\0PSF' or count > 128 or 20 + count * 16 > len(data):
+            return None
+        for i in range(count):
+            key_offset, _align, _fmt, length, _max_length, data_offset = struct.unpack_from(
+                '<HBBIII', data, 20 + i * 16)
+            key_pos = keys_at + key_offset
+            value_pos = values_at + data_offset
+            if key_pos < 0 or key_pos >= len(data) or length > 2048:
+                continue
+            if value_pos < 0 or value_pos + length > len(data):
+                continue
+            if data[key_pos:key_pos + 6] != b'TITLE\0':
+                continue
+            raw = data[value_pos:value_pos + length].split(b'\0', 1)[0]
+            return meaningful_title(raw.decode('utf-8', errors='replace'))
+    except (OSError, ValueError, struct.error):
+        return None
+    return None
+
+
 def package_title(pbp: Path, title_hint: str | None = None) -> str:
-    """Do not name the game 'NPEF00069' or lose distinct FFVII/FFVIII names."""
-    choices = [str(title_hint or ''), pbp.parent.name, pbp.parent.parent.name]
-    for raw in choices:
-        name = raw.strip()
-        while True:
-            new = _STRIP_STORE_TAGS.sub('', name).strip()
-            if new == name:
-                break
-            name = new
-        if not name or name.casefold() in ('eboot', 'psp', 'game', 'content'):
-            continue
-        if _GAME_CODE.fullmatch(name) or name.casefold().startswith('rgl-archive-'):
-            continue
-        return folder_title(name)
+    """Identify from a *meaningful* source name, then PBP's title metadata.
+
+    PS1.zip / PlayStation.7z / EBOOT.PBP must never create a "PS1" CHD tile.
+    """
+    pbp = Path(pbp)
+    candidates = (title_hint, pbp.stem if pbp.stem.casefold() != 'eboot' else None,
+                  pbp.parent.name)
+    for raw in candidates:
+        if title := meaningful_title(raw):
+            return title
+    if title := pbp_metadata_title(pbp):
+        return title
+    # Common PSN packages are Title / NPEFxxxx / EBOOT.PBP.
+    if title := meaningful_title(pbp.parent.parent.name):
+        return title
     raise ValueError(
-        'Cannot determine a safe game title from this PSN package. '
-        'Place the EBOOT inside a named game folder or select a named archive.')
+        'Cannot identify the game title safely. The package was NOT converted. '
+        'Use a descriptively named game archive/folder or a PBP with a valid TITLE '
+        'in PARAM.SFO. Generic PS1/PlayStation/Disc names are not game titles.')
 
 
 def extract_psn_with_helper(pbp: Path, output: Path, helper: Path, *,

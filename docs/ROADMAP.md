@@ -1,5 +1,21 @@
 # Living Roadmap · RG Rotate / Retro Library Studio
 
+## v1.6.3 · Real 30-game batch failure: highest priority
+
+- [x] Diagnose the generic PS1 source-label regression from user's Windows screenshots and source path: a wrapper stem of PS1 was accepted as a game title, yielding PS1/Disc 1 CHD and anonymous cover.
+- [x] Add safe title resolver using PBP PARAM.SFO and meaningful archive/inner folder names. Fail closed on unknown identities, never silently merge games in PS1 directory.
+- [x] Update queue labels as actual game title becomes known; improve batch result status/folder details, add Open game folder on gallery tiles.
+- [x] Make Stop request visible and escalate cooperative STOP -> terminate -> kill, no new job until worker exits.
+- [x] Record receipts for complete PSN single-disc CHDs. Keep all existing CHDs, EBOOTs, artwork and backups untouched.
+- [x] Add synthetic regression fixtures for generic PS1 wrappers, distinct titles, stop at game 1 and reimport.
+- [ ] GitHub Windows/Linux CI for exact v1.6.3 commit.
+- [ ] Physical Windows 11 125% disposable-workspace tests: two generic PS1 archives, correct titles, CHD/M3U, Stop during ZIP/7Z/PSXtract/CHDman, gallery and safe legacy audit.
+- [ ] Confirm v1.6.3 package can replace the old test *program folder*, not automatically rename any files in the virtual NAS workspace.
+- [ ] Inspect legacy PS1/Disc 1 file identity manually; no automated cleanup until evidence is conclusive.
+
+[Acceptance and recovery](PS1_BATCH_IDENTITY_AND_STOP_v163.md).
+
+
 - [x] **Batch PS1 Classics:** choose a directory of ZIP/7Z/EBOOT packages; isolated per-game queue with GAME N/TOTAL, readable summary and continuation after a bad archive.
 - [x] Multiple archives selected in Add Game Files are processed individually, not pooled into one potentially mislabeled PSN extraction.
 - [x] Repeat PSN EBOOT content checks prevent extra CHDs/M3Us even across renamed/repacked ZIP/7Z; non-PS1 PSP EBOOTs are not misconverted.
