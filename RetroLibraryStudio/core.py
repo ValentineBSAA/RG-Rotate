@@ -391,6 +391,17 @@ def _import_one(source: Path, workspace: Path, system: str, progress: Progress |
                 raise ValueError("Archive contains no recognized PS1/PSP game files")
             folder = rom_root / source.stem
             copied, skipped, bytes_added = 0, 0, 0
+            from library_duplicates import inspect_game_duplicate, is_single_game_file
+            # Detect possible conflicts BEFORE publishing the first archive
+            # member, so an ambiguous game does not partially enter the NAS.
+            decisions = {}
+            for f in extracted:
+                if is_single_game_file(f):
+                    decision, note = inspect_game_duplicate(
+                        f, workspace, system, cancel=cancel)
+                    if decision == 'review':
+                        raise ValueError(note)
+                    decisions[f] = (decision, note)
             for f in extracted:
                 if cancel is not None and cancel.is_set():
                     raise InterruptedError("Operation cancelled")
@@ -398,6 +409,11 @@ def _import_one(source: Path, workspace: Path, system: str, progress: Progress |
                 if not within(f, tempdir):
                     raise ValueError("Archive resolved outside extraction directory")
                 rel = f.relative_to(tempdir)
+                if decisions.get(f, ('new', ''))[0] == 'exact':
+                    skipped += 1
+                    if progress:
+                        progress(decisions[f][1], 0, 0)
+                    continue
                 result = copy_atomic(f, folder / rel, progress, cancel)
                 copied += result == "copied"
                 skipped += result == "unchanged"
@@ -439,6 +455,22 @@ def import_files(paths: list[Path], workspace: Path, system: str, progress: Prog
         if progress:
             progress(f"Importing {i}/{len(paths)}: {source.name}", i - 1, len(paths))
         try:
+            # Checks run only in the isolated import worker. Direct files and
+            # extracted ZIP/7Z payloads use the SAME per-platform rules.
+            # Do this before capacity preflight: a proven duplicate needs no space.
+            if source.suffix.lower() not in ARCHIVE_EXT:
+                from library_duplicates import inspect_game_duplicate, is_single_game_file
+                if is_single_game_file(source):
+                    duplicate, note = inspect_game_duplicate(
+                        source, workspace, system, cancel=cancel)
+                    if duplicate == 'exact':
+                        skipped += 1
+                        if progress:
+                            progress(note, i, len(paths))
+                        continue
+                    if duplicate == 'review':
+                        errors.append(f'{source.name}: {note}')
+                        continue
             estimate = expected_import_size(source)
             # Companion budget is separate; unused companion space is kept available.
             companion_used = sum(p.stat().st_size for p in safe_walk(workspace / "CompanionData", cancel=cancel))
