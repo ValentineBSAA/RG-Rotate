@@ -2,6 +2,8 @@
 
 ## v1.5.7 console shelves (source merged, 2026-11-23)
 
+**Main CI confirmed:** [run 45155602315](https://github.com/ValentineBSAA/RG-Rotate/actions/runs/45155602315), Windows 279 passed; Linux 278 passed, 1 skipped. No user Windows/NAS or physical-card acceptance follows from CI.
+
 | Feature | Code change/test | Real Windows/Synology | RG Rotate |
 | --- | --- | --- | --- |
 | PSP/PS1/DS/GBA/PS2/GameCube visual sections, count pills, search/filter/file list | Source and optional Qt regression tests passed [PR run 45155293003](https://github.com/ValentineBSAA/RG-Rotate/actions/runs/45155293003): Windows 279 passed; Linux 278 passed, 1 skipped | **Pending** A01-A09 | Not applicable |
