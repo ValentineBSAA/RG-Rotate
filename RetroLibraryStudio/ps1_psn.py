@@ -8,6 +8,8 @@ disc images. Temporary CUE/BIN output flows into existing CHDman verification.
 from __future__ import annotations
 
 import re
+import queue
+import threading
 import struct
 import subprocess
 import tempfile
@@ -116,31 +118,74 @@ def extract_psn_with_helper(pbp: Path, output: Path, helper: Path, *,
         raise InterruptedError('PSN extraction stopped')
     if progress:
         progress('Extracting PS1 Classic into temporary Windows storage', 0, 0)
-    with tempfile.TemporaryFile(mode='w+t', encoding='utf-8', errors='replace') as log:
-        proc = subprocess.Popen(args, cwd=output, stdout=log,
-                                stderr=subprocess.STDOUT,
-                                stdin=subprocess.DEVNULL, shell=False)
+    from ps1_progress import PSXtractMilestones
+    milestone = PSXtractMilestones()
+    friendly_events = queue.Queue(maxsize=80)
+    # An actively draining reader prevents a noisy converter from deadlocking
+    # on an unconsumed stdout pipe. No raw log or decrypted source is persisted.
+    proc = subprocess.Popen(args, cwd=output, stdout=subprocess.PIPE,
+                            stderr=subprocess.STDOUT,
+                            stdin=subprocess.DEVNULL, shell=False)
+
+    def read_console():
         try:
-            start = time.monotonic()
-            while proc.poll() is None:
-                if cancel is not None and cancel.is_set():
-                    proc.terminate()
-                    try: proc.wait(timeout=4)
-                    except subprocess.TimeoutExpired:
-                        proc.kill(); proc.wait(timeout=4)
-                    raise InterruptedError('PSN extraction stopped; source files are intact')
-                if time.monotonic() - start > 2 * 60 * 60:
-                    proc.kill(); proc.wait(timeout=4)
-                    raise TimeoutError('PSXtract exceeded two-hour safety limit')
-                time.sleep(.2)
-            if proc.returncode:
-                raise RuntimeError(
-                    'PSXtract could not extract complete PS1 disc images. '
-                    'Conversion stopped; the source EBOOT and key files are unchanged. '
-                    f'Helper exit code: {proc.returncode}.')
+            for raw in iter(proc.stdout.readline, b''):
+                event = milestone.event(raw.decode('utf-8', errors='replace'))
+                if event:
+                    try:
+                        friendly_events.put_nowait(event)
+                    except queue.Full:
+                        # Keep output bounded if a third-party helper floods stdout.
+                        try:
+                            friendly_events.get_nowait()
+                            friendly_events.put_nowait(event)
+                        except queue.Empty:
+                            pass
         finally:
-            if proc.poll() is None:
+            proc.stdout.close()
+
+    reader = threading.Thread(target=read_console, daemon=True,
+                              name='PSXtract-Progress-Reader')
+    reader.start()
+
+    def send_friendly_events():
+        while True:
+            try:
+                notice = friendly_events.get_nowait()
+            except queue.Empty:
+                break
+            if progress:
+                progress(notice, 0, 0)
+
+    try:
+        start = time.monotonic()
+        while proc.poll() is None:
+            send_friendly_events()
+            if cancel is not None and cancel.is_set():
+                proc.terminate()
+                try: proc.wait(timeout=4)
+                except subprocess.TimeoutExpired:
+                    proc.kill(); proc.wait(timeout=4)
+                raise InterruptedError('PSN extraction stopped; source files are intact')
+            if time.monotonic() - start > 2 * 60 * 60:
                 proc.kill(); proc.wait(timeout=4)
+                raise TimeoutError('PSXtract exceeded two-hour safety limit')
+            time.sleep(.2)
+        reader.join(timeout=3)
+        send_friendly_events()
+        if proc.returncode:
+            raise RuntimeError('PSXtract could not extract complete PS1 disc images. '
+                               'Conversion stopped; original EBOOT and keys unchanged. '
+                               f'Helper exit code: {proc.returncode}.')
+        if milestone.md5_failed:
+            raise RuntimeError('PSXtract reported an MD5 mismatch. No disc images were published.')
+        if progress:
+            progress('PS1 Classic extracted • checking each disc before CHD conversion', 0, 0)
+    finally:
+        if proc.poll() is None:
+            proc.kill(); proc.wait(timeout=4)
+        reader.join(timeout=3)
+
     from core import safe_walk, MAX_ARCHIVE_BYTES
     files = list(safe_walk(output, cancel=cancel))
     total = sum(p.stat().st_size for p in files)
