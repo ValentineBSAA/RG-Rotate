@@ -1,5 +1,20 @@
 # Verification matrix · Retro Library Studio
 
+## v1.5.8 · Multi-disc PS1 collections (source candidate)
+
+| Acceptance | Automated source / mock | User Windows + Synology | Actual RG Rotate |
+| --- | --- | --- | --- |
+| RE2 (USA) Disc 1+2 complete CUE/BIN → two verified CHDs, one parent folder and M3U | New test fixtures, CI pending | **Pending** M02–M03 | Pending |
+| One My Games tile, cover, N DISCS badge; broken M3U does not hide discs | New pure/Qt tests, CI pending | **Pending** M04/M08 | Cocoon art and playlist pending |
+| FFVII 3 discs, FFVIII 4 discs; distinct editions/regions | New synthetic regression, CI pending | **Pending** M06 | Pending |
+| Disc 3 imported later extends validated M3U without clobbering custom playlist | New synthetic regression, CI pending | **Pending** M05/M08 | Pending |
+| Already-compressed CHD verified and organized (no recompression) | New synthetic regression, CI pending | **Pending** M07 | Pending |
+| NAS originals/backup/CompanionData never modified | Code safety rules/test doubles | **Pending** M02/M07–M09 | Pending |
+| In-emulator disc swapping/saves | Not simulated by tests | Not applicable | **Pending** M10 |
+
+Do not conflate generated/verified CHD output under a mocked converter with actual Windows CHDman or game runtime acceptance. See [test plan](MULTIDISC_ACCEPTANCE.md).
+
+
 ## v1.5.7 console shelves (source merged, 2026-11-23)
 
 **Main CI confirmed:** [run 45155602315](https://github.com/ValentineBSAA/RG-Rotate/actions/runs/45155602315), Windows 279 passed; Linux 278 passed, 1 skipped. No user Windows/NAS or physical-card acceptance follows from CI.
