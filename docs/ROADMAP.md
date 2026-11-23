@@ -1,5 +1,19 @@
 # Living Roadmap · RG Rotate / Retro Library Studio
 
+## v1.5.9 · Virtual exFAT card profile / Multi-disc detail follow-up
+
+- [x] Source: pass validated M3U members through read-only worker JSON into Qt; do not prematurely hide CHD members. Gallery owns one playlist tile with **N DISCS** badge and lists each member in Format Details.
+- [x] Source: second simulated exFAT meter below the **unchanged nominal 512 GB** card meter; pure 128 KiB cluster, partition/FAT/bitmap/boot estimate; actual scanned file allocation slack and existing 8 GiB + 8 GiB budgets.
+- [x] Source: `exFAT details…` labels estimates, does not format/delete/allocate; Windows physical card Preview remains authoritative.
+- [x] Synthetic/optional Qt regression checks in `test_v159_exfat_and_playlist.py` (CI **pending**).
+- [ ] GitHub Actions Windows/Linux green for exact new source; package ZIP after green.
+- [ ] User Windows 125% screenshot showing **2 DISCS**, format details lists both CHDs, and both capacity meters are readable.
+- [ ] Physical microSD formatted capacity, filesystem and free-space verification after arrival; never auto-format or destroy NAS/SD card data.
+- [ ] Actual RG Rotate Cocoon/emulator disc switching, save/load and cover recognition after transfer.
+
+**Detail plan:** [Virtual exFAT plan](VIRTUAL_EXFAT_PLAN.md). Preserve v1.5.8 successful CHDman outputs and every previously imported game.
+
+
 ## v1.5.8 · Smart PlayStation multi-disc collections
 
 **Goal:** One Game/One Cover/One Parent Folder, with a verified CHD per actual physical disc and one safe ordered M3U. Related to existing [multi-disc issue #2](https://github.com/ValentineBSAA/RG-Rotate/issues/2).
