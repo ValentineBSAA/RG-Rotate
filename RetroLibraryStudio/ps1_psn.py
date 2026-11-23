@@ -8,7 +8,6 @@ disc images. Temporary CUE/BIN output flows into existing CHDman verification.
 from __future__ import annotations
 
 import re
-import os
 import queue
 import threading
 import struct
@@ -240,28 +239,6 @@ def describe_extractor_failure(milestone, *, has_document: bool,
     )
 
 
-def psxtract_launch_options():
-    """Capture verified PSXtract console output without hijacking our pipe.
-
-    Upstream has207 v3 calls AttachConsole(ATTACH_PARENT_PROCESS) and then
-    freopen("CONOUT$", stdout). Under Start_Retro_Library_Studio.bat this
-    attaches to the app's visible terminal, BYPASSING stdout=PIPE and losing
-    the real PGD error message. A hidden NEW console makes AttachConsole fail
-    with ERROR_ACCESS_DENIED (already attached) while inherited standard
-    handles remain the redirected stdout/stderr pipes. The helper's console
-    is hidden; Stop still terminates that exact child process.
-    """
-    if os.name != 'nt':
-        return {}
-    startup = subprocess.STARTUPINFO()
-    startup.dwFlags |= subprocess.STARTF_USESHOWWINDOW
-    startup.wShowWindow = subprocess.SW_HIDE
-    return {
-        'creationflags': subprocess.CREATE_NEW_CONSOLE,
-        'startupinfo': startup,
-    }
-
-
 def friendly_helper_status(code: int) -> str:
     """Avoid Windows displaying -1 as the meaningless 4294967295."""
     n = int(code or 0)
@@ -322,10 +299,13 @@ def extract_psn_with_helper(pbp: Path, output: Path, helper: Path, *,
     friendly_events = queue.Queue(maxsize=80)
     # An actively draining reader prevents a noisy converter from deadlocking
     # on an unconsumed stdout pipe. No raw log or decrypted source is persisted.
+    # The isolated import_worker detaches its own console on Windows before
+    # running PSXtract. Thus upstream's AttachConsole(parent) cannot redirect
+    # our stdout pipe to CONOUT$. Do not create a new console for this GUI
+    # helper: Windows may still attach it to the parent's console.
     proc = subprocess.Popen(args, cwd=output, stdout=subprocess.PIPE,
                             stderr=subprocess.STDOUT,
-                            stdin=subprocess.DEVNULL, shell=False,
-                            **psxtract_launch_options())
+                            stdin=subprocess.DEVNULL, shell=False)
 
     def read_console():
         try:
