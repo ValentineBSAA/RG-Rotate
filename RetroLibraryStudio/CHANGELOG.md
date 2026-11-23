@@ -5,7 +5,7 @@
 - Two explicit cleanup policies: keep recoverable tracks off-card, or delete ONLY verified virtual-card working copies after double confirmation. Never touch outside original NAS archives; old backups aren't deleted automatically.
 - Open conversion backups from gallery/context menu and open exact backup folder from completion dialog.
 - Fix artwork preview clipping by responsive in-memory aspect-fit scaling.
-- Local clean extraction: 248 passed / 16 skipped on Linux. Windows batch confirmation pending.
+- Local clean extraction: 248 passed / 16 skipped on Linux. GitHub CI: **264 Windows passed**, **263 Linux passed + 1 skipped** ([run](https://github.com/ValentineBSAA/RG-Rotate/actions/runs/45148569884)). Real Windows batch confirmation pending.
 
 # v1.5.4 Beta — Artwork Previews & Context-Menu CHD Organization (2026-11-23)
 
