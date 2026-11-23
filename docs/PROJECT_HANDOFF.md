@@ -1,5 +1,14 @@
 # Project handoff · read this before working
 
+## v1.5.9 source candidate · Resident Evil 2 detail repair + virtual exFAT overlay
+
+From user real Windows 11 v1.5.8 screenshots: verified Resident Evil 2 Disc 1/Disc 2 CHDs in one parent folder, correctly ordered two-line M3U and artwork; the gallery only showed an `M3U` badge and the details popup only showed the playlist. **Root cause:** read-only `readonly_scan.py` omitted `Entry.members` in JSON, `app.py` reconstructed five-column entries without membership, and `disc_tracks` prematurely hid referenced M3U CHDs. **Fix:** worker transmits six fields including members, CHD files survive until validated grouping in `library_presentation.py`, app restores members, old 5-column JSON tolerated. This is *not* a gameplay or live-device pass.
+
+User also requested a non-destructive virtual Windows 11 512 GB exFAT format simulation **on top** of current NAS workspace. `virtual_exfat.py` models advertised nominal capacity vs estimated formatted capacity with assumed 128 KiB clusters, exFAT metadata/alignment, and cluster slack computed in **existing single read-only scan** via `core.inventory(..., metrics=...)`. `app.py` adds second labeled exFAT bar under original nominal bar, `exFAT details…` and enhanced Exact sizes. No real formatting, partition, preallocation or new NAS file. Real physical card `shutil.disk_usage` from the existing Preview remains authoritative once connected. **Exact formatted bytes cannot be predicted without the physical card.**
+
+New automated regression: `tests/test_v159_exfat_and_playlist.py` including real read-only scan roundtrip and optional Qt at 100/125/150%. Source branch `feature/v1.5.9-exfat-preview-and-disc-details`. [Details](VIRTUAL_EXFAT_PLAN.md), [full checklist](FULL_TEST_CHECKLIST.md). CI and user Windows screenshot acceptance pending. No original CHDs, CUE/BIN, playlists, artwork or CompanionData modified by this feature.
+
+
 ## v1.5.8 packaged source beta · Multi-disc collection workflow (2026-11-23)
 
 Merged to main as [PR #13](https://github.com/ValentineBSAA/RG-Rotate/pull/13), commit `c063450`; developed on `feature/v1.5.8-multidisc-collections` from v1.5.7. The user successfully tested v1.5.7 console pills/gallery-list toggling, 125% scaling, NAS location persistence and 512 GB virtual meter, then requested a full PS1 collection workflow: **one cover, one library entry, one parent game folder, CHD per disc and one ordered M3U**. RE2 Disc 1/2 should be one game; FFVII's 3 and FFVIII's 4 remain distinct.
