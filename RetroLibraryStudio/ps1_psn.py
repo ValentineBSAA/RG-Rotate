@@ -167,6 +167,50 @@ def package_title(pbp: Path, title_hint: str | None = None) -> str:
         'in PARAM.SFO. Generic PS1/PlayStation/Disc names are not game titles.')
 
 
+def describe_extractor_failure(milestone, *, has_document: bool,
+                               has_keys: bool, returncode: int) -> str:
+    """Explain a failed third-party extraction without echoing key bytes or logs.
+
+    A PGD MAC check failure is not a CHDman failure. The old positional CLI
+    cannot use KEYS alone without also supplying a DOCUMENT argument; never
+    forge a fake DOCUMENT.DAT or try a key from another game.
+    """
+    if milestone.pgd_header_failed or milestone.iso_header_failed:
+        detail = (
+            'PSXtract could not authenticate the protected PS1 ISO header '
+            '(0x80 MAC check failed). CHD conversion never started. '
+            'The EBOOT may require a matching companion or a different '
+            'extractor-compatible package. '
+        )
+        if has_keys and not has_document:
+            detail += (
+                'A KEYS.BIN was found, but this PSXtract CLI accepts it only '
+                'after a DOCUMENT.DAT argument, so this attempt used the '
+                'helper built-in key calculation. Do not fabricate a manual '
+                'or substitute keys from another game. '
+            )
+        elif not has_keys:
+            detail += (
+                'No adjacent KEYS.BIN was detected; the helper attempted '
+                'its built-in key calculation. '
+            )
+        else:
+            detail += (
+                'Available companion files were supplied; verify that they '
+                'belong to this exact EBOOT. '
+            )
+        return detail + 'Original files remain untouched.'
+    if milestone.md5_failed:
+        return ('PSXtract reported an MD5 integrity mismatch during extraction. '
+                'No CHDs were published; original files remain untouched.')
+    return (
+        'PSXtract stopped before producing a complete PS1 disc image. '
+        'CHD conversion was not attempted. Verify this EBOOT and matching '
+        'companion files or try another supported package. '
+        f'Helper status: {returncode}. Original files remain untouched.'
+    )
+
+
 def extract_psn_with_helper(pbp: Path, output: Path, helper: Path, *,
                             cancel=None, progress=None):
     """Run separately-provided PSXtract in disposable local storage, no shell."""
@@ -249,12 +293,14 @@ def extract_psn_with_helper(pbp: Path, output: Path, helper: Path, *,
             time.sleep(.2)
         reader.join(timeout=3)
         send_friendly_events()
-        if proc.returncode:
-            raise RuntimeError('PSXtract could not extract complete PS1 disc images. '
-                               'Conversion stopped; original EBOOT and keys unchanged. '
-                               f'Helper exit code: {proc.returncode}.')
+        if proc.returncode or milestone.pgd_header_failed or milestone.iso_header_failed:
+            raise RuntimeError(describe_extractor_failure(
+                milestone, has_document=bool(document), has_keys=bool(keys),
+                returncode=int(proc.returncode or 1)))
         if milestone.md5_failed:
-            raise RuntimeError('PSXtract reported an MD5 mismatch. No disc images were published.')
+            raise RuntimeError(describe_extractor_failure(
+                milestone, has_document=bool(document), has_keys=bool(keys),
+                returncode=int(proc.returncode or 1)))
         if progress:
             progress('PS1 Classic extracted • checking each disc before CHD conversion', 0, 0)
     finally:
