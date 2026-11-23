@@ -1,4 +1,4 @@
-name: Package v1.6.2 Windows test ZIP
+name: Package v1.6.3 Windows test ZIP
 on:
   workflow_dispatch:
   push:
@@ -11,9 +11,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      # Merged-main v1.6.2 exact-source artifact and all-console dedupe verification.
-      # v1.6.2: real ZIP/7Z multi-package queue, 13-console dedupe, and PS1 per-disc status.
-      # Package post-merge main source with all readable batch/duplicate handoff documentation.
+      # v1.6.3 fix-candidate source artifact. Real Windows Stop and game-title tests pending.
+      # v1.6.3: forbid generic PS1 game titles, bounded PBP TITLE metadata, reliable Stop, folder links.
+      # Package checked-out branch or main source; do not claim physical Windows acceptance.
       - name: Package checked-out source without altering existing installs
         shell: bash
         run: |
@@ -22,19 +22,22 @@ jobs:
           root = pathlib.Path('.')
           out_dir = root / 'dist'
           out_dir.mkdir(exist_ok=True)
-          dest = out_dir / 'RetroLibraryStudio_v1.6.2_Windows_Test_Beta.zip'
+          dest = out_dir / 'RetroLibraryStudio_v1.6.3_Windows_Test_Beta.zip'
           text = (
-              'RETRO LIBRARY STUDIO v1.6.2 - WINDOWS SOURCE TEST BETA\n'
+              'RETRO LIBRARY STUDIO v1.6.3 - WINDOWS SOURCE TEST BETA\n'
               'This is a source beta (Python 3 + dependencies), NOT a compiled EXE.\n'
               '1. Extract the ZIP into a NEW folder separate from your old working build.\n'
               '2. Open the RetroLibraryStudio folder.\n'
               '3. Double-click Start_Retro_Library_Studio.bat. Install Python dependencies if prompted.\n'
               '4. Select your EXISTING virtual NAS card location. Do not format or delete anything.\n'
-              '5. Choose a folder under Batch import PS1 Classics; watch GAME N/TOTAL and live Disc 1/2/3.\n'
+              '5. STOP old 1.6.2 batch before running this new build against the SAME workspace.\n'
+              '6. Inspect any old PS1/Disc 1.chd files; NEVER auto-rename or delete them.\n'
+              '7. Test a few DISPOSABLE PSN packages first; game title must be correctly detected.\n'
+              '8. Use Open game folder on My Games tiles; Stop task must prevent next package.\n'
               '6. Retry a renamed ZIP/7Z containing the same EBOOT. Verify it is skipped with one tile.\n'
               'PS2/GameCube folders only organize files; performance is experimental.\n'
               'CHD batch delete is for disposable copies until real Windows verification.\n'
-              'v1.6.2 checks: docs/LIBRARY_DEDUP_AND_PS1_PROGRESS.md; complete tests: docs/FULL_TEST_CHECKLIST.md\n'
+              'v1.6.3 checks: docs/PS1_BATCH_IDENTITY_AND_STOP_v163.md; full checklist: docs/FULL_TEST_CHECKLIST.md\n'
               'GitHub CI does not establish real NAS or RG Rotate acceptance.\n'
           )
           with zipfile.ZipFile(dest,'w',compression=zipfile.ZIP_DEFLATED,compresslevel=9) as z:
@@ -45,9 +48,9 @@ jobs:
                       if p.suffix in ('.pyc', '.pyo'): continue
                       z.write(p,p.as_posix())
               z.write(root/'README.md','README_GITHUB.md')
-              z.writestr('READ_ME_FIRST_v1.6.2.txt',text)
+              z.writestr('READ_ME_FIRST_v1.6.3.txt',text)
               z.writestr('BUILD_METADATA.json',json.dumps({
-                  'version':'1.6.2', 'platform':'Windows source beta',
+                  'version':'1.6.3', 'platform':'Windows source beta',
                   'commit':os.environ.get('GITHUB_SHA',''),
                   'real_windows_nas_acceptance':'pending',
                   'real_RG_Rotate_acceptance':'pending',
@@ -64,11 +67,12 @@ jobs:
                            'RetroLibraryStudio/ps1_psn.py',
                            'RetroLibraryStudio/ps1_progress.py',
                            'RetroLibraryStudio/ps1_batch.py',
-                           'RetroLibraryStudio/tests/test_v162_psn_batch.py',
+                           'RetroLibraryStudio/tests/test_v163_psn_batch.py',
                            'RetroLibraryStudio/ps1_duplicates.py',
                            'RetroLibraryStudio/library_duplicates.py',
-                           'RetroLibraryStudio/tests/test_v162_library_duplicates.py',
+                           'RetroLibraryStudio/tests/test_v163_library_duplicates.py',
                            'docs/LIBRARY_DEDUP_AND_PS1_PROGRESS.md',
+                           'docs/PS1_BATCH_IDENTITY_AND_STOP_v163.md',
                            'RetroLibraryStudio/tests/test_v161_psn_and_7z.py',
                            'docs/PSN_CLASSICS_IMPORT.md',
                            'RetroLibraryStudio/ps1_psn.py',
@@ -93,7 +97,7 @@ jobs:
       - name: Upload test beta ZIP
         uses: actions/upload-artifact@v4
         with:
-          name: RetroLibraryStudio_v1.6.2_Windows_Test_Beta
-          path: dist/RetroLibraryStudio_v1.6.2_Windows_Test_Beta.zip
+          name: RetroLibraryStudio_v1.6.3_Windows_Test_Beta
+          path: dist/RetroLibraryStudio_v1.6.3_Windows_Test_Beta.zip
           if-no-files-found: error
           retention-days: 30
