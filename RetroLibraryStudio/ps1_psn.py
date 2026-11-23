@@ -8,6 +8,7 @@ disc images. Temporary CUE/BIN output flows into existing CHDman verification.
 from __future__ import annotations
 
 import re
+import os
 import queue
 import threading
 import struct
@@ -234,8 +235,39 @@ def describe_extractor_failure(milestone, *, has_document: bool,
         'PSXtract stopped before producing a complete PS1 disc image. '
         'CHD conversion was not attempted. Verify this EBOOT and matching '
         'companion files or try another supported package. '
-        f'Helper status: {returncode}. Original files remain untouched.'
+        f'Helper status: {friendly_helper_status(returncode)}. '
+        'Original files remain untouched.'
     )
+
+
+def psxtract_launch_options():
+    """Capture verified PSXtract console output without hijacking our pipe.
+
+    Upstream has207 v3 calls AttachConsole(ATTACH_PARENT_PROCESS) and then
+    freopen("CONOUT$", stdout). Under Start_Retro_Library_Studio.bat this
+    attaches to the app's visible terminal, BYPASSING stdout=PIPE and losing
+    the real PGD error message. A hidden NEW console makes AttachConsole fail
+    with ERROR_ACCESS_DENIED (already attached) while inherited standard
+    handles remain the redirected stdout/stderr pipes. The helper's console
+    is hidden; Stop still terminates that exact child process.
+    """
+    if os.name != 'nt':
+        return {}
+    startup = subprocess.STARTUPINFO()
+    startup.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+    startup.wShowWindow = subprocess.SW_HIDE
+    return {
+        'creationflags': subprocess.CREATE_NEW_CONSOLE,
+        'startupinfo': startup,
+    }
+
+
+def friendly_helper_status(code: int) -> str:
+    """Avoid Windows displaying -1 as the meaningless 4294967295."""
+    n = int(code or 0)
+    if n >= 0x80000000 and n <= 0xFFFFFFFF:
+        n -= 0x100000000
+    return str(n)
 
 
 def extract_psn_with_helper(pbp: Path, output: Path, helper: Path, *,
@@ -253,6 +285,14 @@ def extract_psn_with_helper(pbp: Path, output: Path, helper: Path, *,
         raise ValueError('This PBP is not a recognized PS1 Classics disc package; '
                          'it will not be converted as a PSP game or renamed blindly')
     document, keys = psn_companions(pbp)
+    if keys:
+        # The v3 helper reads the first 16 bytes of KEYS.BIN. Check only file
+        # length, never key material; an incomplete file is not a valid key.
+        if keys.stat().st_size < 16:
+            raise ValueError(
+                'This game's KEYS.BIN is shorter than the 16 bytes expected '
+                'by PSXtract. No extraction or CHD conversion was attempted. '
+                'Restore the matching original companion file for this EBOOT.')
     args = [str(helper.resolve()), '-c', str(pbp.resolve())]
     key_was_supplied = False
     if document:
@@ -273,6 +313,10 @@ def extract_psn_with_helper(pbp: Path, output: Path, helper: Path, *,
         raise InterruptedError('PSN extraction stopped')
     if progress:
         progress('Extracting PS1 Classic into temporary Windows storage', 0, 0)
+        progress('PS1 source check • matching key ' +
+                 ('provided' if key_was_supplied else
+                  ('found but helper using internal derivation' if keys else
+                   'not present • helper using internal derivation')), 0, 0)
     from ps1_progress import PSXtractMilestones
     milestone = PSXtractMilestones()
     friendly_events = queue.Queue(maxsize=80)
@@ -280,7 +324,8 @@ def extract_psn_with_helper(pbp: Path, output: Path, helper: Path, *,
     # on an unconsumed stdout pipe. No raw log or decrypted source is persisted.
     proc = subprocess.Popen(args, cwd=output, stdout=subprocess.PIPE,
                             stderr=subprocess.STDOUT,
-                            stdin=subprocess.DEVNULL, shell=False)
+                            stdin=subprocess.DEVNULL, shell=False,
+                            **psxtract_launch_options())
 
     def read_console():
         try:
@@ -329,10 +374,15 @@ def extract_psn_with_helper(pbp: Path, output: Path, helper: Path, *,
         reader.join(timeout=3)
         send_friendly_events()
         if proc.returncode or milestone.pgd_header_failed or milestone.iso_header_failed:
-            raise RuntimeError(describe_extractor_failure(
+            error = describe_extractor_failure(
                 milestone, has_document=bool(document), has_keys=bool(keys),
                 returncode=int(proc.returncode or 1),
-                key_was_supplied=key_was_supplied))
+                key_was_supplied=key_was_supplied)
+            if not milestone.pgd_header_failed and not milestone.iso_header_failed:
+                error += (' PSXtract did not report a recognized decryption '
+                          'milestone to the app; inspect companion presence '
+                          'and source compatibility before retrying.')
+            raise RuntimeError(error)
         if milestone.md5_failed:
             raise RuntimeError(describe_extractor_failure(
                 milestone, has_document=bool(document), has_keys=bool(keys),
