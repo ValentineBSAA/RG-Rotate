@@ -127,3 +127,10 @@ Never infer a PASS from a progress bar screenshot alone when the underlying veri
 | v1.5.5 GitHub CI | [Run 45149019365](https://github.com/ValentineBSAA/RG-Rotate/actions/runs/45149019365): Windows **264 passed**, Linux **263 passed, 1 skipped** | **Automated tests passed** |
 
 Do not mistake CHD compression for lossy audio/video reduction: conventional CHD CD codecs preserve disc data. CHD extension by itself is not a verification receipt.
+
+## v1.5.6 capacity-meter verification (2026-11-23)
+
+- **Code test passed:** nominal 512 GB is 476.84 GiB, actual staged byte count vs reserved companion headroom, over-budget cases, measured physical card capacity, free-after-transfer math, preflight capacity conflicts, and no NAS capacity probe on model calculation.
+- **Local source test:** 255 passed / 19 skipped (including the new PySide6 display checks because Qt isn't installed locally).
+- **Pending:** Windows GitHub Actions UI smoke tests, actual formatted microSD capacity, real card filesystem and verified transfer, 125% display screenshot and user acceptance.
+- **Important:** Nominal virtual budget != actual card formatted capacity != backing NAS free space. Display all three separately and never claim bytes copied from preview alone.

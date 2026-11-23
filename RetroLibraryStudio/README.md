@@ -1,3 +1,15 @@
+# Retro Library Studio 1.5.6 Beta — Live Virtual 512 GB Card Planner
+
+## v1.5.6 Beta · Live 512 GB Card Planner (2026-11-23)
+
+- Added an always-visible **512 GB advertised-capacity virtual microSD bar** near the top of Start, Add Games and every other page. It shows actual staged file bytes, future AI companion budget and the 8 GiB protected free-space reserve without allocating a 512 GB file.
+- Added **Exact sizes…** to display the staged library byte count (including CHDs/artwork/APKs) and GB/GiB conversion.
+- After **Copy to card → Check what would be copied**, the real-card section displays **measured formatted capacity**, existing space used, estimated unique new transfer bytes and estimated free space afterward. Practice folders are explicitly excluded. Previously previewed card numbers are invalidated after workspace or destination changes and after a verified transfer.
+- Added transfer preflight conflicts for cards whose real formatted capacity cannot hold the staged library plus budgets, or whose free space cannot accommodate new bytes and reserve.
+- Pure capacity computations never query the NAS from the GUI paint path. NAS free-space lookup remains opt-in, bounded and separate from card planning.
+- **512,000,000,000 bytes = 512 GB = approximately 476.84 GiB.** Real formatted capacity may differ and is not claimed until the Windows card preview measures it.
+- Source beta, not a verified physical microSD release. Initial clean extracted local tests: **255 passed / 19 skipped** (PySide6 not available locally). Windows CI and on-device test are separately tracked.
+
 # Retro Library Studio 1.5.5 Beta — Batch Lossless CHD & Verified Cleanup
 
 **Windows 11 / PySide6 · RG Rotate · Cocoon Shell default**

@@ -121,3 +121,13 @@ Tracked by [#8](https://github.com/ValentineBSAA/RG-Rotate/issues/8), committed 
 - [ ] **Windows acceptance:** Run v1.5.5 batch on disposable test PS1 discs with CHDman. Confirm all CHDs verified, each disc stays in its expected `ROMs/psx` location, the `CHD` badge and covers persist, and all source originals outside the virtual card remain intact.
 - [ ] **Windows cleanup acceptance:** Choose **Remove verified working copies** for disposable card copies only. Failed or cancelled conversions must retain their source tracks; user confirms no deletion of source collection or earlier recovery backups.
 - [ ] **Windows preview acceptance:** Confirm artwork selection previews preserve aspect ratio while resizing; test bad network / timeouts and safe Stop.
+
+### v1.5.6 · Card visualization and real capacity (2026-11-23)
+
+- [x] Source code: persistent 512 GB virtual-card capacity strip on all pages, with exact-byte details, staged files, unused companion budget and 8 GiB protected free space.
+- [x] Source code: Copy to Card actual formatted-capacity preview (only after a real physical destination is selected and measured), currently used space, proposed new data, estimated free after transfer.
+- [x] Transfer preflight: block when formatted capacity is smaller than staged library + protected budgets, or when free-space safety reserve would be violated.
+- [x] Automated model tests (local 255 passed / 19 skipped). No background NAS scan added.
+- [ ] Windows PySide6 CI & visual acceptance at 125% scaling.
+- [ ] User verifies bar against Windows card Properties and staged CHD/APK/cover totals; capture screenshot.
+- [ ] First physical-card verified transfer, no unexpected formatting/deletion and 8 GiB free after transfer.
