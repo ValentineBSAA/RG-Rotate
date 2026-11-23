@@ -1,4 +1,4 @@
-# Retro Library Studio 1.5.4 Beta — Artwork Previews, Right-click CHD Conversion
+# Retro Library Studio 1.5.5 Beta — Batch Lossless CHD & Verified Cleanup
 
 **Windows 11 / PySide6 · RG Rotate · Cocoon Shell default**
 
@@ -380,3 +380,11 @@ Right-click a PS1 game tile or file-list entry for a styled context menu: Rename
 **Original source safety:** CHDman must first create and verify a CHD, then reverify the completed destination. Only after success does the program move the CUE/BIN or IMG into a sibling folder named `<virtual card> - Conversion Backups`, outside the virtual microSD. No permanent deletion; original files remain recoverable. The app never silently formats a drive. Keep backups until play-tested on RG Rotate.
 
 **Test scope:** Local 240 passed, 15 skipped. GUI and genuine MAME chdman conversion on the user's Windows NAS remain for acceptance testing.
+
+## v1.5.5 batch PS1 conversion
+
+Open **Add games → Batch convert remaining PS1 discs…**. It scans only the selected virtual card's `ROMs/psx`, converts safe CUE/BIN and unambiguous IMG discs to CHDman verified CHD, and keeps one progress bar. MAME's CD default `cdlz,cdzl,cdfl` are lossless and preserve game tracks and audio. Multiple separate game discs still require a multi-disc playlist; no one-file merge is attempted.
+
+Choose **Keep recovery backups** (safe, outside-card recovery still uses NAS space) or **Remove verified working copies** (irreversible, *only* after CHDman verification of that disc; *only* within virtual card and with a second confirmation). External original NAS archives and older recovery folders are NEVER automatically deleted. Use **Open conversion backups** to review older backups manually. The cover preview panel now fits the actual aspect ratio and resizes with the window.
+
+Windows batch deletion / real-device game launch require separate acceptance; use disposable discs first.

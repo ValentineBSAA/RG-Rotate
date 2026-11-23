@@ -98,3 +98,10 @@ Never infer a PASS from a progress bar screenshot alone when the underlying veri
 ### v1.5.4 GitHub Actions confirmation
 
 - [run 45144304702](https://github.com/ValentineBSAA/RG-Rotate/actions/runs/45144304702) passed: **255 Windows**, **254 Linux + 1 skipped**. Qt UI and PS1 organizer unit tests executed on CI. CHDman subprocess is mocked in conversion tests; physical Windows NAS hardware and emulator playback still pending.
+
+## v1.5.4 actual Windows acceptance and v1.5.5 source tests
+
+- **Actual Windows 11 v1.5.4 passed (user screenshots):** Clock Tower: The First Fear CHD created and CHDman verified (55.4 MB), Resident Evil Gore Edition CHD created and CHDman verified (311.9 MB). Both cover images retained and CHD badges present. Prior old tracks moved into sibling recovery on Synology NAS.
+- **v1.5.5 local Linux code-only tests:** 248 passed, 16 skipped; new fixtures verify preserving external originals, delete-within-card only after verification, recovered backup mode, failed CHD preservation, cancel, multiple discs, duplicate IMG/CUE, and resized cover preview (Qt skipped on Linux). Clean-extracted ZIP integrity passed.
+- **Pending Windows v1.5.5:** Actual batch conversion including destructive cleanup confirmation, verifying external original and previous recovery backups untouched, genuine lossless CHDman verification, responsive GUI, fitted artwork preview.
+- **Pending RG Rotate:** Physical-device game launch and M3U disc switching.

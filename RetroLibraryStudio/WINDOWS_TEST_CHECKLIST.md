@@ -1,3 +1,14 @@
+# v1.5.5 first Windows acceptance (do not run on valuable source originals)
+
+1. Launch the new extracted folder; confirm v1.5.5 and both earlier CHD tiles still present.
+2. **Open conversion backups** and verify it opens the sibling NAS recovery folder; no files deleted.
+3. In cover search, select a cover and resize the dialog. Entire image must fit; no cropped or stretched preview.
+4. Import a disposable copy of one PS1 CUE/two BINs into a test folder on virtual card, keeping a separate original outside the card.
+5. Batch → **Keep recovery backups**. Confirm CHDman verified, CHD badge, source moved to recovery, external original untouched.
+6. Another disposable disc: Batch → **Remove verified working copies**, acknowledge the second confirmation. Confirm CHD exists, old tracks within virtual card removed, external original and old recovery backups untouched.
+7. Broken missing track and manual Stop tests: never remove incomplete/failed/unprocessed source files.
+8. Review results and run Library Check before copying to real microSD.
+
 # v1.5.4 priority Windows acceptance
 
 1. [ ] Open My Games at 125% and RIGHT-CLICK Clock Tower cover tile. Styled context menu should show the conversion action. Test right-click on File List as well.

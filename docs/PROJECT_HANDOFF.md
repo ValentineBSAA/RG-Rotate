@@ -1,6 +1,6 @@
 # Project handoff · read this before working
 
-**Snapshot date:** 2026-11-23, America/Phoenix. **Latest source artifact:** Retro Library Studio **v1.5.2** (Windows acceptance beta, built from v1.5.1 automatic PS1 pipeline). **Last broadly user-verified Windows transfer baseline:** **v1.4.4**.
+**Snapshot date:** 2026-11-23, America/Phoenix. **Latest source artifact:** Retro Library Studio **v1.5.5** (batch lossless PS1 CHD, verified virtual-card cleanup and cover preview sizing). **Last broadly user-verified Windows transfer baseline:** **v1.4.4**.
 
 ## Why this exists
 
@@ -97,3 +97,11 @@ The latest GitHub workflow run [45138220982](https://github.com/ValentineBSAA/RG
 - **Important:** Backups are outside the virtual card (same parent NAS folder). If user wants to reclaim their NAS disk later, provide a separate carefully verified recovery cleanup workflow, never auto-delete original source files.
 
 - **CI confirmed for v1.5.4:** [Windows 255 tests passed and Linux 254 passed / 1 skipped](https://github.com/ValentineBSAA/RG-Rotate/actions/runs/45144304702). Real conversion on user's NAS remains the next gate.
+
+## v1.5.5 live handoff (2026-11-23)
+
+**User Windows pass:** v1.5.4 Clock Tower: The First Fear converted/CHDman verified to 55.4 MB CHD; Resident Evil Gore Edition to 311.9 MB CHD. Both CHD badges and covers visible in user's screenshots. Original tracks moved into NAS sibling `RG Rotate Virtual Card - Conversion Backups` after verification, so they still use NAS storage.
+
+**v1.5.5 code:** Batch scans ONLY the selected `<virtual card>/ROMs/psx` tree, converts each safe CUE/BIN or standalone unambiguous IMG using ordinary lossless CHDman createcd, re-verifies CHD. User explicitly chooses either backup outside card or deletion of virtual-card **working copies** only after each verification, with a second destructive confirmation. Elsewhere-on-NAS original ROM archives are never touched; preexisting recovery backups are not automatically purged. Adds Open conversion backups and direct links from individual completion dialog; artwork preview uses aspect-fit in memory.
+
+**Local package**: `RetroLibraryStudio_v1.5.5_Windows_Test_Beta.zip`, 3,098,958 bytes, SHA-256 `183b62b2d857f8ec922dbf01c283bd15bccb3ca666aadfc75c94a1cce6bd4bfb`, ZIP test passed; clean extracted Linux suite **248 passed, 16 skipped**. No real v1.5.5 Windows batch deletion acceptance yet. Use disposable test folders FIRST and preserve v1.5.4 fallback.

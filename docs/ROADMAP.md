@@ -97,3 +97,15 @@ Tracked by [#8](https://github.com/ValentineBSAA/RG-Rotate/issues/8), committed 
 - [ ] User Windows acceptance: IMG raw-track test, verification failure rollback, incremental NAS practice transfer, and physical microSD/Cocoon later.
 
 - [x] v1.5.4 GitHub source CI: [run 45144304702](https://github.com/ValentineBSAA/RG-Rotate/actions/runs/45144304702) **255 passed on Windows**, **254 passed / 1 skipped on Linux**. These tests still do not establish real CHDman/NAS/handheld acceptance.
+
+### v1.5.5 · lossless PS1 batch conversion and safe cleanup (2026-11-23)
+
+- [x] **User-observed v1.5.4 Windows pass:** Clock Tower CHD **55.4 MB** and Resident Evil Gore Edition CHD **311.9 MB**; CHDman verification succeeded, both CHD badges and chosen artwork displayed.
+- [x] Implement code-only v1.5.5 batch conversion for CUE/BIN and safe standalone IMG sources under the selected virtual-card `ROMs/psx` tree, using MAME's default **lossless** CD codecs and per-disc CHDman verification.
+- [x] Offer explicit **Keep recovery backups** or **Remove verified virtual-card working copies** with double confirmation for deletion. No deletion of separately stored NAS source originals or old recovery backups.
+- [x] Add **Open conversion backups** action and single conversion dialog buttons linking output/recovery folders.
+- [x] Cover previews now scale the entire image to available space preserving aspect ratio on resize, using an in-memory pixmap (not NAS reads).
+- [x] Linux clean-extracted v1.5.5 package: **248 passed / 16 skipped**, ZIP integrity check passed. GitHub Windows CI pending while packaging.
+- [ ] **CRITICAL user acceptance:** On Windows, batch convert 2 disposable PS1 discs (with both cleanup choices) and confirm only virtual-card working files are removed after genuine CHDman verification, not external NAS originals.
+- [ ] Verify right-click recovery folder opens, cover preview remains inside frame at 125%, and an interrupted batch preserves failed/unprocessed source tracks.
+- [ ] Review old v1.5.4 conversion backups manually; do **not** auto-delete them from the NAS because provenance is unknown.

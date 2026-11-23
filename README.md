@@ -2,7 +2,7 @@
 
 **Project home and development handoff** for the Anbernic RG Rotate (Android 12, 720×720, Unisoc T618, 3 GB RAM, 32 GB internal storage) and **Retro Library Studio**, a Windows 11 / PySide6 virtual-microSD preparation utility.
 
-> **Current working milestone: v1.5.4 Artwork Preview & PS1 CHD Organizer (source beta).** The **full text source and tests** are now published under [RetroLibraryStudio/](RetroLibraryStudio/). The optional generated Resident Evil cover image is not in GitHub. See [Source publication](docs/SOURCE_PUBLICATION.md).
+> **Current working milestone: v1.5.5 Batch Lossless PS1 CHD & Verified Cleanup (source beta).** [Source and tests](RetroLibraryStudio/) are on GitHub; Windows batch conversion and actual RG Rotate gameplay still need user acceptance.
 
 ## Project at a glance
 
@@ -49,3 +49,7 @@
 **Maintenance rule:** Every meaningful project change must update the roadmap status and tests; report whether it was unit-tested, Windows-tested, or RG Rotate-tested. No silent completion claims.
 
 **Latest Windows testing:** [v1.5.4 right-click CHD & cover-preview acceptance issue](https://github.com/ValentineBSAA/RG-Rotate/issues/8). Source published under `RetroLibraryStudio/`; real CHDman conversion and RG Rotate device testing still pending.
+
+### Current Windows results (2026-11-23)
+
+The user confirmed **Clock Tower: The First Fear** (55.4 MB CHD) and **Resident Evil Gore Edition** (311.9 MB CHD) converted and CHDman verified successfully in v1.5.4, with cover artwork preserved. v1.5.5 adds batch PS1 CUE/BIN and selected IMG conversion, optional verified cleanup only within the virtual card, an **Open conversion backups** action, and artwork preview fitting. Batch-delete acceptance on the user's NAS remains **pending**.

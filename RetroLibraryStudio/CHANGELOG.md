@@ -1,3 +1,12 @@
+# v1.5.5 Beta — Lossless Batch CHD & Verified Cleanup (2026-11-23)
+
+- User-observed v1.5.4 Windows results: Clock Tower CHDman verified (55.4 MB); Resident Evil Gore Edition verified (311.9 MB); cover art retained.
+- New batch CUE/BIN and safe standalone IMG conversion using standard MAME CD lossless codecs, CHDman verify per disc, one overall progress bar.
+- Two explicit cleanup policies: keep recoverable tracks off-card, or delete ONLY verified virtual-card working copies after double confirmation. Never touch outside original NAS archives; old backups aren't deleted automatically.
+- Open conversion backups from gallery/context menu and open exact backup folder from completion dialog.
+- Fix artwork preview clipping by responsive in-memory aspect-fit scaling.
+- Local clean extraction: 248 passed / 16 skipped on Linux. Windows batch confirmation pending.
+
 # v1.5.4 Beta — Artwork Previews & Context-Menu CHD Organization (2026-11-23)
 
 - Automatic **selected cover preview** in the artwork results dialog, with a short debounce to avoid rapid repeated downloads. Double-click previews instead of applying an unseen cover. The explicit Preview selected button remains available.
