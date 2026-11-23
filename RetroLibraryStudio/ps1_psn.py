@@ -290,7 +290,7 @@ def extract_psn_with_helper(pbp: Path, output: Path, helper: Path, *,
         # length, never key material; an incomplete file is not a valid key.
         if keys.stat().st_size < 16:
             raise ValueError(
-                'This game's KEYS.BIN is shorter than the 16 bytes expected '
+                'The adjacent KEYS.BIN is shorter than the 16 bytes expected '
                 'by PSXtract. No extraction or CHD conversion was attempted. '
                 'Restore the matching original companion file for this EBOOT.')
     args = [str(helper.resolve()), '-c', str(pbp.resolve())]
