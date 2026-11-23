@@ -1,5 +1,13 @@
 # RG Rotate · Retro Library Studio
 
+## v1.6.1 PS1 Classics package recognition & 7Z verification (source candidate)
+
+- A Windows FFVII PSN folder can contain `EBOOT.PBP`, `KEYS.BIN` and `DOCUMENT.DAT` rather than per-disc CUE/BIN. The importer now recognizes PS1 Classics PBP signatures and keeps the key and manual as **companions**, never standalone discs or PSP titles.
+- A separately installed PSXtract helper can produce temporary CUE/BIN discs, which enter our **existing CHDman createcd+verify** and safe CHD/M3U collection pipeline. If missing or unable to extract, the import reports the blocker without fake success or source deletion.
+- Existing ZIP/7Z unpacking remains intact and receives real archive regression tests. **Real PSN EBOOT decryption and RG Rotate playback have not yet passed.**
+- See [PSN/7Z acceptance guide](docs/PSN_CLASSICS_IMPORT.md). Keep v1.6.0 until Windows and CI checks complete.
+
+
 ## v1.6.1 source beta · PS1 Classics EBOOT and real 7-Zip validation
 
 - New PSN PS1 Classics path recognizes EBOOT.PBP with KEYS.BIN / DOCUMENT.DAT; keys/manual are companion material, never CHD discs. A valid PS1 Classics disc signature prevents confusing PS1 with native PSP games.
