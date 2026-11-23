@@ -53,7 +53,7 @@ from system_shelves import (PRIMARY_SYSTEMS, console_counts, console_order_key,
                             console_visual, grouped_shelves)
 from workspace_setup import suggested_workspace, copy_existing_workspace, count_workspace_files
 
-VERSION = '1.6.1 Beta – PS1 Classics EBOOT & 7Z Import'
+VERSION = '1.6.2 Beta – Disc Progress & Library-Wide Duplicate Checks'
 SCALE_CHOICES = [('100%', 100), ('110%', 110), ('125%', 125), ('140%', 140), ('150%', 150)]
 MAX_VISIBLE_FILES = 1200
 
@@ -625,6 +625,16 @@ class Window(QMainWindow):
         activity.addWidget(self.task_title)
         self.status = label('Choose what you want to do next.', 'Small', True)
         activity.addWidget(self.status)
+        # Live disc-by-disc status is visible ONLY during PS1 Classics work.
+        # It is driven by interpreted PSXtract milestones, not guessed
+        # percentages or arbitrary raw console output.
+        self.ps1_disc_steps = {}
+        self.ps1_disc_phase = label('', 'Small', True)
+        self.ps1_disc_phase.setStyleSheet(
+            'color:#e9dcff; background-color:#292650;'
+            'border:1px solid #7564ab; border-radius:8px; padding:5px 9px;')
+        self.ps1_disc_phase.hide()
+        activity.addWidget(self.ps1_disc_phase)
         b.addLayout(activity, 2)
         self.bar = QProgressBar(); self.bar.setRange(0,100); self.bar.setValue(0)
         self.bar.setTextVisible(False); b.addWidget(self.bar, 1)
@@ -1231,6 +1241,8 @@ class Window(QMainWindow):
             return
         self.current_task = True
         self.current_task_name = task_name
+        self.ps1_disc_steps = {}
+        self.ps1_disc_phase.hide()
         self.import_finished_callback = finished or self.import_completed
         self.import_kind = request.get('mode', 'games')
         self.cancel_requested = False
@@ -1419,6 +1431,28 @@ class Window(QMainWindow):
         self.set_status(f'{name}: {state}')
 
     def on_progress(self, name, current, total):
+        if str(name).startswith('Extracting PS1 Classic •'):
+            import re
+            disc_match = re.search(r'Disc (\\d{1,2})', name)
+            if disc_match:
+                num = int(disc_match.group(1))
+                self.ps1_disc_steps[num] = ('✓' if 'reconstructed ✓' in name
+                                            else '●')
+                display = '    '.join(
+                    f'{self.ps1_disc_steps[n]} Disc {n}'
+                    for n in sorted(self.ps1_disc_steps))
+                self.ps1_disc_phase.setText('PS1 EXTRACT  •  ' + display)
+            elif 'MD5' in name:
+                self.ps1_disc_phase.setText(
+                    self.ps1_disc_phase.text() + '    •    MD5 check')
+            else:
+                self.ps1_disc_phase.setText('PS1 EXTRACT  •  detecting and preparing discs')
+            self.ps1_disc_phase.show()
+        elif 'PS1 Classic extracted' in str(name):
+            count = sum(1 for stage in self.ps1_disc_steps.values() if stage == '✓')
+            self.ps1_disc_phase.setText(
+                f'PS1 EXTRACTION ✓  •  {count} disc(s) reconstructed  •  preparing CHDs')
+            self.ps1_disc_phase.show()
         if name == '@capacity':
             self.staged_bytes = max(0, int(current))
             self.update_card_plan()
@@ -2489,6 +2523,8 @@ class Window(QMainWindow):
             self.set_status(f'{len(unsupported)} unsupported item(s) skipped; importing recognized files…')
 
     def import_completed(self, result):
+        if hasattr(self, 'ps1_disc_phase'):
+            self.ps1_disc_phase.hide()
         if result.get('cancelled'):
             self.library_notice.setText('Import stopped. Any files successfully copied are still safely on the virtual card.')
         elif result.get('empty'):
