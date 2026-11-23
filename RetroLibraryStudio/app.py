@@ -784,7 +784,8 @@ class Window(QMainWindow):
         content.addWidget(self.library_notice)
         content.addWidget(label('PS1 game collections: choose a complete game folder or all CUE/BIN discs together. '
             'Each disc becomes a verified CHD inside ROMs/psx/Game Title. One M3U playlist and one cover tile '
-            'represent the collection. Missing tracks are never guessed or deleted.', 'Small', True))
+            'represent the collection. Missing tracks are never guessed or deleted. '
+            'PSN EBOOT.PBP + KEYS.BIN requires an optional PSXtract helper.', 'Small', True))
         self.card_search = QLineEdit(); self.card_search.setPlaceholderText('Search the games you have added…')
         self.card_search.textChanged.connect(self._gallery_search_changed)
         content.addWidget(self.card_search)
@@ -2435,7 +2436,8 @@ class Window(QMainWindow):
         self.start_import_process({'mode': 'folder', 'folder': str(folder),
                                    'workspace': str(self.workspace), 'fallback': 'PS1',
                                    'auto_ps1_chd': True, 'auto_artwork': self.auto_cover.isChecked(),
-                                   'binary': str(tools_root() / 'chdman' / 'chdman.exe')},
+                                   'binary': str(tools_root() / 'chdman' / 'chdman.exe'),
+                                   'psxtract_binary': str(tools_root() / 'psxtract' / 'psxtract.exe')},
                                   'Importing PS1 Game Collection')
 
     def pick_folder(self):
