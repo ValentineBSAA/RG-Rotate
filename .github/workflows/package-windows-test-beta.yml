@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      # v1.6.5 source candidate: selectable PSN game titles, remembered folder,
+      # v1.6.5 final candidate after legacy artwork fallback regression correction:
       # informed progress and strict automatic cover matching.
       # GitHub synthetic tests do not prove real Windows NAS or device behavior.
       - name: Package checked-out source without altering existing installs
