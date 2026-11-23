@@ -55,15 +55,30 @@ def candidate_score(game: str, candidate: str) -> float:
     return round(.65 * SequenceMatcher(None, a, b).ratio() + .35 * overlap, 4)
 
 
-def region_priority(name: str) -> int:
-    return 4 if '(USA)' in name else 3 if '(World)' in name else 2 if '(Europe)' in name else 1
+def _region_from_title(title: str) -> str | None:
+    match = re.search(r'\((USA|World|Europe|Japan)\)', str(title), re.I)
+    return match.group(1).casefold() if match else None
+
+
+def region_priority(name: str, *, source_region: str | None = None) -> int:
+    candidate = _region_from_title(name)
+    if source_region:
+        # Explicit source region is stronger evidence than general USA
+        # preference. Never silently select a European cover for a marked
+        # Japanese dump merely because the normalized title matches.
+        return 10 if candidate == source_region else -1
+    return {'usa': 4, 'world': 3, 'europe': 2, 'japan': 1}.get(candidate, 0)
 
 
 def find_art_matches(stem: str, catalog: list[str], limit: int = 6) -> dict:
     """Auto-assign only normalized exact names. Fuzzy results are REVIEW ONLY."""
     game_key = key_title(stem)
     exact = [c for c in catalog if key_title(c) == game_key] if game_key else []
-    auto = sorted(exact, key=lambda x: (-region_priority(x), len(x), x))[0] if exact else None
+    region = _region_from_title(stem)
+    if region:
+        exact = [c for c in exact if region_priority(c, source_region=region) > 0]
+    auto = sorted(exact, key=lambda x: (-region_priority(x, source_region=region),
+                                       len(x), x))[0] if exact else None
     ranked = sorted(((candidate_score(stem, c), c) for c in catalog), reverse=True)
     suggestions = [dict(title=c, score=score) for score, c in ranked
                    if score >= .35][:max(0, limit)]
@@ -368,10 +383,20 @@ def direct_cover_fallback(workspace: Path, system: str, stem: str, downloader=No
     Avoid a large number of requests and return a readable, retryable result.
     """
     downloader = downloader or stage_online_cover
-    clean = clean_title(stem)
+    # Sony's PBP TITLE field commonly includes symbols such as ™ or ®.
+    # Libretro's canonical cover filenames generally do not. Strip marks
+    # only from the *search*, never from the published title or ROM.
+    clean = re.sub(r'[™®℠]', '', clean_title(stem)).strip()
     if not clean or len(clean) > 160:
         return {'status': 'review', 'message': 'Use manual artwork search'}
-    options = list(dict.fromkeys([clean, clean+' (USA)', clean+' (Japan)', clean+' (Europe)']))
+    explicit_region = _region_from_title(stem)
+    if explicit_region:
+        options = [clean + ' (' + explicit_region.title().replace('Usa', 'USA') + ')']
+    else:
+        # User preference: USA is the first automatic fallback when the
+        # disc/image metadata does not specify a region.
+        options = list(dict.fromkeys([clean + ' (USA)', clean,
+                                      clean + ' (World)', clean + ' (Europe)']))
     for title in options:
         try:
             return downloader(workspace, system, stem, title)
