@@ -147,3 +147,12 @@ _Last organized: 2026-11-23. Current source: **v1.5.7 merged into main** (PR #11
 - [ ] L07: Actual FFVII CHDman completes and 3 CHDs + M3U display one artwork tile; hardware test and disc switching pending separately.
 
 [Full v1.6.2 list](LIBRARY_DEDUP_AND_PS1_PROGRESS.md).
+
+
+## M · v1.6.2 multi-game PSN batch folder tests
+- [ ] M01: A folder containing several ZIP, 7Z and PS1 Classics EBOOT.PBP files imports each game separately, with its own artwork, verified CHDs and M3U.
+- [ ] M02: GUI clearly displays GAME N/TOTAL and the active Disc 1/2/3 reconstruction stage at 125%; failures are summarized by game.
+- [ ] M03: Same EBOOT from two repackaged archives skips the second conversion with a single title tile.
+- [ ] M04: Broken archive does not prevent valid later games; cancellation stops future games and preserves originals.
+- [ ] M05: Unrelated PSP-native EBOOT in PS1 queue is flagged rather than turned into a corrupt PS1 CHD.
+- [ ] M06: All 13 supported consoles retain independent exact-content duplicate protection, separate regions and editions preserved.
