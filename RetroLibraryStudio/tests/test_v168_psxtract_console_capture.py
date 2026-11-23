@@ -57,6 +57,34 @@ def test_windows_process_trying_to_attach_parent_does_not_steal_stdout():
     assert 'PGD: Invalid 0x80 MAC hash!' in txt
 
 
+@pytest.mark.skipif(os.name != 'nt', reason='GUI subsystem helper is Windows only')
+def test_windows_gui_subsystem_child_does_not_reconnect_to_parent_console(tmp_path):
+    # pythonw.exe is a Windows GUI-subsystem executable, just like the
+    # upstream psxtract.exe. Reproduce AttachConsole and pipe output without
+    # needing commercial packages or running downloaded executables.
+    gui = Path(sys.executable).with_name('pythonw.exe')
+    if not gui.is_file():
+        pytest.skip('pythonw.exe not provided by this interpreter')
+    script = tmp_path / 'gui_helper.py'
+    script.write_text(
+        'import ctypes\n'
+        'from pathlib import Path\n'
+        'kernel = ctypes.WinDLL("kernel32", use_last_error=True)\n'
+        'kernel.AttachConsole.argtypes=[ctypes.c_uint]\n'
+        'kernel.AttachConsole.restype=ctypes.c_int\n'
+        'result = kernel.AttachConsole(0xFFFFFFFF)\n'
+        'print("GUI_ATTACHED="+str(result),flush=True)\n'
+        'print("PGD: Invalid 0x80 MAC hash!",flush=True)\n',
+        encoding='utf-8'
+    )
+    proc = subprocess.run([str(gui), str(script)],
+                          stdout=subprocess.PIPE,stderr=subprocess.STDOUT,
+                          timeout=20,check=True,**psxtract_launch_options())
+    out = proc.stdout.decode('utf-8', errors='replace')
+    assert 'GUI_ATTACHED=0' in out
+    assert 'PGD: Invalid 0x80 MAC hash!' in out
+
+
 def test_real_helper_launch_uses_capture_options_and_reports_known_pgd(tmp_path, monkeypatch):
     pbp = title_eboot(tmp_path / 'Sony' / 'SLUS00695' / 'EBOOT.PBP')
     helper = tmp_path / 'psxtract.exe'
