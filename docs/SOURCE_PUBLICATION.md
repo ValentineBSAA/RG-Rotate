@@ -13,6 +13,7 @@ The source is browsable and cloneable, so **Codex and future chats can work agai
 - Original ZIP: 3,074,882 bytes and 65 archive members. This includes the optional example cover.
 - GitHub code is a text-source-only equivalent, without that optional cover. Do **not** expect its ZIP checksum to match the original binary archive.
 - `python -m pytest -q --disable-warnings --maxfail=1` run on Linux: **225 passed, 15 skipped**.
+- [GitHub Actions v1.5.1 CI](https://github.com/ValentineBSAA/RG-Rotate/actions/runs/45138220982) passed: **241 Windows tests; 240 Linux tests with 1 skip**. These use mocked CHDman conversions.
 - v1.5.1 **real Windows CHDman / Synology NAS / physical RG Rotate acceptance remains pending**.
 
 ## Clone on Windows
