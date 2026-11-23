@@ -75,7 +75,9 @@ _GENERIC_TITLES = {
     'eboot', 'ps1', 'psx', 'psp', 'playstation', 'playstation 1',
     'playstation one', 'psn', 'game', 'games', 'content', 'data',
     'rom', 'roms', 'archive', 'archives', 'source', 'unpacked',
-    'collection', 'ps1 classics', 'psn collection', 'ps1 collection',
+    'download', 'downloads', 'batch', 'packages', 'imports', 'incoming',
+    'tmp', 'temp', 'cache', 'collection', 'ps1 classics',
+    'psn collection', 'ps1 collection',
     'ps1 game', 'ps1 games', 'disc', 'disk', 'cd', 'unknown',
 }
 _GENERIC_DISC = re.compile(
@@ -240,6 +242,8 @@ def meaningful_title(raw: str | None) -> str | None:
         name = new
     if (not name or name.casefold() in _GENERIC_TITLES
             or _GENERIC_DISC.fullmatch(name)
+            or re.fullmatch(r'(?i)(?:ps1|psx|playstation(?:[ _-]*(?:1|one))?)'
+                            r'\s*\((?:disc|disk|cd)\s*\d{1,2}\)', name)
             or _GAME_CODE.fullmatch(name)
             or name.casefold().startswith(('rgl-archive-', 'rgl-psn-extract-',
                                           'retro-ps1-chd-'))):
