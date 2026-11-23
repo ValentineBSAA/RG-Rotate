@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      # v1.6.6 source: route native PS1 file workflow to named app picker,
+      # v1.6.6 final candidate: exact branch HEAD after workspace guard and strict post-CHD art tests.
       # and only auto-apply exact artwork AFTER verified CHD conversion.
       # Synthetic tests are not real Windows NAS/CHDman acceptance.
       - name: Package checked-out source without altering existing installs
