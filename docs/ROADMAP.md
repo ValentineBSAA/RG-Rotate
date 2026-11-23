@@ -5,6 +5,8 @@ _Last updated: 2026-11-23 (Arizona time). Status is evidence-based, never assume
 
 ## P0 · Arriving device / first working PS1 import
 
+Tracked: [#1 Clock Tower CHD](https://github.com/ValentineBSAA/RG-Rotate/issues/1), [#2 multi-disc M3U](https://github.com/ValentineBSAA/RG-Rotate/issues/2), [#3 artwork](https://github.com/ValentineBSAA/RG-Rotate/issues/3), [#4 physical RG Rotate](https://github.com/ValentineBSAA/RG-Rotate/issues/4).
+
 - [x] Windows v1.4.4: Choose/remember an SMB/NAS virtual-card location without allocating a 512 GB image (user verified).
 - [x] Windows v1.4.4: Import at least one game to NAS and stop a running import without force-closing (user verified).
 - [x] Windows v1.4.x: Import Cocoon APK, PPSSPP APK, RetroArch APK; confirm staged packages (user verified).
@@ -23,6 +25,8 @@ _Last updated: 2026-11-23 (Arizona time). Status is evidence-based, never assume
 
 ## P1 · Beginner-first workflow and library completeness
 
+Tracked: [#5 app installer](https://github.com/ValentineBSAA/RG-Rotate/issues/5), [#6 UX/reliability/CI](https://github.com/ValentineBSAA/RG-Rotate/issues/6).
+
 - [ ] Replace remaining scattered controls with a clear guided “Add Games → Prepare Apps → Copy to Card” workflow at 100%, 110%, 125%, 140%, 150%; keep advanced screens discoverable.
 - [ ] Clearly show “Stage → Inspect → Convert → Verify → Add to Library → Find Artwork” under **one overall task progress bar**, with accurate stage text and cancellation.
 - [ ] Show per-game **logical title + disc count + complete file footprint**; list source tracks only in advanced details, not as separate playable games.
@@ -36,6 +40,8 @@ _Last updated: 2026-11-23 (Arizona time). Status is evidence-based, never assume
 - [ ] Establish GitHub Actions CI, verify Windows test runner, and tag a versioned source release.
 
 ## P2 · Hardware follow-through
+
+Tracked: [#7 built-in vs custom AI companion](https://github.com/ValentineBSAA/RG-Rotate/issues/7).
 
 - [ ] Choose a DS emulator and map single-screen top/bottom toggle to a spare button for *Yu-Gi-Oh! GX: Spirit Caller*; check touchscreen accuracy.
 - [ ] Test PSP favorites in PPSSPP, especially SOCOM Tactical Strike, Syphon Filter Dark Mirror / Logan's Shadow, Gran Turismo, and Pursuit Force Extreme Justice with RG Rotate's controls.
