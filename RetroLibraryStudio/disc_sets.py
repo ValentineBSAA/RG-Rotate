@@ -56,7 +56,17 @@ def inspect_cue(source: Path, cancel=None) -> dict:
                 current = None
                 continue
             name = match[1] or match[2]
-            path = source.parent / Path(name.replace('\\', '/'))
+            reference = Path(name.replace('\\', '/'))
+            # Keep every track within the selected source folder.
+            if reference.is_absolute() or '..' in reference.parts or ':' in name:
+                report['errors'].append(f'Line {lineno}: unsafe track reference {name!r}; keep the complete disc files together.')
+                current = None
+                continue
+            path = source.parent / reference
+            if path.is_symlink() or not path.resolve().is_relative_to(source.parent.resolve()):
+                report['errors'].append(f'Line {lineno}: track reference leaves the selected source folder: {name!r}')
+                current = None
+                continue
             current = {'name': name, 'path': str(path), 'type': match[3].upper(), 'bytes': None}
             report['files'].append(current)
             if not path.is_file():
