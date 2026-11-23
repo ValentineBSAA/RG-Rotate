@@ -1,5 +1,21 @@
 # Verification matrix · Retro Library Studio
 
+## v1.6.8 · Clock Tower error capture and helper diagnostics
+
+| Requirement | New tests | Actual Windows |
+| --- | --- | --- |
+| PS1 picker 30 titles correctly displayed | Existing v1.6.6 | **Passed in user's photos** |
+| Clock Tower II successful EBOOT extraction | Impossible with synthetic ROMs | **Still failed in v1.6.7** |
+| Hide separate PSXtract console, capture PGD logs via stdout pipe | New Win32 AttachConsole smoke tests | Pending user's v1.6.8 |
+| Report PGD versus generic helper status -1 | New parser/diagnostic tests | Pending v1.6.8 |
+| Adjacent KEYS length-only verification (without disclosing bytes) | New synthetic tests | Pending |
+| V3-only KEYS without manual support | v1.6.7 synthetic tests | Physical source pending |
+| CHDman verification then auto artwork | v1.6.6 tests | Pending further real games |
+| Other PS1 games continue; original EBOOT/KEYS untouched | Existing tests | Prior working Crash Bandicoot |
+
+[Full v1.6.8 checklist](PSXTRACT_CONSOLE_CAPTURE_v168.md).
+
+
 **v1.6.7 final source status (Nov 23, 2026):** [PR #25](https://github.com/ValentineBSAA/RG-Rotate/pull/25) merged into main as `a8550f1`. [Exact-source CI run 45283622819](https://github.com/ValentineBSAA/RG-Rotate/actions/runs/45283622819) **408 Windows passed; 407 Linux passed, 1 skipped**. [Windows v1.6.7 source ZIP run 45283608206](https://github.com/ValentineBSAA/RG-Rotate/actions/runs/45283608206) at commit `d313878` passed artifact CRC/manifest: 125 internal files. This build adds **receipt-gated PSXtract v3 key-only CLI forwarding** with actual adjacent KEYS.BIN and missing DOCUMENT.DAT safely represented as an empty optional argument, **no fake files**; unverified helpers stay conservative. Also fixes PGD/0x80 MAC error reporting and declutters 30-game title chooser. **Real Clock Tower II (SLUS00695) conversion has NOT been retested and must not be claimed fixed.** Physical RG Rotate microSD game testing and post-CHD artwork acceptance remain separate pending checks. Original EBOOT/KEYS, legacy generic PS1 CHDs and successful Crash Bandicoot games must remain unchanged. [v1.6.7 real Windows checklist](PSXTRACT_PGD_AND_PICKER_POLISH_v167.md).
 
 
