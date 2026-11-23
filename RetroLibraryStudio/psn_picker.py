@@ -71,8 +71,9 @@ def scan_psn_sources(folder: Path, *, cancel=None, progress=None,
                       ' • manual: ' + ('present' if manual else 'not found') +
                       '. Companion files are not separate games.')
             if keyfile and not manual:
-                detail += (' Legacy PSXtract may not accept a key-only positional '
-                           'argument; the built-in key derivation is used.')
+                detail += (' A key-only positional argument is supported by '
+                           'receipt-verified PSXtract v3; other helpers use '
+                           'their built-in key derivation.')
         else:
             # Do not extract multi-GB archives merely to show this chooser.
             # The importer will identify a PBP inside after selection.
