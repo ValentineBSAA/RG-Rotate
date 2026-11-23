@@ -40,7 +40,7 @@ def scan(mode: str, path: Path) -> int:
             companion = sum(f.stat().st_size for f in safe_walk(path/'CompanionData'))
             emit('result', mode=mode, path=str(path), used=used, count=count,
                  companion=companion, disc_tracks=disc_tracks,
-                 exfat_cluster_padding=int(metrics['cluster_padding']), entries=[
+                 exfat_cluster_padding=int(metrics.get('cluster_padding', 0)), entries=[
                      [str(e.path), e.label, e.system, e.size, e.extension, list(e.members)]
                      for e in entries])
         elif mode == 'apps':
