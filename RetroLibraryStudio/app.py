@@ -2578,6 +2578,137 @@ class Window(QMainWindow):
             # original standard import workflow after a cancellable scan.
             self._scan_psn_game_folder(Path(directory), allow_regular_import=True)
 
+    def _show_psn_game_picker(self, result: dict, *, allow_regular_import=False):
+        """User chooses actual titles, not opaque NPEE/NPUJ folder codes."""
+        if result.get('cancelled'):
+            self.set_status('PS1 folder scan stopped. No games imported.')
+            return
+        folder = Path(result.get('folder', self._game_picker_start()))
+        games = result.get('games') or []
+        if not games:
+            if allow_regular_import:
+                self.import_folder_path(folder)
+            else:
+                QMessageBox.information(self, 'No PlayStation Classics found',
+                    'No recognizable PS1 Classics EBOOT.PBP or ZIP/7Z packages '
+                    'were found in this folder. Nothing was imported.')
+            return
+
+        dialog = QDialog(self)
+        dialog.setWindowTitle('Choose PlayStation Classics by game title')
+        dialog.resize(1000, 690)
+        lay = QVBoxLayout(dialog)
+        lay.setContentsMargins(17, 17, 17, 17)
+        lay.setSpacing(10)
+        lay.addWidget(label('Choose the PS1 games you actually want', 'H2', True))
+        lay.addWidget(label(
+            f'{len(games)} source package(s) found  •  {folder}\n'
+            'Titles come from EBOOT metadata where available, not guessed Sony folder IDs. '
+            'Just select the games: EBOOT.PBP and its nearby KEYS.BIN are handled together. '
+            'Originals remain untouched.', 'Small', True))
+        if result.get('truncated'):
+            lay.addWidget(label(
+                'Preview limit reached (1,500 packages). Choose a smaller source folder '
+                'so no games are omitted.', 'Small', True))
+        query = QLineEdit()
+        query.setPlaceholderText('Filter by game title, Sony folder code or archive name…')
+        lay.addWidget(query)
+
+        table = QTableWidget(len(games), 5)
+        table.setHorizontalHeaderLabels(['Import', 'Game title', 'Sony folder / file', 'Type', 'Size'])
+        table.setSelectionMode(QAbstractItemView.SelectionMode.NoSelection)
+        table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
+        table.setAlternatingRowColors(True)
+        table.verticalHeader().setVisible(False)
+        table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)
+        table.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)
+        table.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeMode.Stretch)
+        table.horizontalHeader().setSectionResizeMode(3, QHeaderView.ResizeMode.ResizeToContents)
+        table.horizontalHeader().setSectionResizeMode(4, QHeaderView.ResizeMode.ResizeToContents)
+        selected_flags = (Qt.ItemFlag.ItemIsEnabled | Qt.ItemFlag.ItemIsUserCheckable)
+        for row, game in enumerate(games):
+            mark = QTableWidgetItem()
+            mark.setFlags(selected_flags)
+            mark.setCheckState(Qt.CheckState.Checked if len(games) == 1 else Qt.CheckState.Unchecked)
+            mark.setData(Qt.ItemDataRole.UserRole, game['path'])
+            table.setItem(row, 0, mark)
+            for col, value in enumerate([
+                game['title'],
+                game['code'] or Path(game['path']).name,
+                game['kind'], pretty_bytes(game['bytes'])
+            ], 1):
+                cell = QTableWidgetItem(str(value))
+                cell.setToolTip(game['detail'] + '\n' + game['path'])
+                table.setItem(row, col, cell)
+            if not game['identified']:
+                table.item(row, 1).setToolTip(
+                    'The game name is not yet known. If its archive contains an '
+                    'EBOOT with valid title metadata, import can identify it; '
+                    'otherwise this package is flagged for review, not mislabeled.')
+        lay.addWidget(table, 1)
+        summary = label('', 'Small', True)
+        lay.addWidget(summary)
+
+        def update_count(_item=None):
+            selected = sum(table.item(i, 0).checkState() == Qt.CheckState.Checked
+                           for i in range(table.rowCount()))
+            summary.setText(f'{selected} selected of {len(games)} packages. '
+                'Only selected games will be processed; no KEYS.BIN checkbox is needed.')
+
+        def filter_rows(value):
+            term = str(value).casefold().strip()
+            for i, game in enumerate(games):
+                searchable = (game['title'] + ' ' + game['code'] + ' ' +
+                              Path(game['path']).name).casefold()
+                table.setRowHidden(i, bool(term and term not in searchable))
+
+        def select_visible(value):
+            table.blockSignals(True)
+            for i in range(table.rowCount()):
+                if not table.isRowHidden(i):
+                    table.item(i, 0).setCheckState(
+                        Qt.CheckState.Checked if value else Qt.CheckState.Unchecked)
+            table.blockSignals(False)
+            update_count()
+
+        query.textChanged.connect(filter_rows)
+        table.itemChanged.connect(update_count)
+        actions = QHBoxLayout()
+        actions.addWidget(button('Select visible', lambda: select_visible(True)))
+        actions.addWidget(button('Clear visible', lambda: select_visible(False)))
+        actions.addStretch(1)
+        actions.addWidget(button('Cancel', dialog.reject))
+        paths = []
+
+        def accept_selected():
+            paths.clear()
+            paths.extend(str(table.item(i, 0).data(Qt.ItemDataRole.UserRole))
+                         for i in range(table.rowCount())
+                         if table.item(i, 0).checkState() == Qt.CheckState.Checked)
+            if not paths:
+                QMessageBox.information(dialog, 'Choose at least one game',
+                    'Select one or more PS1 games first, or press Cancel.')
+                return
+            dialog.accept()
+
+        actions.addWidget(button('Import selected games', accept_selected, 'Accent'))
+        lay.addLayout(actions)
+        update_count()
+        if dialog.exec() != QDialog.DialogCode.Accepted or not paths:
+            self.set_status('PS1 game selection cancelled. Nothing was imported.')
+            return
+        self.navigate(1)
+        self.set_status(f'Importing {len(paths)} selected PS1 game package(s). '
+                        'Game files and nearby keys remain untouched.')
+        self.start_import_process({
+            'mode': 'batch_psn_selected', 'paths': paths,
+            'workspace': str(self.workspace), 'fallback': 'PS1',
+            'auto_ps1_chd': True,
+            'auto_artwork': self.auto_cover.isChecked(),
+            'binary': str(tools_root() / 'chdman' / 'chdman.exe'),
+            'psxtract_binary': str(tools_root() / 'psxtract' / 'psxtract.exe')
+        }, 'Importing Selected PlayStation Classics')
+
     def import_folder_path(self, path: Path):
         if not self.ensure_workspace(): return
         chosen = self.ask_unknown_system()
