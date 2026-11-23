@@ -1,5 +1,14 @@
 # RG Rotate · Retro Library Studio
 
+## v1.6.6 Beta candidate · One PS1 chooser; exact artwork after CHD
+
+- **Unified single/multi-game PS1 selection:** Add Game Files / PS1 Titles from a remembered `PS1/NPEE...` location opens the custom searchable picker showing actual PBP metadata, not the native Windows folder-code-only window. Browse other ROM files remains available. All selected EBOOT.PBP packages find adjacent KEYS automatically.
+- **After CHD, not before:** PSXtract extraction → CHDman conversion and verification → verified CHD published → exact title artwork downloaded/applied automatically. USA first if region unknown; explicit region respected; no extra confirmation for confident matching; no fuzzy edition assignment.
+- **Why manual covers worked but automatic did not:** Trademark characters in metadata (e.g. `Crash Bandicoot™`) were counted as extra words during automatic exact matching. The artwork matcher now ignores trademark symbols *only* for cover matching, without changing game names.
+- Already-verified EBOOT receipt skips expensive conversion when retried, but can still fill a missing cover, preserving user-selected artwork. Network/artwork failures never invalidate an existing verified CHD.
+- Candidate pending real Windows checks. [v1.6.6 acceptance](docs/PS1_UNIFIED_PICKER_AND_POST_CHD_ART_v166.md).
+
+
 ## v1.6.5 Beta candidate · Select PS1 games by actual title, smart artwork
 
 - **PS1 Classics chooser:** select a NAS parent directory of Sony NPEE/NPUJ folders, read safe public EBOOT metadata, search actual game titles, check only wanted packages, and import with EBOOT+KEYS sidecars handled automatically. Folder codes alone are **not** trusted game titles. ZIP/7Z wrappers not identifiable before extraction are labeled as such.

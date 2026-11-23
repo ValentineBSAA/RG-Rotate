@@ -423,6 +423,11 @@ def guided_import(paths: list[Path], workspace: Path, fallback: str, binary: Pat
             if decision == 'same':
                 out['skipped'] += 1
                 out['duplicate_notes'].append(note)
+                # The source receipt already proved this collection is complete.
+                # An older verified CHD may still be missing artwork; retrying
+                # should fill its cover without ever re-running PSXtract/CHDman.
+                if auto_artwork:
+                    out['artwork_games'].append({'system': 'PS1', 'label': title})
                 phase(f'Already imported • {title} • one collection retained', 0, 0)
                 continue
             if decision == 'review':
@@ -451,6 +456,7 @@ def guided_import(paths: list[Path], workspace: Path, fallback: str, binary: Pat
                             and (converted['copied'] > 0 or converted['skipped'] > 0))
                 if finished:
                     out['collection_folder'] = str(Path(workspace) / 'ROMs' / 'psx' / title)
+                    phase(f'CHD verified and published • {title} • cover lookup is next', 84, 100)
                 if (finished and
                         ((len(prepared) == 1 and converted['converted'] == 1)
                          or (len(prepared) > 1 and
@@ -582,10 +588,12 @@ def guided_import(paths: list[Path], workspace: Path, fallback: str, binary: Pat
         for p in remaining:
             if p.suffix.lower() not in ('.bin', '.img') or infer_system(p, fallback) != 'PS1':
                 out['artwork_games'].append({'system': infer_system(p, fallback), 'label': p.stem})
-    if auto_artwork and out['artwork_games']:
+    # Post-conversion only: never search/apply cover before the source discs
+    # have become verified game files. Artwork errors must not undo a CHD.
+    if auto_artwork and out['artwork_games'] and not out['cancelled']:
         out['artwork_attempted'] = True
         from artwork_gallery import process_batch
-        phase('Looking for matching cover artwork', 86, 100)
+        phase('CHD/import complete • applying confident artwork matches', 86, 100)
         try:
             unique = list({(g['system'], g['label']):g for g in out['artwork_games']}.values())
             art = process_batch(workspace, unique, cancelled=cancel, max_items=80,
