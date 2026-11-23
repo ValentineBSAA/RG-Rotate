@@ -1,5 +1,8 @@
 # Verification matrix · Retro Library Studio
 
+**v1.6.5 completion update (November 23, 2026):** [PR #23](https://github.com/ValentineBSAA/RG-Rotate/pull/23) merged into main (squash `b8fe446`) after [Windows/Linux CI](https://github.com/ValentineBSAA/RG-Rotate/actions/runs/45278366622) passed **394 Windows, 393 Linux with one skip** on source commit `96c02a7`. [Windows 1.6.5 source ZIP](https://github.com/ValentineBSAA/RG-Rotate/actions/runs/45278357384) passed packaging/CRC and includes new PS1 title picker and tests; this is **source beta, not an EXE**. User's proven physical Windows baseline is still v1.6.4 Crash Bandicoot™ CHD conversion + Stop task working. **v1.6.5 real NAS PS1 folder selection, automatic artwork, duplicate retry, and physical RG Rotate launch NOT YET TESTED.** The new UI reads actual EBOOT title from public PBP metadata instead of guessing Sony NPEE product IDs; the user can select a subset and EBOOT companions are found automatically. Browse PS1 Classics, Add Folder, Add Files remember the last game folder. Existing anonymous PS1 CHDs from v1.6.2 should NEVER be automatically deleted/renamed. [Exact acceptance checklist](PSN_GAME_PICKER_AND_ARTWORK_v165.md).
+
+
 ## v1.6.5 Acceptance status
 
 | Test | Synthetic source | Windows/NAS | Physical RG Rotate |
