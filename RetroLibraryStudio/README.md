@@ -1,4 +1,6 @@
-# Retro Library Studio v1.5.8 Beta — Smart Multi-disc Collections
+# Retro Library Studio v1.5.9 Beta — Virtual exFAT Planner & Multi-disc Details
+
+> **v1.5.9 source candidate:** Corrects the M3U-only disc detail issue seen in your Resident Evil 2 Windows screenshots. Adds a SIMULATED Windows 11 exFAT formatted-capacity estimate below the original 512 GB nominal planner. Existing NAS files remain untouched, and Windows real-card Preview remains the authoritative measurement. No formatting, partitioning, deletion or preallocation. See [v1.5.9 acceptance](../docs/VIRTUAL_EXFAT_PLAN.md).
 
 > **v1.5.8 merged and source CI-tested:** Full PS1 game-folder import, one verified CHD per disc, one ordered M3U, one gallery tile and N DISCS badge. Adds existing CHD verification/organization, safe incremental disc additions and conservative naming. GitHub Windows/Linux source CI passed (289/288 tests plus 1 Linux skip); actual user Windows/Synology multi-disc import and RG Rotate acceptance remain pending. See [multi-disc test plan](../docs/MULTIDISC_ACCEPTANCE.md). Do not overwrite your v1.5.7 working folder.
 
