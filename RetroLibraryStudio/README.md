@@ -1,4 +1,4 @@
-# Retro Library Studio 1.5.2 Beta — Windows PS1 Acceptance
+# Retro Library Studio 1.5.3 Beta — Windows PS1 Acceptance
 
 Windows 11 / PySide6 source release, based on the supplied v1.4.4 project.
 Extract into a **new application folder**. Keep your existing PC/NAS library
@@ -285,3 +285,7 @@ The capacity check is non-destructive. Because the PySide6 UI and SMB network ca
 **Windows acceptance test:** close the stuck old app if necessary, then launch v1.2.3 from a new folder, keeping the same NAS workspace. Import only one small, nonessential homebrew/test game from a local PC folder. Press Stop while the import is active. It should return to Ready after the child exits. Retry that same file and confirm it completes, then verify that the original remains intact and the NAS has no falsely completed partial. Next test a slow NAS import. Do not start with a huge library or the real microSD.
 
 **Limitations:** The Windows Qt GUI and Synology SMB calls cannot be executed in this container. A subprocess hard-stop is tested locally but still requires a real Windows/NAS acceptance test. Other file-writing operations (APKs, CHD conversion, SD transfer) remain cooperatively cancellable; this change specifically isolates **game imports**. When Windows itself delays process termination, no software can promise an instantaneous OS-level stop. Never disconnect the NAS or unplug media during writes.
+
+## v1.5.3 · game file badges and alternate artwork source
+
+My Games shows a small CHD / BIN-CUE / M3U / ISO / PBP badge based on actual file extension. Click it for details. Artwork search uses official Libretro index with a GitHub fallback when unavailable; you can also pick your own cover.
