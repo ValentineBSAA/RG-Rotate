@@ -53,7 +53,7 @@ from system_shelves import (PRIMARY_SYSTEMS, console_counts, console_order_key,
                             console_visual, grouped_shelves)
 from workspace_setup import suggested_workspace, copy_existing_workspace, count_workspace_files
 
-VERSION = '1.6.5 Beta – Selectable PS1 Game Browser & Automatic Covers'
+VERSION = '1.6.6 Beta – Unified Game Titles & Automatic Cover Repair'
 SCALE_CHOICES = [('100%', 100), ('110%', 110), ('125%', 125), ('140%', 140), ('150%', 150)]
 MAX_VISIBLE_FILES = 1200
 
@@ -777,7 +777,7 @@ class Window(QMainWindow):
         actions = expandable(c, 'More import options',
             'Select individual files, a whole folder, or scan Downloads. ZIP and 7Z archives are unpacked automatically.')
         row = QGridLayout()
-        row.addWidget(self.register(button('＋ Add Game Files', self.pick_files, 'Primary')), 0, 0)
+        row.addWidget(self.register(button('＋ Add Game Files / PS1 Titles', self.pick_files, 'Primary')), 0, 0)
         row.addWidget(self.register(button('＋ Add Folder', self.pick_folder, 'Accent')), 0, 1)
         row.addWidget(self.register(button('Find Games in Downloads', self.find_downloads)), 1, 0, 1, 2)
         row.addWidget(self.register(button('◆ Browse PS1 Classics by game title (select any)…',
@@ -2543,6 +2543,21 @@ class Window(QMainWindow):
         self.settings.setValue('last_game_folder', str(folder))
 
     def pick_files(self):
+        """One or many PS1 games always enter the same named selection screen.
+
+        The standard Windows picker cannot relabel Sony product-code folders.
+        Use our title-aware dialog when the user's saved location is PS1 and
+        keep an explicit option for ordinary standalone ROM files.
+        """
+        if not self.ensure_workspace(): return
+        from psn_picker import ps1_parent_from_last_location
+        root = ps1_parent_from_last_location(self.last_game_folder)
+        if root:
+            self._scan_psn_game_folder(root)
+            return
+        self._pick_files_native()
+
+    def _pick_files_native(self):
         if not self.ensure_workspace(): return
         names, _ = QFileDialog.getOpenFileNames(self, 'Choose your existing game files', self._game_picker_start(),
             'Games and archives (*.zip *.7z *.chd *.cue *.bin *.img *.iso *.cso *.pbp *.m3u *.ccd *.ecm *.gba *.gb *.gbc *.nes *.sfc *.smc *.md *.gen *.nds *.n64 *.z64 *.v64 *.gdi *.cdi);;All files (*.*)')
@@ -2703,6 +2718,8 @@ class Window(QMainWindow):
         actions.addWidget(button('Select visible', lambda: select_visible(True)))
         actions.addWidget(button('Clear visible', lambda: select_visible(False)))
         actions.addStretch(1)
+        actions.addWidget(button('Browse other ROM files…',
+            lambda: (dialog.reject(), QTimer.singleShot(0, self._pick_files_native))))
         actions.addWidget(button('Cancel', dialog.reject))
         paths = []
 
