@@ -2731,7 +2731,7 @@ class Window(QMainWindow):
                 return
             dialog.accept()
 
-        actions.addWidget(button('Import selected', accept_selected, 'Accent'))
+        actions.addWidget(button('Import selected games', accept_selected, 'Accent'))
         lay.addLayout(actions)
         update_count()
         if dialog.exec() != QDialog.DialogCode.Accepted or not paths:
