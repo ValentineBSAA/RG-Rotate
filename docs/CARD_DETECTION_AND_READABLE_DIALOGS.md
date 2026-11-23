@@ -1,5 +1,7 @@
 # v1.6.0 · Friendly details + microSD adapter identity checks
 
+**Source status:** v1.6.0 merged into main, [GitHub CI](https://github.com/ValentineBSAA/RG-Rotate/actions/runs/45246376971) 311 Windows and 310 Linux passed (1 Linux skipped). Final GitHub-generated Windows source ZIP CRC validated, exact source clean-extract 279 local passed / 32 skipped (without PySide6). **No real USB adapter or physical RG Rotate acceptance yet.**
+
 ## Your proven starting point
 The user's real Windows v1.5.9 screenshots at 125% confirm Resident Evil 2 now displays **one cover tile, 2 DISCS**, with an M3U and both CHDs in game details. The nominal planner shows **2.71 GB staged / 512 GB advertised**, about **492.11 GB** further nominal game capacity after the AI/free budgets. The virtual exFAT model shows **511.98 GB estimated formatted**, about **492.09 GB** modeled game space. User requested that the dense details popups become as approachable as the rest of the application.
 
