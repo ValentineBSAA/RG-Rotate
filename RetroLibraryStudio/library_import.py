@@ -15,7 +15,7 @@ def infer_system(file: Path, default: str) -> str:
                '.nds':'Nintendo DS', '.n64':'Nintendo 64', '.z64':'Nintendo 64',
                '.v64':'Nintendo 64', '.cso':'PSP',
                '.cue':'PS1', '.ccd':'PS1', '.m3u':'PS1', '.gdi':'Dreamcast',
-               '.cdi':'Dreamcast'}
+               '.cdi':'Dreamcast', '.gcm':'GameCube'}
     return precise.get(suffix, default)
 
 
