@@ -1,5 +1,19 @@
 # Living Roadmap · RG Rotate / Retro Library Studio
 
+## v1.6.1 · PSN EBOOT/KEYS and validated 7-Zip import
+
+- [x] Source: distinguish PS1 Classics PSN EBOOT from PSP native EBOOT. Treat KEYS.BIN and DOCUMENT.DAT as companion files, not independent BIN tracks or CHDs.
+- [x] Source: optional PSXtract v3.0 pinned SHA-256 checked installer with user opt-in; no automatic format or unapproved executable download.
+- [x] Source: extracted CUE/BIN goes through prior CHDman verify, ordered M3U and one artwork tile; fail closed for missing tool, incomplete tracks, invalid disc order or unsupported PBP.
+- [x] Source: actual .7z creation/extraction tests (synthetic three-disc files), mocked PSXtract package handoff and unsafe extraction tests.
+- [ ] Exact GitHub Windows/Linux regression CI green for branch.
+- [ ] User confirms real 7z archive with Final Fantasy VII PSN EBOOT, KEYS.BIN, DOCUMENT.DAT safely extracts three actual disc CUE/BIN pairs.
+- [ ] User confirms actual CHDman produces three verified CHDs, one Final Fantasy VII.m3u, one artwork tile with 3 DISCS, originals unchanged.
+- [ ] RG Rotate emulator disc switching and saves verified on physical device.
+
+[Full acceptance](PS1_CLASSICS_7Z_ACCEPTANCE.md). Actual Sony PSN decryption is not proven by fake fixtures.
+
+
 ## v1.6.0 · Friendly details + safe USB microSD discovery
 
 - [x] Three dense details popups replaced by premium summary cards with expandable raw paths/bytes and Copy details.
