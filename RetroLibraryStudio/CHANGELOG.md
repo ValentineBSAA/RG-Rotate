@@ -1,6 +1,6 @@
 ## v1.5.6 Beta · Live 512 GB Card Planner (2026-11-23)
 
-## v1.5.8 source beta candidate · Smart Multi-disc Collections (2026-11-23)
+## v1.5.8 packaged source beta · Smart Multi-disc Collections (2026-11-23)
 
 - One new button **Import complete PS1 game folder…** to inspect complete CUE/BIN disc sets in an isolated worker, verify each lossless CHD, and stage into `ROMs/psx/<Game Title>/`.
 - Disc tags and editions handled conservatively. Resident Evil 2 (USA) Disc 1 and 2 join their edition, Final Fantasy VII (3 discs) and VIII (4 discs) remain separate; track files are not discs.
