@@ -51,6 +51,11 @@ _Last reviewed 2026-11-23. Only exact observed outcomes are marked **Passed**._
 - **v1.5.0**: uploaded source file was reviewed; in the current environment its Linux run was reported **205 passed, 15 skipped**. Its own release report claims 220 Windows passes; this report is not independent evidence here.
 - **v1.5.1**: **2026-11-23** rerun from source directory: `python -m pytest -q --disable-warnings --maxfail=1` → **225 passed, 15 skipped** (Linux). ZIP has **65 members**, passed `ZipFile.testzip()`; **size 3,074,882 bytes**. Test harness does not prove actual CHDman, live art-provider downloads, Windows DPI, NAS stall or hardware behavior.
 
+## Automated GitHub CI results, 2026-11-23
+
+- **Run [45138220982](https://github.com/ValentineBSAA/RG-Rotate/actions/runs/45138220982): PASSED.** Windows: **241 passed**. Linux: **240 passed, 1 skipped**. These are automated source tests, not genuine CHDman execution or RG Rotate hardware acceptance.
+- First run caught an actual Windows ZIP/CUE companion path normalization issue. Fixed in commits `89b1b6c` and `e51d25a`; subsequent cross-platform CI passed.
+
 ## Exact next real-world checklist
 1. On Windows run v1.5.1 in a new program directory while pointing at **existing** NAS library; do not delete or reset old workspace.
 2. Confirm CHDman actually runs, not just that chdman.exe exists.
