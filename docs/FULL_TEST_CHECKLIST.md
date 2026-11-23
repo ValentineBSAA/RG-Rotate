@@ -125,3 +125,12 @@ _Last organized: 2026-11-23. Current source: **v1.5.7 merged into main** (PR #11
 - [ ] K06: Verify Final Fantasy VII actually runs/switches discs on RG Rotate hardware.
 
 [Full PS1 Classics verification](PS1_CLASSICS_7Z_ACCEPTANCE.md).
+
+## K · v1.6.1 PSOne Classics / 7Z
+- [ ] K01: Real .7z archive with ordinary CUE/BIN multi-disc game converts through verified CHDman to single M3U tile.
+- [ ] K02: FFVII `EBOOT.PBP`/`KEYS.BIN`/`DOCUMENT.DAT` classified as a PS1 Classics package, not PSP or separate BIN disc.
+- [ ] K03: Missing PSXtract gives clear error, no partial file/image/silent copy; real upstream extractor installed by explicit user action.
+- [ ] K04: Real PSXtract outputs valid CUE/BIN, ordered CHDs and M3U, with original archive and keys intact.
+- [ ] K05: Final Fantasy VII renders one tile and number of discs matching **actual extracted game**, no guess based on packaging.
+- [ ] K06: Windows/Synology unchanged from v1.6.0; physical microSD and RG Rotate emulator disc swap still require separate test.
+[Full PSN/7Z acceptance](PSN_CLASSICS_IMPORT.md).
