@@ -8,6 +8,12 @@ The user bought an **Anbernic RG Rotate** with a **512 GB microSD** for PSP, PS1
 
 This GitHub repository was newly created with only an 11-byte placeholder README. On 2026-11-23 the **64 UTF-8 text source and test files for v1.5.1** were committed under `RetroLibraryStudio/` (commit `b458028`). The optional generated cover image is not published. Cloning the repo now provides Python/Windows source; the user still must install dependencies and perform Windows acceptance tests.
 
+## GitHub source + CI status
+
+- v1.5.1 text source and tests published under `RetroLibraryStudio/`.
+- [CI run 45138220982](https://github.com/ValentineBSAA/RG-Rotate/actions/runs/45138220982): **241 passed on Windows; 240 passed / 1 skipped on Linux**.
+- GitHub CI uncovered a ZIP/CUE-BIN path alias issue on Windows. Canonical path comparison fixed (`89b1b6c`), regression test added (`e51d25a`). The user still needs to run genuine CHDman on Windows before we say Clock Tower import is fully accepted.
+
 ## Current engineering baseline
 
 - **v1.4.4:** User ran Windows 11 GUI against real Synology NAS. Verified app launch and workspace selection; PS1 import; artwork tile; imported Cocoon APK to `SetupPackages`; PPSSPP and RetroArch APK staging; ADB and CHDman showed Ready (actual program execution not fully acceptance-tested). Library check reported 1 game, no duplicate groups, no broken CUE/M3U references. NAS→Windows practice transfer: **6/6 files SHA-256 verified** (roughly 1.21 GB); repeat run: **0 copied, 6 already identical, 6/6 verified**. Previously unresponsive Stop for NAS imports was repaired and user confirmed Stop now worked. Source file preservation was a top priority.
