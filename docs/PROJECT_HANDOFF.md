@@ -1,5 +1,14 @@
 # Project handoff · read this before working
 
+## v1.6.1 source candidate · PSOne Classics EBOOT and 7Z
+
+New real Windows screenshot shows `Final Fantasy VII (English)(PSN)/NPEF00069/EBOOT.PBP`, `KEYS.BIN`, `DOCUMENT.DAT`. This is a PS1 Classics PSN package, *not* a 3-disc CUE/BIN dump or normal PSP ISO. v1.6.0 had proper .7z archive handling but no PSN-to-CHD bridge and risked treating KEYS.BIN as a standalone PS1 BIN track.
+
+Branch `feature/v1.6.1-psn-eboot-and-7z-verification`: `ps1_psn.py` recognizes signatures and optional same-directory companions, extracts with separately installed PSXtract into disposable LOCAL Windows temp, validates ordered CUE/BIN set; `ps1_pipeline.guided_import` routes this to **existing CHDman conversion + M3U**, never directly converts `KEYS.BIN` or manual. Archive basename is used for game title when nested NPEF game-code would otherwise hide it. New `test_v161_psn_and_7z.py` has real 7Z archive and synthetic PSXtract test. Source CI and real Windows/PSXtract user acceptance **pending**; no real Sony decryption claimed.
+
+Do not change existing verified Resident Evil 2, its 2-DISCS UI, PSP games, 512 GB virtual card, NAS or backups. Acceptance: [PSN_CLASSICS_IMPORT.md](PSN_CLASSICS_IMPORT.md).
+
+
 ## v1.6.1 source candidate | PSN PS1 Classics + 7Z
 
 Real user photo shows Final Fantasy VII (English)(PSN)/NPEF00069 with EBOOT.PBP, KEYS.BIN and DOCUMENT.DAT. It is an official PS1 Classics PSN-style package, not a native PSP ISO. KEYS.BIN is companion key material; DOCUMENT.DAT is a manual. They should never become CHD files or be stored in the virtual ROMs. Final Fantasy VII original PS1 = 3 discs.
