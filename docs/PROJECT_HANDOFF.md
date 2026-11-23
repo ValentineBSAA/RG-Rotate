@@ -85,3 +85,5 @@ The latest GitHub workflow run [45138220982](https://github.com/ValentineBSAA/RG
 - **Artwork:** Libretro catalog is primary. If it fails, try official `api.github.com/repos/libretro-thumbnails/<platform>/git/trees/master?recursive=1`, with limited response size and cached index. Cover retrieval can fall back to official `raw.githubusercontent.com` image. Manual browser/PC image fallback remains.
 - **Build:** `RetroLibraryStudio_v1.5.3_Windows_Test_Beta.zip`, clean extraction tests **230 passed / 15 skipped** on Linux; real online provider and actual Windows UI still require user acceptance.
 - **Next:** Have user click Clock Tower's file-type badge. If BIN/CUE, conversion still pending; run the existing CHDman action on source CUE/track pair with no source-file deletion. Then test artwork search. Do not treat reported size as evidence of successful CHD conversion.
+
+- **CI after v1.5.3 badge/artwork changes:** [run 45141431778](https://github.com/ValentineBSAA/RG-Rotate/actions/runs/45141431778) passed **245 tests on Windows**, **244 pass and 1 skip on Linux**; unit tests use mocked artwork endpoints, so user screenshot verification is still required.
