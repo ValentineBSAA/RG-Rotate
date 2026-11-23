@@ -32,7 +32,8 @@ _Last updated: 2026-11-23 (Arizona time). Status is evidence-based, never assume
 - [ ] Test imported CHDs, ZIP/7Z, M3Us and playlist paths when transferred and opened by Cocoon and standalone emulators.
 - [ ] Add production-quality artwork retrieval/provider failure messages; prevent repeated NAS scans from locking UI.
 - [ ] Verify home-screen browsing, multi-system game organization, favorites, and navigation for the 720×720 screen.
-- [ ] Publish **actual tested source files** to this GitHub repo (see SOURCE_PUBLICATION.md), ensure automated tests run in CI, and tag a versioned release.
+- [x] Publish the full **v1.5.1 text source and tests** in this GitHub repo under `RetroLibraryStudio/` (commit `b458028`).
+- [ ] Establish GitHub Actions CI, verify Windows test runner, and tag a versioned source release.
 
 ## P2 · Hardware follow-through
 
