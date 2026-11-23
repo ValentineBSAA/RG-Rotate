@@ -395,12 +395,28 @@ def _import_one(source: Path, workspace: Path, system: str, progress: Progress |
             # Detect possible conflicts BEFORE publishing the first archive
             # member, so an ambiguous game does not partially enter the NAS.
             decisions = {}
+            # Files inside the SAME archive can also be copies of one another.
+            # Hash only repeated sizes so large distinct games aren't needlessly
+            # re-read; CUE/BIN and other disc companions never enter this check.
+            size_counts = {}
+            for f in extracted:
+                if is_single_game_file(f):
+                    size = f.stat().st_size
+                    size_counts[size] = size_counts.get(size, 0) + 1
+            seen_archive_digests = set()
             for f in extracted:
                 if is_single_game_file(f):
                     decision, note = inspect_game_duplicate(
                         f, workspace, system, cancel=cancel)
                     if decision == 'review':
                         raise ValueError(note)
+                    if decision == 'new' and size_counts.get(f.stat().st_size, 0) > 1:
+                        digest = (f.stat().st_size, sha256(f, cancel))
+                        if digest in seen_archive_digests:
+                            decision = 'exact'
+                            note = f'Identical game file already included earlier in this archive: {f.name}'
+                        else:
+                            seen_archive_digests.add(digest)
                     decisions[f] = (decision, note)
             for f in extracted:
                 if cancel is not None and cancel.is_set():
