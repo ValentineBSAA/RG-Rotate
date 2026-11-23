@@ -359,7 +359,13 @@ def guided_import(paths: list[Path], workspace: Path, fallback: str, binary: Pat
                 raise ValueError('No recognized game files found inside the archive')
             # An archive containing an NPEF... directory otherwise loses the
             # actual game title and becomes an anonymous game-code folder.
-            title_hint = psn_title_hint or (archives[0].stem if len(archives) == 1 else None)
+            # An archive can contain several different PSN EBOOT games.
+            # Never force the single archive filename on every game in it.
+            from ps1_psn import is_ps1_classic
+            eboots = [p for p in unpacked if p.suffix.lower() == '.pbp'
+                      and is_ps1_classic(p)]
+            title_hint = psn_title_hint or (archives[0].stem
+                         if len(archives) == 1 and len(eboots) == 1 else None)
             return guided_import([p for p in paths if p not in archives] + unpacked,
                                 workspace, fallback, binary, progress=progress,
                                 cancel=cancel, auto_artwork=auto_artwork,
