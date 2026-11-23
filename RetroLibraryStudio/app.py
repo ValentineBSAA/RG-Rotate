@@ -53,7 +53,7 @@ from system_shelves import (PRIMARY_SYSTEMS, console_counts, console_order_key,
                             console_visual, grouped_shelves)
 from workspace_setup import suggested_workspace, copy_existing_workspace, count_workspace_files
 
-VERSION = '1.6.0 Beta – Friendly Details & Safe microSD Detection'
+VERSION = '1.6.1 Beta – PS1 Classics EBOOT & 7Z Import'
 SCALE_CHOICES = [('100%', 100), ('110%', 110), ('125%', 125), ('140%', 140), ('150%', 150)]
 MAX_VISIBLE_FILES = 1200
 
@@ -897,6 +897,7 @@ class Window(QMainWindow):
             ('RetroArch', 'Other classic systems', True),
             ('Android Platform Tools', 'USB-assisted device setup on Windows', True),
             ('CHDman', 'Optional PS1 disc conversion on Windows', True),
+            ('PSXtract', 'Optional PS1 Classics PSN EBOOT.PBP extraction', False),
             ('DuckStation', 'Optional PS1 app, Cocoon compatibility needs testing', False),
         ]
         self.install_state_labels: dict[str, QLabel] = {}
