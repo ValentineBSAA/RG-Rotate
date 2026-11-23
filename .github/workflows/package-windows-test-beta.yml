@@ -13,7 +13,7 @@ jobs:
       - uses: actions/checkout@v4
       # v1.6.4 fix-candidate source artifact. Real Windows Stop and game-title tests pending.
       # v1.6.4 candidate after regression corrections: checked-out SHA only; do not infer Windows NAS acceptance.
-      # Package checked-out branch or main source; do not claim physical Windows acceptance.
+      # Package v1.6.4 checked-out SHA after acceptance doc and Unicode regression tests landed.
       - name: Package checked-out source without altering existing installs
         shell: bash
         run: |
