@@ -1,17 +1,17 @@
 {
   "version": "1.6.2",
-  "title": "Live PS1 Classic Disc Progress + 13-console Exact-Content Dedupe",
+  "title": "Live PS1 Disc Progress, 13-console Dedupe and PSN Batch Import",
   "build_date": "2026-11-23",
   "platform": "Windows source (PySide6)",
   "source_CI": {
-    "status": "pending final v1.6.2 Windows/Linux GitHub CI"
+    "status": "pending final Windows/Linux source CI for v1.6.2 batch queue"
   },
   "local_pytest": {
     "passed": 266,
     "skipped": 25
   },
-  "windows_real_acceptance": "v1.6.1 real 7Z/PBP PSXtract extraction reached Disc 3 and CHDman Disc 1; user final three-CHD/M3U completion not yet supplied. v1.6.2 UI and duplicate checks need user 125% screenshots.",
-  "device_acceptance": "Real RG Rotate multi-disc launch, saves, physical card copy and USB detection pending",
+  "windows_real_acceptance": "v1.6.1 user observed FFVII 7Z PSN disc 1-3 reconstructed, MD5 pass and CHDman start; final 3 CHDs/M3U and v1.6.2 125% UI batch test not yet observed.",
+  "device_acceptance": "RG Rotate PSP/PS1 real gameplay, microSD first transfer and FFVII disc swapping remain pending",
   "source_files": [
     "app.py",
     "core.py",
@@ -20,7 +20,9 @@
     "ps1_pipeline.py",
     "ps1_duplicates.py",
     "library_duplicates.py",
-    "tests/test_v162_library_duplicates.py"
+    "tests/test_v162_library_duplicates.py",
+    "ps1_batch.py",
+    "tests/test_v162_psn_batch.py"
   ],
-  "safety": "Exact SHA-256 content matches only within same console skipped; matching titles with different data need user review. No source ROMs, keys, archives, existing CHD/M3Us or artwork deleted or overwritten. PSN receipts live in ignored metadata."
+  "safety": "13-console dedupe is per-platform, SHA-256 for exact bytes; uncertain same-title variants held for review. Batch PS1 Classics ZIP/7Z/PBP imports isolated per game, preserve original sources and KEYS.BIN; native PSP EBOOT not turned into PS1 CHD. No automatic deletion or format."
 }
