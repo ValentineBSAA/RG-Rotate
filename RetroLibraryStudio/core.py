@@ -20,10 +20,10 @@ FREE_RESERVE = 8 * GIB
 GAME_BUDGET = CAPACITY - COMPANION_BUDGET - FREE_RESERVE
 MAX_ARCHIVE_BYTES = 32_000_000_000  # explicit safety limit per archive
 MAX_ARCHIVE_FILES = 10_000
-ROM_EXT = {".chd", ".cue", ".bin", ".img", ".iso", ".cso", ".pbp", ".m3u", ".ccd", ".ecm", ".sub", ".mdf", ".mds", ".nrg", ".gba", ".gb", ".gbc", ".nes", ".sfc", ".smc", ".md", ".gen", ".nds", ".n64", ".z64", ".v64", ".gdi", ".cdi"}
+ROM_EXT = {".chd", ".cue", ".bin", ".img", ".iso", ".cso", ".pbp", ".m3u", ".ccd", ".ecm", ".sub", ".mdf", ".mds", ".nrg", ".gba", ".gb", ".gbc", ".nes", ".sfc", ".smc", ".md", ".gen", ".nds", ".n64", ".z64", ".v64", ".gdi", ".cdi", ".gcm", ".gcz", ".rvz"}
 ARCHIVE_EXT = {".zip", ".7z"}
 SUPPORTED = ROM_EXT | ARCHIVE_EXT
-SYSTEM_DIR = {"PS1": "psx", "PSP": "psp", "GBA": "gba", "GB": "gb", "GBC": "gbc", "NES": "nes", "SNES": "snes", "Genesis": "md", "Nintendo DS": "nds", "Nintendo 64": "n64", "Dreamcast": "dc"}
+SYSTEM_DIR = {"PS1": "psx", "PSP": "psp", "GBA": "gba", "GB": "gb", "GBC": "gbc", "NES": "nes", "SNES": "snes", "Genesis": "md", "Nintendo DS": "nds", "Nintendo 64": "n64", "Dreamcast": "dc", "PS2": "ps2", "GameCube": "gc"}
 IGNORED_FOLDERS = {".retro-library", ".retro-tmp"}
 Progress = Callable[[str, int, int], None]
 
@@ -442,7 +442,7 @@ def import_files(paths: list[Path], workspace: Path, system: str, progress: Prog
 
 
 def prepare_layout(workspace: Path) -> None:
-    for name in ("ROMs/psx", "ROMs/psp", "ROMs/gba", "ROMs/gb", "ROMs/gbc", "ROMs/nes", "ROMs/snes", "ROMs/md", "ROMs/nds", "ROMs/n64", "ROMs/dc", "BIOS", "Media", "CocoonData", "SetupPackages", "CompanionData/Memory", "CompanionData/Settings", ".retro-library"):
+    for name in ("ROMs/psx", "ROMs/psp", "ROMs/gba", "ROMs/gb", "ROMs/gbc", "ROMs/nes", "ROMs/snes", "ROMs/md", "ROMs/nds", "ROMs/n64", "ROMs/dc", "ROMs/ps2", "ROMs/gc", "BIOS", "Media", "CocoonData", "SetupPackages", "CompanionData/Memory", "CompanionData/Settings", ".retro-library"):
         (workspace / name).mkdir(parents=True, exist_ok=True)
 
 
