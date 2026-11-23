@@ -11,6 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      # Merged-main v1.6.2 exact-source artifact and all-console dedupe verification.
       # v1.6.2: real ZIP/7Z multi-package queue, 13-console dedupe, and PS1 per-disc status.
       - name: Package checked-out source without altering existing installs
         shell: bash
