@@ -845,7 +845,7 @@ class Window(QMainWindow):
         self.cover_info = label('Your cover gallery will appear here after importing games.', 'Small', True)
         content.addWidget(self.cover_info)
         art_actions = QHBoxLayout()
-        self.auto_cover = QCheckBox('Look for covers automatically after imports')
+        self.auto_cover = QCheckBox('Auto-save confidently matched covers (USA preferred if region unknown)')
         self.auto_cover.setChecked(str(self.settings.value('auto_covers', 'true')).lower() not in ('false', '0'))
         self.auto_cover.toggled.connect(lambda enabled: self.settings.setValue('auto_covers', bool(enabled)))
         art_actions.addWidget(self.auto_cover, 1)
@@ -1259,6 +1259,7 @@ class Window(QMainWindow):
         self.current_task_name = task_name
         self.ps1_disc_steps = {}
         self.ps1_disc_phase.hide()
+        self.active_game_title = ''
         self.active_batch_index = 0
         self.batch_count_label.hide()
         self.import_finished_callback = finished or self.import_completed
@@ -1477,10 +1478,21 @@ class Window(QMainWindow):
                     self.ps1_disc_phase.hide()
                 self.active_batch_index = index
                 self.batch_count_label.setText(f'GAME {index} / {count}  •  {label_name}')
+                self.active_game_title = label_name
                 self.batch_count_label.show()
             elif 'Batch complete' in str(name):
                 self.batch_count_label.setText(str(name))
                 self.batch_count_label.show()
+        # The title can become known after opening the PBP, without waiting
+        # until a CHD has finished. The main UI shows it beside each stage.
+        if 'Checking for an existing PS1 collection: ' in str(name):
+            self.active_game_title = str(name).split(
+                'Checking for an existing PS1 collection: ', 1)[-1].strip().split(' • ', 1)[0]
+        if 'Inspecting PS1 Classic ' in str(name) and not self.active_game_title:
+            self.active_game_title = str(name).split('Inspecting PS1 Classic ', 1)[-1].strip()
+        if self.active_game_title:
+            self.task_title.setText(
+                f'Working on: {self.current_task_name}  •  {self.active_game_title[:65]}')
         if 'Extracting PS1 Classic •' in str(name):
             import re
             disc_match = re.search(r'Disc (\d{1,2})', name)
@@ -1504,6 +1516,14 @@ class Window(QMainWindow):
                        if count else 'disc count not reported by extractor')
             self.ps1_disc_phase.setText(
                 f'PS1 EXTRACTION ✓  •  {message}  •  preparing CHDs')
+            self.ps1_disc_phase.show()
+        elif 'Converting PS1 disc to CHD' in str(name):
+            self.ps1_disc_phase.setText(
+                f'CHD CONVERSION  •  {self.active_game_title or "PS1 game"}  •  processing disc image')
+            self.ps1_disc_phase.show()
+        elif 'Verifying converted CHD' in str(name) or 'Verified ' in str(name):
+            self.ps1_disc_phase.setText(
+                f'CHD VERIFICATION  •  {self.active_game_title or "PS1 game"}')
             self.ps1_disc_phase.show()
         if name == '@capacity':
             self.staged_bytes = max(0, int(current))
@@ -1979,7 +1999,7 @@ class Window(QMainWindow):
                 if game.system == 'PS1':
                     from ps1_psn import meaningful_title
                     if meaningful_title(game.label) is None:
-                        t.addWidget(label('Title needs review before copying to card',
+                        t.addWidget(label('Unidentified legacy PS1 entry • inspect folder before cleanup',
                                           'Small', True))
                 t.addWidget(button('Open game folder', lambda _=False, g=game: self.open_path(g.path.parent)))
                 t.addWidget(button('Edit display title…', lambda _=False, g=game: self.edit_game_title(g)))
