@@ -4,11 +4,11 @@
 
 | Feature | Source/mock test | Real Windows PSN FFVII | Physical RG Rotate |
 | --- | --- | --- | --- |
-| Actual py7zr .7z with 3 synthetic CUE/BIN discs | Added, CI pending | Real user archive pending | N/A |
-| PSN PBP + KEYS/DOCUMENT distinguished from PSP native | Synthetic header/source tests, CI pending | Original package classification pending | N/A |
-| PSXtract pinned release downloaded only by consent | Installer ZIP/integrity mock tests, CI pending | Real install pending | N/A |
+| Actual py7zr .7z with 3 synthetic CUE/BIN discs | Actual .7z regression passed on Windows/Linux CI | Real user archive pending | N/A |
+| PSN PBP + KEYS/DOCUMENT distinguished from PSP native | Synthetic header tests passed on Windows/Linux CI | Original package classification pending | N/A |
+| PSXtract pinned release downloaded only by consent | Installer ZIP/integrity tests passed on Windows/Linux CI | Real install pending | N/A |
 | PSXtract decrypts real FFVII disc images | MOCKED helper only | **NOT VERIFIED** | N/A |
-| CHDman verifies discs, ordered M3U, one artwork tile | Fake three-disc regression, CI pending | **NOT VERIFIED for PBP source**; RE2 path previously passed | Disc switching pending |
+| CHDman verifies discs, ordered M3U, one artwork tile | Synthetic three-disc regression passed on Windows/Linux CI | **NOT VERIFIED for PBP source**; RE2 path previously passed | Disc switching pending |
 | Original key/manual and NAS archive preserved | Code/test fixtures | User check pending | N/A |
 
 [Required real-file testing](PS1_CLASSICS_7Z_ACCEPTANCE.md). A helper's checksum is release integrity, NOT independent security certification.
