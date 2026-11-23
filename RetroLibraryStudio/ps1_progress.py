@@ -26,6 +26,8 @@ class PSXtractMilestones:
         self.discs_seen = set()
         self.md5_confirmed = False
         self.md5_failed = False
+        self.pgd_header_failed = False
+        self.iso_header_failed = False
 
     def event(self, line: str) -> str | None:
         """Produce friendly per-disc status ONLY when a meaningful stage changes."""
@@ -34,7 +36,13 @@ class PSXtractMilestones:
             return None
         text = s.casefold()
         msg = None
-        if 'multi-disc game detected' in text:
+        if 'invalid 0x80 mac hash' in text:
+            self.pgd_header_failed = True
+            msg = 'PS1 extraction blocked • Protected image-header authentication failed'
+        elif 'iso header decryption failed' in text:
+            self.iso_header_failed = True
+            msg = 'PS1 extraction blocked • Could not read the protected disc header'
+        elif 'multi-disc game detected' in text:
             msg = 'Extracting PS1 Classic • multi-disc game recognized'
         elif _MD5_FAIL.search(s):
             self.md5_failed = True
