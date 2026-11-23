@@ -81,17 +81,22 @@ def test_qt_console_nav_filters_gallery_and_preserves_game_entries(tmp_path, mon
         window.navigate(1, refresh_apps=False)
         window.fill_card()
         qt.processEvents()
-        headings = window.gallery_page.findChildren(QFrame, 'ConsoleSection')
+        # Qt deleteLater() keeps former child widgets alive briefly. Inspect
+        # only the live grid-layout membership, not all parented descendants.
+        def gallery_items(kind):
+            layout = window.gallery_grid
+            return [layout.itemAt(i).widget() for i in range(layout.count())
+                    if layout.itemAt(i).widget().objectName() == kind]
         pills = window.console_nav_page.findChildren(QPushButton, 'SystemPill')
-        assert len(headings) == 4
+        assert len(gallery_items('ConsoleSection')) == 4
         assert len(pills) >= 7
-        assert len(window.gallery_page.findChildren(QFrame, 'GameTile')) == 4
+        assert len(gallery_items('GameTile')) == 4
         assert '4 games shown' in window.library_count.text()
         # Both the legacy combo and the new tabs share the same selected system.
         window.game_filter.setCurrentText('GameCube')
         qt.processEvents()
-        assert len(window.gallery_page.findChildren(QFrame, 'GameTile')) == 1
-        assert len(window.gallery_page.findChildren(QFrame, 'ConsoleSection')) == 1
+        assert len(gallery_items('GameTile')) == 1
+        assert len(gallery_items('ConsoleSection')) == 1
         assert '1 games shown' in window.library_count.text()
         window.set_gallery_mode('List')
         assert window.card_table.rowCount() == 1
