@@ -264,3 +264,17 @@ def test_previous_disc_conversion_is_one_visible_worker_task(tmp_path, monkeypat
     result=import_worker.handle({'mode':'optimize_existing_ps1','workspace':str(card),
                                  'binary':'C:/chdman.exe','auto_artwork':True},Event())
     assert result['converted']==1 and observed==[cue]
+
+
+def test_aliased_bin_companions_are_not_imported_as_standalone_tracks(tmp_path):
+    """Windows ZIP/short-path aliases must match the resolved CUE companions."""
+    cue, bins = make_disc(tmp_path / 'source')
+    alias = cue.parent / 'aliasdir'
+    alias.mkdir()
+    selected = [cue] + [alias / '..' / p.name for p in bins]
+    result = guided_import(selected, tmp_path / 'virtual', 'PS1', tool(tmp_path),
+                           auto_artwork=False, converter=fake_converter)
+    assert result['converted'] == 1
+    assert not result['errors']
+    assert (tmp_path / 'virtual' / 'ROMs' / 'psx' / (cue.stem + '.chd')).is_file()
+    assert not list((tmp_path / 'virtual' / 'ROMs' / 'psx').glob('*.bin'))
