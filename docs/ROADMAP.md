@@ -1,4 +1,17 @@
 # Living Roadmap · RG Rotate / Retro Library Studio
+
+## v1.5.7 · Console shelves and system-aware library (source candidate)
+
+**Implementation in `feature/v1.5.7-system-shelves` only until merged:** display-only system sections with full-width headers, colored console pills and logical game counts; matching gallery/file-list filters; conservative explicit PS2/GameCube folders and experimental-use warnings. No actual RG Rotate support claim or new OS/app installation.
+- [x] Source logic and offline Qt regression cases committed for console group ordering, 100/125/150% scaling, filter synchronization, import folder classification.
+- [ ] GitHub Windows/Linux CI green for the PR head (not yet counted as passed).
+- [ ] Real Windows v1.5.7 screenshot at 125%, tabs, grouping, search, file list, artwork and no duplicate discs.
+- [ ] Validate PS2/GameCube isolated test imports with original NAS sources untouched.
+- [ ] Preserve v1.5.5 batch CHD pending verification, v1.5.6 capacity meter pending Windows UI/hardware verification.
+- [ ] Physical RG Rotate gameplay, system cover mapping and emulation tests after device arrives.
+
+**Complete acceptance plan:** [FULL_TEST_CHECKLIST.md](FULL_TEST_CHECKLIST.md) covering A01–G05; do not replace older real results with inferred passes.
+
 _Last updated: 2026-11-23 (Arizona time). Status is evidence-based, never assumed._
 
 **Definition of done:** A checked item has met its own acceptance criteria, not just compiled or passed mocked tests. Use **[x]** only for the exact tier verified. Each milestone must have code, regression tests, updated docs, and a real acceptance result where applicable.
