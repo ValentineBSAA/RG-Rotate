@@ -1,5 +1,14 @@
 # Project handoff · read this before working
 
+## 2026-11-23 · v1.5.7 source candidate: system shelves
+
+Branch: `feature/v1.5.7-system-shelves` in `ValentineBSAA/RG-Rotate`. v1.5.6 was the previous code baseline (512 GB staged capacity meter, Windows CI 274 passed / Linux CI 273 passed, 1 skipped). This branch adds visual **console tabs/pills** with live logical game counts and strong grouped headings in My Games, preserving existing cover and game-format badges, title edits, contextual CHD actions, gallery paging, filtering, file-list view and 512 GB meter. Primary sections PSP, PS1, Nintendo DS, GBA, PS2, GameCube; other known systems follow. The shelf system is display-only: it never scans NAS to build visual groups and does not touch ROM files.
+
+`core.SYSTEM_DIR` now has explicit `ROMs/ps2` and `ROMs/gc` directories for **user-selected legal game image organization**; GameCube `.gcm` infers GameCube; ambiguous `.iso`, `.rvz`, `.gcz` use selected system or parent folder. **PS2 and GameCube are experimental on this T618/3 GB RG Rotate, not guaranteed playable.** Artwork catalogs are merely best-effort. The new comprehensive [test checklist](FULL_TEST_CHECKLIST.md) includes all remaining Windows/NAS, batch verified-cleanup, card and handheld tests. New code/Qt tests require GitHub CI and real Windows user acceptance before calling a release verified. No new ZIP is claimed.
+
+Do not regress prior user-observed v1.5.4 Clock Tower 55.4 MB and Resident Evil 311.9 MB CHDman-verified Windows conversions, v1.4.x NAS Stop and practice 6/6 SHA-256 verification. **v1.5.5 batch-delete/backup modes and v1.5.6 Windows capacity-bar UI remain pending user acceptance.** Preserve originals on Synology, historical backup folders, existing virtual card and CompanionData. Do not touch physical card until actual device arrives.
+
+
 **Snapshot date:** 2026-11-23, America/Phoenix. **Latest source artifact:** Retro Library Studio **v1.5.5** (batch lossless PS1 CHD, verified virtual-card cleanup and cover preview sizing). **Last broadly user-verified Windows transfer baseline:** **v1.4.4**.
 
 ## Why this exists
