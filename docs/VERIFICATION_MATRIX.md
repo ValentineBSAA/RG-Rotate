@@ -1,5 +1,18 @@
 # Verification matrix · Retro Library Studio
 
+## v1.6.4 · Unicode PSN CUE handoff
+
+| Test | Synthetic / CI | Real Windows CHDman | Hardware |
+| --- | --- | --- | --- |
+| Crash Bandicoot™ PBP title recognition | Existing v1.6.3 tests passed | **Passed title display in v1.6.3** | N/A |
+| Unicode PSN CUE passed to CHDman via ASCII alias | New v1.6.4 source/tests | **Pending**; v1.6.3 direct path failed | N/A |
+| Correct Unicode folder / verified CHD | Synthetic v1.6.4 test | **Pending** | RG Rotate pending |
+| Unicode BIN hardlink alias cleanup | Synthetic v1.6.4 test | Pending | N/A |
+| Repeat exact PSN EBOOT duplicate skip | Existing synthetic test | **Pending**; first import produced 0 files | N/A |
+
+[Acceptance](PSN_UNICODE_CHDMAN_v164.md)
+
+
 **Verification update:** v1.6.3 exact-source code/tests passed [CI run 45269373105](https://github.com/ValentineBSAA/RG-Rotate/actions/runs/45269373105) on Windows (379) and Linux (378, 1 skipped). [PR #21 merged](https://github.com/ValentineBSAA/RG-Rotate/pull/21). [Packaging passed](https://github.com/ValentineBSAA/RG-Rotate/actions/runs/45269530914). All real user Windows/NAS and RG Rotate v1.6.3 checks remain unchecked.
 
 
