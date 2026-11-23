@@ -257,3 +257,16 @@ def test_extractor_output_bridge_yields_live_events_without_raw_console(tmp_path
     assert any('Disc 1 identified' in x for x in notices)
     assert any('Disc 1 reconstructed' in x for x in notices)
     assert all('KEYS.BIN' not in x for x in notices)
+
+def test_duplicate_files_inside_one_zip_do_not_create_two_game_tiles(tmp_path):
+    import zipfile
+    workspace=tmp_path/'virtual'
+    archive=tmp_path/'TwoCopies.zip'
+    with zipfile.ZipFile(archive,'w') as z:
+        z.writestr('FirstGame.gba',b'ONE IDENTICAL PAYLOAD')
+        z.writestr('RenamedCopy.gba',b'ONE IDENTICAL PAYLOAD')
+    copied, skipped, errors=import_files([archive],workspace,'GBA')
+    assert (copied,skipped,errors)==(1,1,[])
+    assert len(list((workspace/'ROMs'/'gba').rglob('*.gba')))==1
+    assert archive.exists()
+
