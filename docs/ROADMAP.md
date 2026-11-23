@@ -1,5 +1,18 @@
 # Living Roadmap · RG Rotate / Retro Library Studio
 
+## v1.6.1 · Final Fantasy VII PSN EBOOT and real 7Z import
+
+- [x] Source: PS1 Classics PBP header detection including multi-disc signatures; `KEYS.BIN` and `DOCUMENT.DAT` are PSN companions, not convert-to-CHD inputs.
+- [x] Source: optional installed PSXtract bridge for PS1 CUE/BIN extraction in local temp, followed by verified CHDman+M3U pipeline; refuse bad disc numbering, incomplete output or missing helper.
+- [x] Source: archive folder title hint survives NPEF-series directory IDs and 7Z extraction; preserve all original files, reject nested/oversize archives.
+- [x] Added synthetic PSN fixture + real py7zr archive regression tests; **GitHub CI pending**.
+- [ ] Real Windows installation and executable test of PSXtract v3.0 from reviewed upstream release.
+- [ ] Real user's FFVII PSN EBOOT conversion into verified CHDs, one M3U, correct artwork/disc count; manual user acceptance, not inferred from mocks.
+- [ ] Real RG Rotate disc swapping and saves after safe card transfer.
+
+[Full PS1 Classics / 7Z checklist](PSN_CLASSICS_IMPORT.md).
+
+
 ## v1.6.1 · PSN EBOOT/KEYS and validated 7-Zip import
 
 - [x] Source: distinguish PS1 Classics PSN EBOOT from PSP native EBOOT. Treat KEYS.BIN and DOCUMENT.DAT as companion files, not independent BIN tracks or CHDs.
