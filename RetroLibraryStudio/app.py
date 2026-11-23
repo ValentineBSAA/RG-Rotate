@@ -37,7 +37,7 @@ from card_identity import card_candidate, fingerprint, verify_card, matches as m
 from friendly_dialogs import DetailsDialog
 from destination_mode import is_volume_root, restore_destination_mode
 from software import SOFTWARE, download_selected
-from tool_setup import tool_status, tools_root, install_selected, ADB_DOCS, CHDMAN_DOCS, validate_installed_chdman
+from tool_setup import tool_status, tools_root, install_selected, ADB_DOCS, CHDMAN_DOCS, PSXTRACT_DOCS, validate_installed_chdman
 from health import inspect_library
 from android_setup import connected_devices, install_local_apks
 from library_import import infer_system, import_grouped
@@ -2937,6 +2937,7 @@ class Window(QMainWindow):
             ('RetroArch', SOFTWARE['RetroArch']['homepage']),
             ('Android Platform Tools (Google)', ADB_DOCS),
             ('CHDman (MAME)', CHDMAN_DOCS),
+            ('PSXtract (community PSN helper)', PSXTRACT_DOCS),
             ('DuckStation (optional)', SOFTWARE['DuckStation']['homepage'])]:
             lay.addWidget(button(f'{name}   ↗', lambda _=False, u=url: QDesktopServices.openUrl(QUrl(u))))
         lay.addWidget(button('Close', dlg.accept))
