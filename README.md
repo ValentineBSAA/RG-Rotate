@@ -1,5 +1,16 @@
 # RG Rotate · Retro Library Studio
 
+## v1.5.8 source candidate · One Game, Multiple Discs
+
+- New **Import complete PS1 game folder…** action inspects all CUE/BIN tracks, converts and verifies each disc as its own CHD, and puts CHDs under one parent game folder. Existing CHDs are verified and organized without recompressing.
+- A strict, ordered M3U playlist can be created or safely extended as later discs arrive. **One cover-gallery tile** represents valid multi-disc playlists, with an N DISCS badge; raw File List still shows physical files for troubleshooting.
+- Editions, regions, Resident Evil 2 Leon/Claire disc tags, Final Fantasy VII vs VIII, and disc order are kept separate. Missing tracks, gaps, duplicates or conflicting M3Us do not silently merge, overwrite or destroy sources.
+- The desktop uses background scan-worker M3U membership; no network work in Qt painting. This is not a claim that Cocoon disc swapping has been tested on a physical RG Rotate.
+- Full new acceptance: [Multi-disc Windows tests](docs/MULTIDISC_ACCEPTANCE.md). Older acceptance still open: [Full checklist](docs/FULL_TEST_CHECKLIST.md).
+
+**Status:** v1.5.8 branch candidate until CI and user Windows/NAS evidence. v1.5.7 was the last downloaded source beta. Keep the working version and use a new folder for testing.
+
+
 **Project home and development handoff** for the Anbernic RG Rotate (Android 12, 720×720, Unisoc T618, 3 GB RAM, 32 GB internal storage) and **Retro Library Studio**, a Windows 11 / PySide6 virtual-microSD preparation utility.
 
 > **Latest packaged source beta: v1.5.6 (512 GB capacity planner).** **v1.5.7 source is now merged into main** (PR #11), adding per-console My Games shelves, colored tabs and PS2/GameCube organization. It is **not yet a packaged Windows release or real NAS/hardware acceptance**. Read the [complete testing checklist](docs/FULL_TEST_CHECKLIST.md). Real v1.5.5 batch verified-cleanup, v1.5.6 Windows capacity UI and physical RG Rotate still need acceptance.
