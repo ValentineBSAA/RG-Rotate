@@ -109,3 +109,15 @@ Tracked by [#8](https://github.com/ValentineBSAA/RG-Rotate/issues/8), committed 
 - [ ] **CRITICAL user acceptance:** On Windows, batch convert 2 disposable PS1 discs (with both cleanup choices) and confirm only virtual-card working files are removed after genuine CHDman verification, not external NAS originals.
 - [ ] Verify right-click recovery folder opens, cover preview remains inside frame at 125%, and an interrupted batch preserves failed/unprocessed source tracks.
 - [ ] Review old v1.5.4 conversion backups manually; do **not** auto-delete them from the NAS because provenance is unknown.
+
+
+### v1.5.5 · Batch lossless PS1 conversion and safe cleanup (2026-11-23)
+
+- [x] **Local source beta:** Add batch PS1 CUE/BIN and unambiguous IMG → verified CHD conversion, one progress task, per-game failure summary, and conversion cancellation. **248 passed, 16 skipped locally**.
+- [x] **Local source beta:** Offer explicit **Keep recovery backups** or **Remove verified working copies**. Deletion is limited to the active virtual card's `ROMs/psx` files and only follows two completed verification steps. Files outside the virtual card, including the user's separate NAS ROM collection, are untouched. Previously generated recovery backups are not deleted automatically.
+- [x] **Local source beta:** Add **Open conversion backups** and cover-preview fit-to-window behavior.
+- [x] Package `RetroLibraryStudio_v1.5.5_Windows_Test_Beta.zip` (73 members; SHA-256 `e1a00b4f0147353ffdc37f47bb49e69a87afd5bfc23a9839968232834d441350`); ZIP integrity passed and local Linux tests passed **248/16 skipped** after sanitizing personal NAS/example-user paths.
+- [ ] **Source sync required:** The v1.5.5 code is present in the test ZIP, but the GitHub `RetroLibraryStudio/` source tree still needs its full v1.5.5 modifications uploaded. Do not claim GitHub CI has tested v1.5.5 yet.
+- [ ] **Windows acceptance:** Run v1.5.5 batch on disposable test PS1 discs with CHDman. Confirm all CHDs verified, each disc stays in its expected `ROMs/psx` location, the `CHD` badge and covers persist, and all source originals outside the virtual card remain intact.
+- [ ] **Windows cleanup acceptance:** Choose **Remove verified working copies** for disposable card copies only. Failed or cancelled conversions must retain their source tracks; user confirms no deletion of source collection or earlier recovery backups.
+- [ ] **Windows preview acceptance:** Confirm artwork selection previews preserve aspect ratio while resizing; test bad network / timeouts and safe Stop.

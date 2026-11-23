@@ -110,3 +110,20 @@ Never infer a PASS from a progress bar screenshot alone when the underlying veri
 
 - **Passed:** [run 45148569884](https://github.com/ValentineBSAA/RG-Rotate/actions/runs/45148569884), **Windows 264 passed**, **Linux 263 passed / 1 skipped**, including Qt aspect-fit preview test. All conversion tools mocked in automated tests.
 - Package ZIP clean extraction on Linux: **248 passed / 16 skipped**. **Pending:** Real v1.5.5 Windows batch deletion and Synology NAS user acceptance.
+
+
+## v1.5.5 batch conversion / cleanup (2026-11-23)
+
+| Test | Evidence | Status |
+| --- | --- | --- |
+| Existing v1.5.4 Clock Tower conversion and cover | User screenshots show CHD badge, 55.4 MB, cover | **Windows observed pass (previous version)** |
+| Existing v1.5.4 Resident Evil Gore Edition | User screenshots show verified CHD dialogue, 311.9 MB, cover | **Windows observed pass (previous version)** |
+| New v1.5.5 batch CUE/IMG conversion orchestration | Local simulated CHDman tests, failed/missing-track/cancel cases | **Source tests passed** |
+| New v1.5.5 cleanup of virtual PSX working tracks | Local tests prevent deleting external originals, check verification before cleanup | **Source tests passed** |
+| New v1.5.5 preview resizing and Windows context-menu behavior | PySide6 GUI not exercised here | **Pending real Windows** |
+| New v1.5.5 batch with actual CHDman + Synology SMB | No physical test yet | **Pending** |
+| v1.5.5 archive | 73 members; ZIP integrity passed; SHA-256 `e1a00b4f0147353ffdc37f47bb49e69a87afd5bfc23a9839968232834d441350` | **Package verified** |
+| v1.5.5 automated test run | **248 passed, 16 skipped on Linux** | **Code passed, GUI unverified** |
+| v1.5.5 GitHub CI | Source push not yet complete | **Pending** |
+
+Do not mistake CHD compression for lossy audio/video reduction: conventional CHD CD codecs preserve disc data. CHD extension by itself is not a verification receipt.

@@ -26,6 +26,8 @@ This is a **historical summary**, not a claim that all archived builds are on Gi
 | 1.5.4 | Artwork result auto-previews, polished right-click game menus, verified CHD conversion/tidy from CUE/BIN and safe IMG with off-card recovery backups | Linux 240/15 local; Windows CHDman and UI acceptance pending |
 | 1.5.5 | Batch lossless CHD conversion, explicit verified working-copy cleanup, direct recovery-folder access, responsive artwork preview | Source beta, Linux 248/16; Windows batch test pending |
 | 1.5.4 | User confirmed Clock Tower (55.4 MB) and Resident Evil Gore Edition (311.9 MB) CHDman verification + artwork preserved | Windows user-observed pass for individual conversion only |
+
+| 1.5.5 | Batch CUE/IMG→CHD with verified-only virtual-card cleanup, source preservation, recovery folder navigation, and cover preview fit | **Local ZIP 248 passed / 16 skipped; Windows batch acceptance pending; GitHub source sync pending** |
 | 1.5.3 | Clickable actual file-format badges (CHD / BIN-CUE / M3U etc), detailed format popup, Libretro artwork catalog GitHub fallback, resilient cover fetch | Source beta; Linux 230/15, Windows user acceptance pending |
 | 1.5.2 | First Windows acceptance build incorporating v1.5.1 automatic PS1 pipeline and CI fixes | User screenshot: Clock Tower 118 MB; artwork search unavailable |
 | 1.5.1 | Auto PS1 CUE/BIN → verified CHD → staged game; multi-disc M3U; combined game size and artwork in unified import task | **225 Linux passed / 15 skipped, Windows/live CHDman pending** |

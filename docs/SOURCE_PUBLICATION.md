@@ -52,3 +52,12 @@ The repository is public. No license has yet been selected explicitly; do not as
 - Local tests: 240 passed, 15 skipped. Physical Windows CHDman and user NAS acceptance remains pending.
 
 - **CI for v1.5.4 source:** [run 45144304702](https://github.com/ValentineBSAA/RG-Rotate/actions/runs/45144304702) succeeded, Windows 255 pass; Linux 254 pass / 1 skip. Real CHDman and original-image compatibility pending.
+
+
+## v1.5.5 source sync pending (2026-11-23)
+
+**A newer local source ZIP has been prepared and verified:** `RetroLibraryStudio_v1.5.5_Windows_Test_Beta.zip` (73 members, SHA-256 `e1a00b4f0147353ffdc37f47bb49e69a87afd5bfc23a9839968232834d441350`). The zip includes the runnable v1.5.5 source, Windows batch launchers, tests, README and release report. Local Linux tests: **248 passed, 16 skipped**.
+
+**Important:** The repository's `RetroLibraryStudio/` code has **not yet been fully synchronized to v1.5.5**. To ensure GitHub is an authoritative code handoff, clone the repo with GitHub Desktop, replace the `RetroLibraryStudio/` folder contents with the ZIP's extracted source, review the staged changes and push. Do not copy `Example_Covers` if licensing is uncertain; never upload the user's ROMs, BIOS, APKs, saves, settings or NAS addresses. The next chat should check whether this upload happened before working from GitHub code.
+
+Until sync is confirmed, do not claim GitHub CI checks validate v1.5.5. The last verified published source remains v1.5.4.

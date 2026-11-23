@@ -107,3 +107,12 @@ The latest GitHub workflow run [45138220982](https://github.com/ValentineBSAA/RG
 **Local package**: `RetroLibraryStudio_v1.5.5_Windows_Test_Beta.zip`, 3,097,042 bytes, SHA-256 `5ef63fd138d6b5fc285d7b0448427b36188b24d36b9ee670aa3fc65c8166691d`, ZIP test passed; clean extracted Linux suite **248 passed, 16 skipped**. No real v1.5.5 Windows batch deletion acceptance yet. Use disposable test folders FIRST and preserve v1.5.4 fallback.
 
 **Final v1.5.5 GitHub source CI:** [run 45148569884](https://github.com/ValentineBSAA/RG-Rotate/actions/runs/45148569884) passed **264 Windows tests** and **263 Linux tests / 1 skip**. README/release package updated with matching source and a clean-extraction test report.
+
+
+## v1.5.5 package handoff · 2026-11-23
+
+The user reported **real v1.5.4 Windows success**: Clock Tower CHD displayed as **55.4 MB**, Resident Evil Gore Edition as **311.9 MB**, green CHD badges, both covers retained, actual CHDman verification reported, and converted files kept in the appropriate PSX folder. Earlier source tracks moved to `<virtual card sibling> - Conversion Backups`, which was **outside the virtual card but on the same NAS share**, not automatically freed NAS space.
+
+**New v1.5.5 local source beta:** batch convert `.cue` and safe standalone `.img` candidates; sequential CHDman create/verify; report per-item errors and remaining work; one progress workflow; clickable **Open conversion backups**; cover preview scales proportionally to dialog dimensions. Two cleanup policies: preserve originals in a recovery directory or delete only the **virtual-card working tracks** after CHD verification with explicit confirmation. Does not delete the user's separate NAS originals. Old recovery folders are not purged. CHDman uses normal **lossless CD compression**. CloneCD `.ccd/.img/.sub` and other ambiguous IMG files are intentionally refused.
+
+**Evidence:** new ZIP `RetroLibraryStudio_v1.5.5_Windows_Test_Beta.zip`; local clean test on Linux **248 passed, 16 skipped**; archive 73 entries, hash `e1a00b4f0147353ffdc37f47bb49e69a87afd5bfc23a9839968232834d441350`. Real v1.5.5 Windows, NAS batch/delete and UI acceptance are **not yet tested**. Public GitHub repository source is still at v1.5.4 until code from the ZIP is published there; do not say latest source CI passed.
