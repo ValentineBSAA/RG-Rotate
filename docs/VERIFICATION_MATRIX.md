@@ -1,5 +1,8 @@
 # Verification matrix · Retro Library Studio
 
+**Verification update:** v1.6.3 exact-source code/tests passed [CI run 45269373105](https://github.com/ValentineBSAA/RG-Rotate/actions/runs/45269373105) on Windows (379) and Linux (378, 1 skipped). [PR #21 merged](https://github.com/ValentineBSAA/RG-Rotate/pull/21). [Packaging passed](https://github.com/ValentineBSAA/RG-Rotate/actions/runs/45269530914). All real user Windows/NAS and RG Rotate v1.6.3 checks remain unchecked.
+
+
 ## v1.6.3 · Real Windows identity and Stop bug (acceptance open)
 
 | Requirement | Code / synthetic test | Real Windows 11 NAS | RG Rotate |
