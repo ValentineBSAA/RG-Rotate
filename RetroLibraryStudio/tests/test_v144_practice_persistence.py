@@ -55,4 +55,8 @@ def test_ui_persists_mode_and_refuses_wrong_destination_in_preview():
     assert text.count('self._selected_transfer_mode()') >= 2
     assert 'if practice and is_volume_root(self.target):' in text
     assert "self._remember_destination(directory, 'practice')" in text
-    assert "self._remember_destination(candidates[choices.index(selected)].root, 'physical')" in text
+    # v1.6.0 keeps explicit user selection, but now allows an uncertain USB
+    # reader to be reviewed before it becomes a physical destination.
+    assert "candidate = candidates[choices.index(chosen)]" in text
+    assert "self._remember_destination(candidate.root, 'physical')" in text
+    assert "self.confirmed_card_identity = None" in text
