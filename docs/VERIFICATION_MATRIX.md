@@ -35,6 +35,11 @@ _Last reviewed 2026-11-23. Only exact observed outcomes are marked **Passed**._
 | Cocoon Home/ROM configuration | Planned | Staging only | **Pending** | Requires Android permissions |
 | AI companion vs built-in Anbernic AI | Planned | N/A | **Pending assessment** | Do not overbuild before testing |
 
+## Source publication
+
+- **Passed:** Source files and tests from v1.5.1 were pushed as browsable UTF-8 files to `RetroLibraryStudio/` on 2026-11-23 (commit `b458028`). Published `app.py` and `ps1_pipeline.py` were fetched back through the GitHub connector and verified as present. Optional generated cover artwork excluded.
+- **Pending:** GitHub-hosted Windows CI and external release packaging.
+
 ## Test runs
 - **v1.4.4**: historical source package reported **180 automated tests** plus the real user NAS transfer outcomes above.
 - **v1.5.0**: uploaded source file was reviewed; in the current environment its Linux run was reported **205 passed, 15 skipped**. Its own release report claims 220 Windows passes; this report is not independent evidence here.
