@@ -1,5 +1,9 @@
 # Living Roadmap · RG Rotate / Retro Library Studio
 
+- [x] Confirm from has207 upstream v3 source that a verified helper can safely receive an empty missing-DOCUMENT positional argument followed by real adjacent KEYS.BIN, avoiding v1.6.6's built-in-key-only behavior when no DOCUMENT exists.
+- [x] Gate key-only forwarding on the app's pinned v3 installer receipt, preserve unknown helper fallback and source originals. Synthetic tests added.
+- [ ] Actual Clock Tower II EBOOT extraction with verified v3 + matching KEYS only, then CHDman verification; do NOT promise success until observed.
+
 ## v1.6.7 · Real PSXtract encrypted-header failure, not CHDman
 
 - [x] User's v1.6.6 custom PS1 title chooser displayed 30 games including Clock Tower II (SLUS00695); selection worked. Keep title chooser.
