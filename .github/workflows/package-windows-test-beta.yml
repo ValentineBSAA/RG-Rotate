@@ -1,4 +1,4 @@
-name: Package v1.6.0 Windows test ZIP
+name: Package v1.6.1 Windows test ZIP
 on:
   workflow_dispatch:
   push:
@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      # Final v1.6.0 package includes responsive 100–150% dialog typography.
+      # Final v1.6.1 package includes responsive 100–150% dialog typography.
       - name: Package checked-out source without altering existing installs
         shell: bash
         run: |
@@ -20,19 +20,19 @@ jobs:
           root = pathlib.Path('.')
           out_dir = root / 'dist'
           out_dir.mkdir(exist_ok=True)
-          dest = out_dir / 'RetroLibraryStudio_v1.6.0_Windows_Test_Beta.zip'
+          dest = out_dir / 'RetroLibraryStudio_v1.6.1_Windows_Test_Beta.zip'
           text = (
-              'RETRO LIBRARY STUDIO v1.6.0 - WINDOWS SOURCE TEST BETA\n'
+              'RETRO LIBRARY STUDIO v1.6.1 - WINDOWS SOURCE TEST BETA\n'
               'This is a source beta (Python 3 + dependencies), NOT a compiled EXE.\n'
               '1. Extract the ZIP into a NEW folder separate from your old working build.\n'
               '2. Open the RetroLibraryStudio folder.\n'
               '3. Double-click Start_Retro_Library_Studio.bat. Install Python dependencies if prompted.\n'
               '4. Select your EXISTING virtual NAS card location. Do not format or delete anything.\n'
-              '5. Open Exact sizes, exFAT details and Resident Evil 2 Game Format to test the new summary cards.\n'
-              '6. Open Copy to card and review auto-detected candidate microSD drives; confirm BEFORE copying.\n'
+              '5. For PSN Classics choose the .7z archive on Add Games and select PS1 when asked.\n'
+              '6. First check optional PSXtract on Prepare apps, approve setup, then import. Real EBOOT still needs user testing.\n'
               'PS2/GameCube folders only organize files; performance is experimental.\n'
               'CHD batch delete is for disposable copies until real Windows verification.\n'
-              'v1.6.0 checks: docs/CARD_DETECTION_AND_READABLE_DIALOGS.md; complete tests: docs/FULL_TEST_CHECKLIST.md\n'
+              'v1.6.1 checks: docs/PS1_CLASSICS_7Z_ACCEPTANCE.md; complete tests: docs/FULL_TEST_CHECKLIST.md\n'
               'GitHub CI does not establish real NAS or RG Rotate acceptance.\n'
           )
           with zipfile.ZipFile(dest,'w',compression=zipfile.ZIP_DEFLATED,compresslevel=9) as z:
@@ -43,9 +43,9 @@ jobs:
                       if p.suffix in ('.pyc', '.pyo'): continue
                       z.write(p,p.as_posix())
               z.write(root/'README.md','README_GITHUB.md')
-              z.writestr('READ_ME_FIRST_v1.6.0.txt',text)
+              z.writestr('READ_ME_FIRST_v1.6.1.txt',text)
               z.writestr('BUILD_METADATA.json',json.dumps({
-                  'version':'1.6.0', 'platform':'Windows source beta',
+                  'version':'1.6.1', 'platform':'Windows source beta',
                   'commit':os.environ.get('GITHUB_SHA',''),
                   'real_windows_nas_acceptance':'pending',
                   'real_RG_Rotate_acceptance':'pending',
@@ -59,6 +59,10 @@ jobs:
                            'RetroLibraryStudio/system_shelves.py',
                            'RetroLibraryStudio/virtual_exfat.py',
                            'RetroLibraryStudio/friendly_dialogs.py',
+                           'RetroLibraryStudio/ps1_psn.py',
+                           'RetroLibraryStudio/tests/test_v161_psn_and_7z.py',
+                           'RetroLibraryStudio/tests/test_v161_psxtract_setup.py',
+                           'docs/PS1_CLASSICS_7Z_ACCEPTANCE.md',
                            'RetroLibraryStudio/card_identity.py',
                            'RetroLibraryStudio/tests/test_v160_readable_cards.py',
                            'docs/CARD_DETECTION_AND_READABLE_DIALOGS.md',
@@ -77,7 +81,7 @@ jobs:
       - name: Upload test beta ZIP
         uses: actions/upload-artifact@v4
         with:
-          name: RetroLibraryStudio_v1.6.0_Windows_Test_Beta
-          path: dist/RetroLibraryStudio_v1.6.0_Windows_Test_Beta.zip
+          name: RetroLibraryStudio_v1.6.1_Windows_Test_Beta
+          path: dist/RetroLibraryStudio_v1.6.1_Windows_Test_Beta.zip
           if-no-files-found: error
           retention-days: 30
