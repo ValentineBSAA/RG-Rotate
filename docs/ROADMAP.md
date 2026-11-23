@@ -1,5 +1,23 @@
 # Living Roadmap · RG Rotate / Retro Library Studio
 
+## v1.6.5 · Selective EBOOT imports, remembered locations and reliable artwork
+
+- [x] Scan PS1 Classics parent folder from a cancellable process; read bounded public EBOOT title metadata; never invent Sony NP code/name associations.
+- [x] Select any subset of games by actual name with search, checkboxes and select-visible controls. Import only checked EBOOT/ZIP/7Z packages, automatically include same-folder KEYS when PSXtract needs it.
+- [x] Remember last game-picker folder for Add Game Files, Add Folder, and PS1 chooser.
+- [x] Keep ordinary multi-console Add Folder behavior when there is no recognized PS1 EBOOT.
+- [x] Show resolved game title, PSXtract MD5 stages, CHD conversion and verify in main UI.
+- [x] Enable strict auto-cover matching for supported consoles, USA default if region unspecified, respect explicit region, preserve user art, never guess on uncertain editions.
+- [x] Synthetic tests for Sony-code titles, select subset, no KEYS as game, cover region and safe cancellation.
+- [ ] Exact source CI (Windows/Linux), source ZIP verification, then real Windows UI.
+- [ ] Windows NAS selection of some of the ~30 PS1 games with previews, normal folder import regression, remembered location after restart.
+- [ ] Real art downloaded automatically without user dialog, and manual fallback only if needs review.
+- [ ] Test same Crash Bandicoot EBOOT **after successful CHD conversion** is skipped as duplicate before PSXtract/CHDman.
+- [ ] Audit extra generic PS1 tile against old v1.6.2 imports, without deletion or guessing.
+- [ ] Copy to physical RG Rotate microSD and verify game launches (later).
+[Acceptance and evidence](PSN_GAME_PICKER_AND_ARTWORK_v165.md).
+
+
 **STATUS UPDATE 2026-11-23:** [PR #22](https://github.com/ValentineBSAA/RG-Rotate/pull/22) for v1.6.4 Unicode CUE fix merged into main (squash `21c2b5a`). Source CI run [45272838436](https://github.com/ValentineBSAA/RG-Rotate/actions/runs/45272838436) **384 Windows passed; 383 Linux passed, 1 skipped**. The exact branch-head source ZIP [45272820961](https://github.com/ValentineBSAA/RG-Rotate/actions/runs/45272820961) packaged successfully (commit `8d755754`; subsequent merge was squash of same source). Real Windows user **Crash Bandicoot™** CHDman createcd + verify, duplicate retry, and Stop acceptance are **still pending**. v1.6.3 had recognized title correctly but imported zero files because CHDman reported Unicode CUE filename missing. User should use v1.6.4 source ZIP from GitHub Actions, install in new program folder, start with one Crash Bandicoot™ EBOOT, inspect named CHD after verification, then repeat same EBOOT. No big 30-game batch until passes. Retain anonymous v1.6.2 PS1 CHDs untouched. Full [v1.6.4 checklist](PSN_UNICODE_CHDMAN_v164.md).
 
 
