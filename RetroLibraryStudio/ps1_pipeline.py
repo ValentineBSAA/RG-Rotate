@@ -268,9 +268,13 @@ def guided_import(paths: list[Path], workspace: Path, fallback: str, binary: Pat
     # Exclude BIN tracks that are companions to any CUE/M3U. Standalone BINs
     # cannot be converted reliably and must not show up as separate PS1 games.
     from core import _cue_companions
+    # _cue_companions returns resolved paths. The selected paths (especially
+    # those read from ZIP extraction on Windows) may use equivalent spelling,
+    # short-name aliases or parent/.. segments. Compare canonical paths so
+    # referenced BIN tracks cannot be misreported as standalone PS1 discs.
     companions = set()
     for cue in cue_sources:
-        try: companions.update(_cue_companions(cue))
+        try: companions.update(p.resolve() for p in _cue_companions(cue))
         except Exception as exc: out['errors'].append(f'{cue.name}: {exc}')
     # Existing CHD/M3U collections remain importable without conversion.
     # Only playlists referencing unconverted CUE sets are replaced by new M3Us.
@@ -283,7 +287,7 @@ def guided_import(paths: list[Path], workspace: Path, fallback: str, binary: Pat
             except (OSError, ValueError) as exc:
                 out['errors'].append(f'{p.name}: {exc}')
                 converted_m3us.add(p)
-    remaining = [p for p in paths if p not in companions and
+    remaining = [p for p in paths if p.resolve() not in companions and
                  p.suffix.lower() != '.cue' and p not in converted_m3us]
     raw_bins = [p for p in remaining if p.suffix.lower() == '.bin' and infer_system(p, fallback) == 'PS1']
     for f in raw_bins:
