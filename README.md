@@ -1,5 +1,14 @@
 # RG Rotate · Retro Library Studio
 
+## v1.6.4 Beta candidate · Crash Bandicoot™ / Unicode CHDman path
+
+**Real Windows failure:** v1.6.3 recognized Crash Bandicoot™ from a PSN EBOOT, but CHDman reported that the Unicode-named temporary CUE did not exist and imported **0 files**. No successful duplicate verification occurred.
+
+- The PSN extractor's disposable CUE is now passed to CHDman using a same-folder ASCII-only alias. Unicode track references can use temporary NTFS hardlinks, avoiding a second multi-GB copy. Cleanup is automatic and original PBP/CUE/BIN/KEYS files are never rewritten.
+- The final verified CHD still uses the proper original Unicode game title. Other original PS1 disc imports are unchanged.
+- **Real Windows conversion is pending.** [v1.6.4 acceptance checklist](docs/PSN_UNICODE_CHDMAN_v164.md). Stop old 30-game batch, do not bulk delete generic v1.6.2 PS1 CHDs, and test one Crash Bandicoot import before a new batch.
+
+
 ## v1.6.3 fix candidate · PS1 Classics real titles, reliable Stop, game folder access
 
 - **Real 30-package Windows batch exposed v1.6.2 failure:** archive name PS1 was used as game identity, creating generic PS1/Disc 1 CHDs and cover tiles; Stop task reportedly failed to stop reliably. **Do not rerun the v1.6.2 batch** on the existing virtual card.
