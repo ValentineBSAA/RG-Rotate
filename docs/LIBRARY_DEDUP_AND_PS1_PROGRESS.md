@@ -22,6 +22,12 @@ All platform directories listed in `core.SYSTEM_DIR` participate: **PS1, PSP, PS
 6. A finished PS1 Classics PBP conversion writes a small **EBOOT SHA-256 receipt** under `.retro-library/psn-sources`. Only after a verified M3U/CHD set exists may an exact EBOOT be skipped before PSXtract/CHDman run. The receipt stores **no source paths, KEYS.BIN data, PSN serial IDs, or personal information**, and lives outside the ROM scanner. A preexisting unproven same-title legacy collection is flagged for manual review instead of copied over.
 7. Existing game files, artwork, ROM names, NAS source files and real microSD are not rewritten by the duplicate scanner. Fingerprinting may take time on large games over SMB; the importer remains isolated from the graphical thread.
 
+## Multiple PS1 Classics ZIP/7Z/EBOOT packages
+- A separate optional **Batch import PS1 Classics** action can scan a selected folder of ZIP/7Z/PBP packages. Each package has its own game job and numbered progress; one malformed EBOOT is reported without combining its disc files with another title.
+- Standalone PBP sidecars KEYS.BIN and DOCUMENT.DAT stay in place; they are not separate games. Loose CUE/BIN sets remain grouped as a complete disc set rather than treated as individual archives.
+- Batch summary includes imported, already present, and needs-attention counts with per-package statuses. No item is silently erased, and cancellation prevents starting the next package.
+- Batch includes only PS1 package formats: the shared general game import still supports the other 12 console families.
+
 ## Acceptance on Windows 11 and RG Rotate
 - [ ] V162-01 Launch new beta and repeat a PS1 Classic 3-disc test; confirm disc-by-disc live activity in the GUI without opening the debug console.
 - [ ] V162-02 Import then re-import an identical PSP game, PS2 ISO, NDS game, GBA ROM and GameCube game from different folder or ZIP/7Z name. Only one file per console should remain.
