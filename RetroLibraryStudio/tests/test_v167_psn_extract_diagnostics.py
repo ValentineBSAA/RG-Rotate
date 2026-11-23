@@ -4,6 +4,10 @@ Synthetic-only: no real Sony keys, no decrypted content or third-party helpers.
 """
 from pathlib import Path
 import struct
+import io
+import pytest
+
+import ps1_psn
 
 from ps1_progress import PSXtractMilestones
 from ps1_psn import describe_extractor_failure, psn_companions
@@ -90,3 +94,66 @@ def test_picker_compact_text_and_no_opaque_full_path_header():
     assert "Search game name or Sony ID" in app
     assert "Game import results" in app
     assert 'Titles come from EBOOT metadata where available, not guessed Sony folder IDs.' not in app
+
+
+
+def test_verified_psxtract_v3_key_only_requires_approved_helper_receipt(tmp_path, monkeypatch):
+    helper = tmp_path / 'WindowsTools' / 'psxtract' / 'psxtract.exe'
+    helper.parent.mkdir(parents=True)
+    helper.write_bytes(b'NOT_AN_EXE')
+    monkeypatch.setattr('tool_setup.tool_status', lambda root: {
+        'PSXtract': {'installed': True}})
+    assert ps1_psn.verified_psxtract_v3_key_only(helper)
+    assert not ps1_psn.verified_psxtract_v3_key_only(tmp_path / 'untrusted.exe')
+    monkeypatch.setattr('tool_setup.tool_status', lambda root: {
+        'PSXtract': {'installed': False}})
+    assert not ps1_psn.verified_psxtract_v3_key_only(helper)
+
+
+@pytest.mark.parametrize('verified,with_manual,expected_keys', [
+    (True, False, True),
+    (False, False, False),
+    (False, True, True),
+])
+def test_extractor_keys_argument_is_used_safely_with_verified_v3(
+        tmp_path, monkeypatch, verified, with_manual, expected_keys):
+    game = title_eboot(tmp_path / 'source' / 'SLUS00695' / 'EBOOT.PBP')
+    keys = game.parent / 'KEYS.BIN'
+    keys.write_bytes(b'FAKE_KEY_BYTES_NEVER_SHARED')
+    manual = game.parent / 'DOCUMENT.DAT'
+    if with_manual:
+        manual.write_bytes(b'FAKE_DOC')
+    helper = tmp_path / 'psxtract' / 'psxtract.exe'
+    helper.parent.mkdir()
+    helper.write_bytes(b'NOT_AN_EXECUTABLE')
+    output = tmp_path / 'out'
+    output.mkdir()
+    calls = []
+    monkeypatch.setattr(ps1_psn, 'verified_psxtract_v3_key_only',
+                        lambda h: verified)
+    class Proc:
+        def __init__(self, args, **kwargs):
+            calls.append(args)
+            self.stdout = io.BytesIO(
+                b'PGD: Invalid 0x80 MAC hash!\n'
+                b'ERROR: ISO header decryption failed!\n')
+            self.returncode = 1
+        def poll(self):
+            return 1
+    monkeypatch.setattr(ps1_psn.subprocess, 'Popen', Proc)
+    with pytest.raises(RuntimeError, match='0x80 MAC') as exc:
+        ps1_psn.extract_psn_with_helper(game, output, helper)
+    assert len(calls) == 1
+    args = calls[0]
+    if with_manual:
+        assert args[-2:] == [str(manual.resolve()), str(keys.resolve())]
+    elif expected_keys:
+        assert args[-2:] == ['', str(keys.resolve())]
+    else:
+        assert len(args) == 3
+    assert (str(keys.resolve()) in args) == expected_keys
+    assert ('was passed to the verified v3' in str(exc.value)) == (
+        verified and not with_manual)
+    assert 'FAKE_KEY_BYTES_NEVER_SHARED' not in str(exc.value)
+    assert keys.read_bytes() == b'FAKE_KEY_BYTES_NEVER_SHARED'
+    assert game.is_file()
