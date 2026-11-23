@@ -1,3 +1,17 @@
+# v1.5.1 priority acceptance: automatic PS1 import
+
+- [ ] Keep v1.4.4 or another known-good install in a separate folder; do not reset or delete the NAS virtual library.
+- [ ] Verify installed chdman.exe genuinely runs on Windows. Select *Clock Tower: The First Fear* English patch complete CUE + two BIN tracks (or a safe test copy).
+- [ ] Observe one progress bar: Inspect → Convert → Verify → Stage → Artwork; no GUI freezing or unbounded NAS status lookup.
+- [ ] Confirm one playable `.chd`, one game tile, correct non-tiny game size. Original CUE and BINs untouched.
+- [ ] Remove or rename one referenced track in a **disposable copy**, confirm meaningful failure and no incomplete playable CHD.
+- [ ] Test a genuine two-disc game: two separate CHDs, ordered M3U, working emulator disc switch.
+- [ ] Test automatic cover result and manual “Search / Choose image” fallback for ambiguous editions.
+- [ ] Confirm Stop and resume and NAS→Windows practice hash-verification remain reliable.
+- [ ] Actual 512 GB microSD and Cocoon on RG Rotate must be checked separately.
+
+---
+
 # v1.5.0 Windows / NAS / RG Rotate acceptance checks
 
 Automated Qt widget checks are not a substitute for these interactive and

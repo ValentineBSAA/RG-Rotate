@@ -1,3 +1,13 @@
+# v1.5.1 Beta — Automatic PS1 CHD/M3U Import (November 23, 2026)
+
+- Connected existing CUE inspection, CHDman create/verify, M3U generation and safe staging to the **normal Add My Games import**. The game enters My Games as a verified CHD, not an individual CUE/BIN track, when conversion succeeds.
+- One unified progress flow now reports inspection, conversion, verification, staging and cover retrieval. Originals remain unchanged; interruptions cannot release partial .chd output as playable.
+- Fixed My Games' misleading CUE-only 226–228-byte display by accounting for referenced BIN tracks when still in the legacy format.
+- Supports importing complete CUE/BIN sets from ZIP/7Z through local temporary extraction. Disc 1/Disc 2 remain independent CHD files and an M3U references them in order.
+- Improved artwork fallback for English patches while keeping ambiguous edition covers user-reviewable.
+- **GitHub Actions CI:** initially exposed Windows ZIP/CUE companion aliases, fixed by comparing canonical file paths and adding a regression test. [Run 45138220982](https://github.com/ValentineBSAA/RG-Rotate/actions/runs/45138220982) passed: **Windows 241 tests; Linux 240 tests with 1 skip**.
+- Real CHDman execution, live artwork providers, user Synology SMB, physical card and Android Cocoon setup still require acceptance testing.
+
 # v1.5.0 Beta — Guided setup and PlayStation disc conversion (November 22, 2026)
 
 - Reorganized Start around Add My Games, Prepare My RG Rotate and Copy to My microSD.

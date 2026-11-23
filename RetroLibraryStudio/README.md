@@ -1,4 +1,4 @@
-# Retro Library Studio 1.5.0 Beta — Guided Setup & PlayStation Discs
+# Retro Library Studio 1.5.1 Beta — Automatic PS1 Import and Disc Preparation
 
 Windows 11 / PySide6 source release, based on the supplied v1.4.4 project.
 Extract into a **new application folder**. Keep your existing PC/NAS library
@@ -20,6 +20,14 @@ File list shows the actual individual files. Display-title edits save in Windows
 settings and do not rename files or change artwork identity. Multi-disc/region
 variants in the same folder share a gallery tile with their original paths in
 its tooltip. CUE-referenced tracks remain in File list, rather than separate game tiles.
+
+## Automatic PlayStation 1 preparation (new in 1.5.1)
+
+Choose **Add My Games** and select a complete PS1 CUE/BIN set, including ZIP/7Z packages when supported. The app now runs one guided task: inspect referenced tracks → convert **each actual game disc** to CHD with CHDman → verify the CHD → stage the playable output → build an M3U **only when multiple separate discs belong to the same game** → find artwork. Original source files remain untouched. For already-imported CUE/BIN sets, use the explicit optimize-existing option; it does not silently delete prior files on the NAS.
+
+My Games should show one logical title with its complete size instead of only the 226–228-byte CUE descriptor. During conversion, the unified progress area names each step; Stop must be safe on a network share. A missing track or failed CHDman verification must not publish a broken final game.
+
+This pipeline passed mocked tests in GitHub Actions (241 Windows / 240 Linux, 1 skipped), **but real CHDman conversion on your Windows machine and physical RG Rotate emulator tests remain pending**. See `RELEASE_REPORT_1_5_1.md`.
 
 ## PlayStation Disc Converter
 
