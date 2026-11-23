@@ -2,7 +2,7 @@
 
 **Project home and development handoff** for the Anbernic RG Rotate (Android 12, 720×720, Unisoc T618, 3 GB RAM, 32 GB internal storage) and **Retro Library Studio**, a Windows 11 / PySide6 virtual-microSD preparation utility.
 
-> **Current working milestone: v1.5.5 Batch Lossless PS1 CHD & Verified Cleanup (source beta).** [Source and tests](RetroLibraryStudio/) are on GitHub; Windows batch conversion and actual RG Rotate gameplay still need user acceptance.
+> **Latest packaged source beta: v1.5.6 (512 GB capacity planner).** GitHub candidate v1.5.7 adds per-console My Games shelves, color-coded tabs and PS2/GameCube organization on a development branch, **not yet a Windows release**. Read the [complete testing checklist](docs/FULL_TEST_CHECKLIST.md). Real v1.5.5 batch verified-cleanup, v1.5.6 Windows capacity UI and physical RG Rotate still need acceptance.
 
 ## Project at a glance
 
@@ -19,7 +19,7 @@
 
 1. Read [Project Handoff](docs/PROJECT_HANDOFF.md) for the latest known state, decisions, paths and safety rules.
 2. Read the **living [Roadmap](docs/ROADMAP.md)** for current priorities and stop conditions.
-3. Read [Verification Matrix](docs/VERIFICATION_MATRIX.md) to avoid claiming an untested feature passed.
+3. Read [Verification Matrix](docs/VERIFICATION_MATRIX.md) and [Full Test Checklist](docs/FULL_TEST_CHECKLIST.md) to distinguish passed tests from pending acceptance.
 4. Read [Release History](docs/RELEASE_HISTORY.md) to understand why earlier regressions occurred.
 5. Before changing code, obtain the actual source ZIP or the published source branch, run existing tests, keep the NAS workspace intact, then update **roadmap + handoff + tests + changelog in the same change**.
 

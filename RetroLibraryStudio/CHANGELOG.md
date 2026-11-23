@@ -1,5 +1,14 @@
 ## v1.5.6 Beta · Live 512 GB Card Planner (2026-11-23)
 
+## v1.5.7 source candidate · Console Shelves (2026-11-23)
+
+- Added scrollable premium console pills with **logical game counts**, synchronizing My Games cover gallery and file list filters. Gallery displays distinct full-width console headers and organizes games by PSP, PS1, Nintendo DS, GBA, PS2, GameCube, then remaining supported systems. Existing game cards keep artwork, title edits, CHD format badges, contextual actions and Show More paging.
+- Explicit PS2 and GameCube destination folders support sorting user-supplied game images. GCM is unambiguous; ISO/RVZ/GCZ remain selected-system/folder inferred. PS2/GameCube are **experimental** for RG Rotate gameplay, not emulation promises.
+- No new NAS I/O in visual shelf sorting; no conversion, backup deletion or physical card preallocation. v1.5.6 capacity meter retained.
+- Offline Python and optional Qt tests added, [FULL_TEST_CHECKLIST.md](../docs/FULL_TEST_CHECKLIST.md) provides full future acceptance.
+- **Not yet a Windows beta ZIP or real-device acceptance.** Record CI and screenshots before declaring this candidate tested.
+
+
 - Added an always-visible **512 GB advertised-capacity virtual microSD bar** near the top of Start, Add Games and every other page. It shows actual staged file bytes, future AI companion budget and the 8 GiB protected free-space reserve without allocating a 512 GB file.
 - Added **Exact sizes…** to display the staged library byte count (including CHDs/artwork/APKs) and GB/GiB conversion.
 - After **Copy to card → Check what would be copied**, the real-card section displays **measured formatted capacity**, existing space used, estimated unique new transfer bytes and estimated free space afterward. Practice folders are explicitly excluded. Previously previewed card numbers are invalidated after workspace or destination changes and after a verified transfer.

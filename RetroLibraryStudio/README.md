@@ -1,5 +1,8 @@
 # Retro Library Studio 1.5.6 Beta — Live Virtual 512 GB Card Planner
 
+> **v1.5.7 source candidate (branch `feature/v1.5.7-system-shelves`):** My Games adds distinct PSP / PS1 / DS / GBA / PS2 / GameCube shelves, scrollable count tabs and synchronized filters. PS2/GameCube entries organize user-supplied files but RG Rotate emulation is experimental. v1.5.5 batch cleanup and v1.5.6 Windows capacity UI still need acceptance. See [full test checklist](../docs/FULL_TEST_CHECKLIST.md). Not a verified released ZIP.
+
+
 ## v1.5.6 Beta · Live 512 GB Card Planner (2026-11-23)
 
 - Added an always-visible **512 GB advertised-capacity virtual microSD bar** near the top of Start, Add Games and every other page. It shows actual staged file bytes, future AI companion budget and the 8 GiB protected free-space reserve without allocating a 512 GB file.
