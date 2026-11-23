@@ -2605,6 +2605,12 @@ class Window(QMainWindow):
             return
         folder = Path(result.get('folder', self._game_picker_start()))
         games = result.get('games') or []
+        if allow_regular_import and not any(
+                game['kind'] == 'PS1 Classic EBOOT' for game in games):
+            # An ordinary Add Folder can contain SNES/GBA/PSP ZIPs.
+            # Do NOT force every ZIP archive into the PS1 converter.
+            self.import_folder_path(folder)
+            return
         if not games:
             if allow_regular_import:
                 self.import_folder_path(folder)
