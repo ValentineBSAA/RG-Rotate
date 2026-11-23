@@ -42,6 +42,8 @@ class PSXtractMilestones:
         elif _MD5_PASS.search(s):
             self.md5_confirmed = True
             msg = 'Extracting PS1 Classic • MD5 integrity check passed'
+        elif 'md5 verification' in text or 'md5 check' in text:
+            msg = 'Extracting PS1 Classic • Checking disc data integrity (MD5)'
         elif m := _SER.search(s):
             self.disc = int(m.group(1))
             self.discs_seen.add(self.disc)
