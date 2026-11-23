@@ -1,5 +1,13 @@
 ## v1.5.6 Beta · Live 512 GB Card Planner (2026-11-23)
 
+## v1.5.9 candidate · exFAT Simulation + 2 DISCS Details
+
+- Fixed scan serialization: the gallery now receives verified `Entry.members` from background inventory and keeps referenced CHDs until a playlist is validated. Expected Resident Evil 2 behavior is **one cover + 2 DISCS**, with all three files in the details popup. Original verified CHDs/M3U are never changed.
+- Added an optional, safe **virtual Windows 11 SDXC/exFAT format estimate** below the existing 512 GB nominal meter, modeling 128 KiB file clusters and exFAT metadata. The scan computes file slack without a second NAS walk. Existing 8 GiB AI allowance and 8 GiB protected free reserve remain.
+- New `exFAT details…` explains exactly which bytes are modeled; already-measured real physical card capacity/free space remains the transfer authority. There is **no formatting, partitioning, file creation or deletion**.
+- Added empty library, playlist roundtrip, malformed playlist, pure storage math and optional Qt tests. New v1.5.9 user Windows/Synology evidence and real microSD measurement remain pending.
+
+
 ## v1.5.8 packaged source beta · Smart Multi-disc Collections (2026-11-23)
 
 - One new button **Import complete PS1 game folder…** to inspect complete CUE/BIN disc sets in an isolated worker, verify each lossless CHD, and stage into `ROMs/psx/<Game Title>/`.
