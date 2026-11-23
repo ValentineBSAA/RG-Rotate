@@ -94,3 +94,14 @@ _Last organized: 2026-11-23. Current source: **v1.5.7 merged into main** (PR #11
 - [ ] G05: Roadmap, handoff, verification matrix, release notes reflect the exact evidence tier.
 
 **Testing sequence:** first **A + B05 + E05/E06** (visual-only, safe), then **D**, then **C with disposable copies**, then **E transfers**, then **F after device arrives**. Do not risk personal originals to validate a new visual feature.
+
+## I · v1.5.9 virtual SDXC/exFAT format profile + disc details
+
+- [ ] I01: At 125% verify existing nominal 512 GB meter and second virtual exFAT meter; no overlap, correct labels and combined budget.
+- [ ] I02: Open simulated exFAT details and Exact sizes; identify model vs real measured byte counts and original 8 GiB companion + 8 GiB reserve.
+- [ ] I03: Resident Evil 2 M3U renders exactly one cover tile with **2 DISCS**, popup names playlist + both CHDs, File List still includes all 3 files.
+- [ ] I04: Old NAS workspace, covers, sources, M3U, backups, saves and CompanionData all unchanged; no disk image, hidden 512 GB file, reformat or movement.
+- [ ] I05: Connect actual 512 GB card; inspect filesystem and Windows measured formatted capacity/free bytes. Keep the measured values authoritative. Do not assume Windows automatically reformats it.
+- [ ] I06: Verify copy preflight, 8 GiB reserve, FAT32 >4 GiB check and SHA-256 verification on actual removable card; test RG Rotate emulator only afterward.
+
+[Detailed v1.5.9 acceptance](VIRTUAL_EXFAT_PLAN.md).

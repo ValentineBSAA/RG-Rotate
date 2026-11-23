@@ -31,6 +31,7 @@ from core import (CAPACITY, COMPANION_BUDGET, FREE_RESERVE, SYSTEM_DIR, SUPPORTE
 from sync_engine import SyncPlan, make_plan, transfer_verified
 from transfer_feedback import preview_explanation, copy_explanation
 from card_capacity import planned_card_budget, physical_card_preview, decimal_gb, binary_gib
+from virtual_exfat import virtual_exfat_preview, MODEL_CLUSTER_BYTES
 from drives import list_windows_volumes, validate_physical_root
 from destination_mode import is_volume_root, restore_destination_mode
 from software import SOFTWARE, download_selected
@@ -50,7 +51,7 @@ from system_shelves import (PRIMARY_SYSTEMS, console_counts, console_order_key,
                             console_visual, grouped_shelves)
 from workspace_setup import suggested_workspace, copy_existing_workspace, count_workspace_files
 
-VERSION = '1.5.8 Beta – Smart Multi-disc Collections'
+VERSION = '1.5.9 Beta – exFAT Planner & Disc Collection Details'
 SCALE_CHOICES = [('100%', 100), ('110%', 110), ('125%', 125), ('140%', 140), ('150%', 150)]
 MAX_VISIBLE_FILES = 1200
 
@@ -409,6 +410,7 @@ class Window(QMainWindow):
         self.staged_bytes = 0
         self.staged_files = 0
         self.staged_companion = 0
+        self.staged_cluster_padding = 0  # Background scan estimate, not NAS I/O in Qt.
         self.last_physical_plan = None
         self.current_task = False
         self.current_task_name = ''
@@ -576,6 +578,17 @@ class Window(QMainWindow):
         plan_box.addWidget(self.card_plan_bar)
         self.card_plan_note = label('Blue: staged files • Purple: AI space • Gold: protected free space', 'Small', True)
         plan_box.addWidget(self.card_plan_note)
+        # Additional non-destructive formatting projection overlay. Never creates
+        # an image, partition, filesystem, reservation or physical-card format.
+        exfat_heading = QHBoxLayout()
+        self.exfat_title = label('SIMULATED Windows 11 exFAT • not yet measured', 'Small', True)
+        exfat_heading.addWidget(self.exfat_title, 1)
+        exfat_heading.addWidget(button('exFAT details…', self.show_virtual_exfat_details))
+        plan_box.addLayout(exfat_heading)
+        self.exfat_bar = CardFillMeter()
+        plan_box.addWidget(self.exfat_bar)
+        self.exfat_summary = label('Format model only; no files changed.', 'Small', True)
+        plan_box.addWidget(self.exfat_summary)
         r.addWidget(plan_strip)
         self.stack = QStackedWidget(); r.addWidget(self.stack, 1)
         self.make_home(); self.make_library(); self.make_apps(); self.make_copy(); self.make_health(); self.make_prefs()
@@ -1123,10 +1136,12 @@ class Window(QMainWindow):
                 payload = result
             elif mode == 'inventory':
                 self.cue_tracks = {os.path.normcase(os.path.abspath(p)) for p in result.get('disc_tracks', [])}
-                entries = [Entry(Path(row[0]), row[1], row[2], int(row[3]), row[4])
+                entries = [Entry(Path(row[0]), row[1], row[2], int(row[3]), row[4],
+                                 tuple(str(x) for x in row[5]) if len(row) > 5 else ())
                            for row in result['entries']]
                 payload = (Path(result['path']), entries, int(result['used']),
-                           int(result['count']), int(result['companion']))
+                           int(result['count']), int(result['companion']),
+                           int(result.get('exfat_cluster_padding', 0)))
             else:
                 payload = (int(result['count']), int(result['used']))
         except (KeyError, ValueError, IndexError, TypeError) as exc:
@@ -1453,32 +1468,76 @@ class Window(QMainWindow):
         self.set_status('Checking files inside your virtual card only. Downloads are not being scanned.')
         self.start_readonly_scan('inventory', active_workspace, self.render_scan)
 
-    def show_card_plan_details(self):
-        """Details from cached inventory/preview only; no GUI-thread NAS I/O."""
-        model = planned_card_budget(self.staged_bytes, self.staged_companion)
+    def show_virtual_exfat_details(self):
+        """Simulation only: no NAS/card formatting, allocation or file writes."""
+        ex = virtual_exfat_preview(
+            self.staged_bytes, self.staged_companion, self.staged_cluster_padding)
         message = (
-            'VIRTUAL 512 GB CARD (advertised planning size, not real capacity)\n\n'
+            'SIMULATED WINDOWS 11 SDXC / exFAT PROFILE\n\n'
+            'This is an overlay of your EXISTING files, not a real format. '
+            'No card, virtual folder, partition, filesystem or disk image is changed.\n\n'
+            f'Advertised 512 GB: {ex.nominal_bytes:,} bytes ({binary_gib(ex.nominal_bytes)})\n'
+            f'Modeled partition + filesystem overhead: {ex.estimated_format_bytes:,} bytes\n'
+            f'Modeled formatted capacity: {ex.modeled_formatted_bytes:,} bytes '
+            f'({decimal_gb(ex.modeled_formatted_bytes)} / {binary_gib(ex.modeled_formatted_bytes)})\n'
+            f'Assumed allocation unit: {ex.cluster_bytes:,} bytes (128 KiB)\n'
+            f'Files staged: {ex.staged_file_bytes:,} bytes\n'
+            f'Estimated allocation padding: {ex.estimated_cluster_padding_bytes:,} bytes\n'
+            f'Modeled allocated data: {ex.estimated_allocated_bytes:,} bytes\n'
+            f'Unspent companion budget: {ex.companion_remaining_bytes:,} bytes\n'
+            f'Protected free-space reserve: {ex.protected_free_bytes:,} bytes\n'
+            f'Modeled room for more games: {ex.estimated_room_for_games:,} bytes '
+            f'({decimal_gb(ex.estimated_room_for_games)})\n\n'
+            'ESTIMATE ONLY: The real card can have a different sector count, '
+            'partition alignment or cluster size. Windows does not automatically '
+            'format every inserted card. Use Copy to card > choose the actual '
+            'microSD > Preview to measure real formatted capacity and free space.'
+        )
+        if self.last_physical_plan is not None:
+            p = self.last_physical_plan
+            message += (
+                '\n\nREAL CARD MEASURED BY WINDOWS\n'
+                f'Actual formatted capacity: {p.capacity:,} bytes ({binary_gib(p.capacity)})\n'
+                f'Actual free before transfer: {p.capacity - p.occupied_before:,} bytes\n'
+                f'Projected free after transfer: {p.free_after:,} bytes\n'
+                'Measured values take precedence over simulated values.'
+            )
+        QMessageBox.information(self, 'Virtual exFAT format profile • no changes', message)
+
+    def show_card_plan_details(self):
+        """Expose nominal, exFAT model and measured physical bytes separately."""
+        model = planned_card_budget(self.staged_bytes, self.staged_companion)
+        ex = virtual_exfat_preview(
+            self.staged_bytes, self.staged_companion, self.staged_cluster_padding)
+        message = (
+            'VIRTUAL 512 GB CARD (nominal advertised size)\n\n'
             f'Nominal capacity: {model.capacity:,} bytes ({binary_gib(model.capacity)})\n'
             f'Currently staged: {model.staged:,} bytes ({decimal_gb(model.staged)})\n'
             f'AI companion already included: {model.companion_used:,} bytes\n'
             f'Additional AI allowance: {model.companion_remaining:,} bytes\n'
             f'Protected free space: {model.protected_free:,} bytes (8 GiB)\n'
-            f'Remaining room for new games: {model.game_room:,} bytes ({decimal_gb(model.game_room)})\n\n'
-            'Only actual files use NAS space. Nothing reserves or creates 512 GB. '
-            'The formatted capacity of the real card may be smaller.\n'
+            f'Nominal room for new games: {model.game_room:,} bytes ({decimal_gb(model.game_room)})\n\n'
+            'SIMULATED WINDOWS exFAT LAYER (NOT AN ACTUAL FORMAT)\n'
+            f'Modeled formatted capacity: {ex.modeled_formatted_bytes:,} bytes\n'
+            f'Modeled filesystem overhead: {ex.estimated_format_bytes:,} bytes\n'
+            f'Estimated cluster padding (128 KiB): {ex.estimated_cluster_padding_bytes:,} bytes\n'
+            f'Modeled safe room for games: {ex.estimated_room_for_games:,} bytes '
+            f'({decimal_gb(ex.estimated_room_for_games)})\n\n'
+            'Only actual files use NAS space. Nothing creates or reserves 512 GB. '
+            'Actual formatted volume size may differ.\n'
         )
         if self.last_physical_plan is not None:
-            real = self.last_physical_plan
+            p = self.last_physical_plan
             message += (
-                '\nPHYSICAL CARD (preview only, no copying yet)\n'
-                f'Measured capacity: {real.capacity:,} bytes ({binary_gib(real.capacity)})\n'
-                f'Already occupied: {real.occupied_before:,} bytes\n'
-                f'New bytes to copy: {real.queued_new_bytes:,} bytes\n'
-                f'Estimated free after copy: {real.free_after:,} bytes\n'
-                'Same-size files must be SHA-256 verified before counting as identical.\n'
+                '\nREAL PHYSICAL CARD (Windows volume measured; no formatting)\n'
+                f'Actual formatted volume: {p.capacity:,} bytes ({binary_gib(p.capacity)})\n'
+                f'Already occupied: {p.occupied_before:,} bytes\n'
+                f'Planned new transfer: {p.queued_new_bytes:,} bytes\n'
+                f'Projected free after copy: {p.free_after:,} bytes\n'
+                'Use the measured physical values for the final transfer decision.\n'
             )
         else:
-            message += '\nReal microSD capacity not measured yet. Choose the card and run Preview on Copy to card.'
+            message += '\nReal microSD not yet measured. Choose it and run Preview on Copy to card.'
         QMessageBox.information(self, 'Card capacity & exact byte counts', message)
 
     def update_card_plan(self):
@@ -1502,9 +1561,34 @@ class Window(QMainWindow):
         self.card_plan_bar.setToolTip('512 GB advertised-size preview, NOT an allocated file or actual card reading. '
             f'{model.staged:,} staged bytes; {model.companion_remaining:,} future AI bytes budgeted; '
             f'{model.protected_free:,} protected free bytes. Storage is measured from virtual-card files.')
+        # This separate overlay never changes nominal budgeting or old safety
+        # limits. Exact values will come from Windows when a real card is probed.
+        ex = virtual_exfat_preview(
+            self.staged_bytes, self.staged_companion, self.staged_cluster_padding)
+        self.exfat_bar.set_bytes(ex.modeled_formatted_bytes, ex.estimated_allocated_bytes,
+                                 ai_remaining=ex.companion_remaining_bytes,
+                                 reserve=ex.protected_free_bytes)
+        self.exfat_title.setText(
+            f'VIRTUAL Windows 11 exFAT model • {decimal_gb(ex.modeled_formatted_bytes)} estimated')
+        estimated_room = decimal_gb(ex.estimated_room_for_games)
+        if self.last_physical_plan is None:
+            self.exfat_summary.setText(
+                f'Modeled room for games: {estimated_room} • real card not measured')
+        else:
+            p = self.last_physical_plan
+            self.exfat_summary.setText(
+                f'Modeled: {estimated_room} • REAL formatted: {decimal_gb(p.capacity)}; '
+                f'free after copy: {decimal_gb(p.free_after)}')
+        self.exfat_bar.setToolTip(
+            f'exFAT SIMULATION ONLY: 128 KiB clusters; '
+            f'{ex.estimated_format_bytes:,} modeled formatting overhead and '
+            f'{ex.estimated_cluster_padding_bytes:,} estimated file slack. '
+            'No card or NAS files are formatted, created, modified or deleted.')
 
     def reset_physical_plan(self, note=None):
         self.last_physical_plan = None
+        if hasattr(self, 'exfat_bar'):
+            self.update_card_plan()
         if hasattr(self, 'card_measured'):
             self.card_measured.setText(note or 'Real microSD not measured yet. Select the card and click Preview.')
             self.real_card_bar.setVisible(False)
@@ -1522,6 +1606,7 @@ class Window(QMainWindow):
             self.reset_physical_plan('Could not measure the selected card. Do not copy until a valid preview succeeds.')
             return
         self.last_physical_plan = physical
+        self.update_card_plan()
         self.card_measured.setText(
             f'REAL CARD • {decimal_gb(physical.capacity)} formatted ({binary_gib(physical.capacity)})  •  '
             'Preview only, not yet transferred')
@@ -1541,12 +1626,13 @@ class Window(QMainWindow):
         if result is None or result[4] is None:
             self.set_status('Virtual-card check stopped. Your files were not changed.')
             return
-        scan_path, entries, size, count, companion = result
+        scan_path, entries, size, count, companion, cluster_padding = result
         if scan_path != self.workspace:
             self.refresh()
             return
         self.card_entries, self.staged_bytes, self.staged_files = entries, size, count
         self.staged_companion = companion
+        self.staged_cluster_padding = cluster_padding
         self.update_card_plan()
         if self.last_physical_plan is not None:
             self.reset_physical_plan('Staged files changed or were rescanned. Preview the card again for current numbers.')

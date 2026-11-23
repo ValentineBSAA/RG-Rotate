@@ -1,5 +1,17 @@
 # Verification matrix · Retro Library Studio
 
+## v1.5.9 candidate · Virtual exFAT layer + M3U member details
+
+| Verification | Source | Actual Windows / NAS | Physical card / RG Rotate |
+| --- | --- | --- | --- |
+| CHD + M3U membership survives JSON worker handoff | Regression added, CI pending | User confirmed ordered files, **2 DISCS display pending** | Emulator disc switching pending |
+| Nominal advertised 512 GB planner stays intact | Code unchanged + new layer tests, CI pending | User v1.5.8 nominal UI passed; v1.5.9 screenshot pending | Not a real card size |
+| Non-destructive 128 KiB exFAT model and cluster slack | Pure math/scan tests, CI pending | v1.5.9 screenshot pending | Actual Windows formatted size pending |
+| Real card source of truth | Existing measured physical preview retained | Pending physical card connection | Pending real drive/filesystem test |
+
+See [non-destructive exFAT acceptance](VIRTUAL_EXFAT_PLAN.md). **No virtual formatting of real disk or virtual NAS directory takes place.**
+
+
 ## v1.5.8 · Multi-disc PS1 collections (merged source beta)
 
 | Acceptance | Automated source / mock | User Windows + Synology | Actual RG Rotate |

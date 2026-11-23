@@ -1,28 +1,25 @@
 {
-  "version": "1.5.8",
-  "title": "Smart Multi-disc PS1 Collections Beta",
+  "version": "1.5.9",
+  "title": "Virtual Windows 11 exFAT Card Preview + 2 DISCS Gallery Fix",
   "build_date": "2026-11-23",
   "platform": "Windows source (PySide6)",
   "source_CI": {
-    "windows_passed": 289,
-    "linux_passed": 288,
-    "linux_skipped": 1,
-    "run": "45162684438"
+    "status": "pending GitHub Windows/Linux CI for v1.5.9"
   },
   "local_pytest": {
     "passed": 266,
     "skipped": 25
   },
-  "windows_real_acceptance": "pending for v1.5.8 multi-disc CHD/M3U workflow",
-  "device_acceptance": "pending for RG Rotate game launch and disc swap",
+  "windows_real_acceptance": "v1.5.8 user confirmed RE2 real CHDman conversion and ordered CHD/M3U folder; v1.5.9 display/exFAT screenshots pending",
+  "device_acceptance": "512 GB physical microSD not yet measured by Windows; RG Rotate playback pending",
   "source_files": [
     "app.py",
+    "readonly_scan.py",
     "core.py",
-    "disc_sets.py",
-    "library_presentation.py",
-    "ps1_pipeline.py",
+    "virtual_exfat.py",
     "ps1_collections.py",
-    "tests/test_v158_collections.py"
+    "library_presentation.py",
+    "tests/test_v159_exfat_and_playlist.py"
   ],
-  "safety": "Original source CUE/BIN/CHD untouched; no automatic destructive cleanup. M3U subset-only atomic extension."
+  "safety": "Model only, no formatting/writes/deletes/preallocation. Source NAS ROMs, CHDs, M3U, artwork and CompanionData preserved."
 }

@@ -1,5 +1,13 @@
 # RG Rotate · Retro Library Studio
 
+## v1.5.9 · Non-destructive exFAT preview + multi-disc details
+
+- Fixed the **real Windows v1.5.8 Resident Evil 2** gallery detail defect. Read-only scan previously discarded M3U-to-CHD membership and hid the member CHDs before grouping. The new scan retains them and presents a **2 DISCS** badge with both verified file paths, **without modifying the game folder or playlist**.
+- Added a second **SIMULATED Windows 11 SDXC/exFAT** capacity bar *under* the previously tested 512 GB nominal planner. The overlay models a 128 KiB cluster-size assumption, estimated exFAT metadata, file-allocation rounding, existing staged bytes, companion allowance and protected 8 GiB free reserve. It creates, formats and deletes **nothing**.
+- **Not exact physical capacity:** Real card sector count, allocation unit and partition overhead are unknown until Windows measures the connected microSD. **Copy to card → Preview** already reads that measurement and uses it for physical transfer safety. Windows does not automatically reformat a properly readable card.
+- [Full virtual-format acceptance and rationale](docs/VIRTUAL_EXFAT_PLAN.md). Keep v1.5.8 until you confirm the new UI; RG Rotate hardware setup and real M3U disc-switching remain pending.
+
+
 ## v1.5.8 Windows source beta · One Game, Multiple Discs
 
 - New **Import complete PS1 game folder…** action inspects all CUE/BIN tracks, converts and verifies each disc as its own CHD, and puts CHDs under one parent game folder. Existing CHDs are verified and organized without recompressing.
