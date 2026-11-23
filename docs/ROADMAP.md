@@ -1,5 +1,8 @@
 # Living Roadmap · RG Rotate / Retro Library Studio
 
+**STATUS UPDATE 2026-11-23:** [PR #22](https://github.com/ValentineBSAA/RG-Rotate/pull/22) for v1.6.4 Unicode CUE fix merged into main (squash `21c2b5a`). Source CI run [45272838436](https://github.com/ValentineBSAA/RG-Rotate/actions/runs/45272838436) **384 Windows passed; 383 Linux passed, 1 skipped**. The exact branch-head source ZIP [45272820961](https://github.com/ValentineBSAA/RG-Rotate/actions/runs/45272820961) packaged successfully (commit `8d755754`; subsequent merge was squash of same source). Real Windows user **Crash Bandicoot™** CHDman createcd + verify, duplicate retry, and Stop acceptance are **still pending**. v1.6.3 had recognized title correctly but imported zero files because CHDman reported Unicode CUE filename missing. User should use v1.6.4 source ZIP from GitHub Actions, install in new program folder, start with one Crash Bandicoot™ EBOOT, inspect named CHD after verification, then repeat same EBOOT. No big 30-game batch until passes. Retain anonymous v1.6.2 PS1 CHDs untouched. Full [v1.6.4 checklist](PSN_UNICODE_CHDMAN_v164.md).
+
+
 ## v1.6.4 · Crash Bandicoot™ conversion failure
 
 - [x] Real Windows 11 v1.6.3 single EBOOT import identified title **Crash Bandicoot™**, then CHDman createcd exited 1: Windows reported temporary `Crash Bandicoot™ (Disc 1).cue` as nonexistent. **Added 0 files**. Exact duplicate test NOT possible yet.
