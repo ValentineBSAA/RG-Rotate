@@ -27,7 +27,17 @@ def batch_guided_import(paths, workspace, fallback, binary, *, progress=None,
     loose = [p for p in unique if p not in packages
              and not (p.parent in package_dirs
                       and p.name.casefold() in ('keys.bin', 'document.dat'))]
-    jobs = [('package', p.name, [p]) for p in packages]
+    from ps1_psn import is_ps1_classic, package_title
+    jobs = []
+    for p in packages:
+        if p.suffix.casefold() == '.pbp' and is_ps1_classic(p):
+            try:
+                visible_name = package_title(p)
+            except ValueError:
+                visible_name = p.parent.name
+        else:
+            visible_name = p.stem
+        jobs.append(('package', visible_name, [p]))
     if loose:
         jobs.append(('loose', f'{len(loose)} loose game/disc file(s)', loose))
     result = {'copied': 0, 'skipped': 0, 'converted': 0, 'playlists': 0,
