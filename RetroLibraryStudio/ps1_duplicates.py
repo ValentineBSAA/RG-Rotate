@@ -65,6 +65,27 @@ def _members(folder: Path) -> list[Path]:
     return members if numbers == sorted(numbers) and disc_numbers_are_contiguous(numbers) else []
 
 
+def _single_member(folder: Path) -> list[Path]:
+    """Verified PSN single-disc output has no M3U; check its exact layout."""
+    if folder.is_symlink() or not folder.is_dir():
+        return []
+    chds = list(folder.glob('*.chd'))
+    target = folder / f'{folder.name} (Disc 1).chd'
+    if (len(chds) == 1 and chds[0] == target
+            and not target.is_symlink() and target.is_file()
+            and target.stat().st_size > 0
+            and not list(folder.glob('*.m3u'))):
+        return [target]
+    return []
+
+
+def completed_members(folder: Path, expected_discs: int | None = None) -> list[Path]:
+    members = _members(folder) or _single_member(folder)
+    if expected_discs is not None and len(members) != expected_discs:
+        return []
+    return members
+
+
 def existing_collections(workspace: Path, title: str) -> list[Path]:
     root = Path(workspace) / 'ROMs' / 'psx'
     if not root.is_dir() or root.is_symlink():
@@ -72,7 +93,8 @@ def existing_collections(workspace: Path, title: str) -> list[Path]:
     wanted = title_key(title)
     return sorted((folder for folder in root.iterdir()
                    if folder.is_dir() and not folder.is_symlink()
-                   and title_key(folder.name) == wanted and _members(folder)),
+                   and title_key(folder.name) == wanted
+                   and completed_members(folder)),
                   key=lambda p: p.name.casefold())
 
 
@@ -91,8 +113,8 @@ def decide_repeat(workspace: Path, title: str, source_hash: str) -> tuple[str, s
             if record.get('version') == 1 and record.get('system') == 'PS1':
                 folder_name = folder_title(record.get('collection', ''))
                 folder = Path(workspace) / 'ROMs' / 'psx' / folder_name
-                members = _members(folder)
-                if len(members) == record.get('discs'):
+                members = completed_members(folder, record.get('discs'))
+                if members:
                     return ('same', f'Already imported to PS1: {folder_name} • all {len(members)} CHDs still present')
         except (ValueError, OSError, TypeError):
             pass
@@ -110,8 +132,8 @@ def record_import(workspace: Path, folder: Path, pbp_sha256: str, *, disc_count:
     folder = Path(folder)
     if folder.name != folder_title(folder.name):
         raise ValueError('Unsafe PS1 collection title')
-    members = _members(folder)
-    if len(members) != disc_count:
+    members = completed_members(folder, disc_count)
+    if not members:
         raise ValueError('Cannot record unverified or incomplete CHD/M3U collection')
     target = _receipt_path(workspace, pbp_sha256)
     payload = {'version': 1, 'system': 'PS1', 'collection': folder.name, 'discs': disc_count}
