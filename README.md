@@ -1,5 +1,14 @@
 # RG Rotate · Retro Library Studio
 
+## v1.6.1 source beta · PS1 Classics EBOOT and real 7-Zip validation
+
+- New PSN PS1 Classics path recognizes EBOOT.PBP with KEYS.BIN / DOCUMENT.DAT; keys/manual are companion material, never CHD discs. A valid PS1 Classics disc signature prevents confusing PS1 with native PSP games.
+- An optional, unchecked PSXtract selection in Prepare apps installs a pinned GitHub v3.0 release after user consent and SHA-256 verification. It is not included in our ZIP, does not execute during installation, and is required for the encrypted PSN path.
+- Once the helper extracts full PS1 CUE/BIN discs, the existing verified CHDman conversion, ordered M3U, parent folder and single cover process continues automatically. The original archive, keys, manual and NAS library are preserved.
+- Added tests that actually create and extract .7z archives with three synthetic discs. Synthetic PSN PBP tests mock decryption. **Actual PSN EBOOT extraction and gameplay are unverified until the user tests their file.**
+- [PS1 Classics/7Z test checklist](docs/PS1_CLASSICS_7Z_ACCEPTANCE.md).
+
+
 ## v1.6.0 · Readable details and verified microSD adapter identification
 
 - Game File Format, Exact Sizes and exFAT details are now premium **summary-first dialogs** with easy-to-read grouped facts, member files and optional *Show exact bytes and technical details*. No existing game, folder or artwork is modified.
