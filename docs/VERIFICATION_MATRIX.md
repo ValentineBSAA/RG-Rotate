@@ -1,5 +1,19 @@
 # Verification matrix · Retro Library Studio
 
+## v1.6.0 candidate · readable dialogs / safe card discovery
+
+| Test | Source/CI | User Windows USB card | Physical RG Rotate |
+| --- | --- | --- | --- |
+| Three readable themed information dialogs and exact technical expander | New Qt tests, CI pending | Pending 125% screenshots | N/A |
+| Background candidate drive detection (removable/uncertain fixed) | Pure discovery tests, CI pending | Pending actual USB reader | N/A |
+| Identity capture on Preview, exFAT + typed drive-letter approval | Mocked Windows volume tests, CI pending | Pending actual Windows formatted card | N/A |
+| Volume identity verified at worker start and per-file before writing | Unit tests, CI pending | Pending card/disconnection test | N/A |
+| Existing ZIP import, CHDman, M3U, artwork and virtual NAS remain unchanged | Older regression suite to rerun | Previous v1.5.9 observed | Not yet launched |
+| Small game launch, savestates and swap in Cocoon/emulators | Not testable in CI | Pending | Pending |
+
+[Acceptance steps](CARD_DETECTION_AND_READABLE_DIALOGS.md).
+
+
 ## v1.5.9 candidate · Virtual exFAT layer + M3U member details
 
 | Verification | Source | Actual Windows / NAS | Physical card / RG Rotate |
