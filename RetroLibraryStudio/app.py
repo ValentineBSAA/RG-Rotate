@@ -1587,6 +1587,8 @@ class Window(QMainWindow):
 
     def reset_physical_plan(self, note=None):
         self.last_physical_plan = None
+        if hasattr(self, 'exfat_bar'):
+            self.update_card_plan()
         if hasattr(self, 'card_measured'):
             self.card_measured.setText(note or 'Real microSD not measured yet. Select the card and click Preview.')
             self.real_card_bar.setVisible(False)
@@ -1604,6 +1606,7 @@ class Window(QMainWindow):
             self.reset_physical_plan('Could not measure the selected card. Do not copy until a valid preview succeeds.')
             return
         self.last_physical_plan = physical
+        self.update_card_plan()
         self.card_measured.setText(
             f'REAL CARD • {decimal_gb(physical.capacity)} formatted ({binary_gib(physical.capacity)})  •  '
             'Preview only, not yet transferred')
