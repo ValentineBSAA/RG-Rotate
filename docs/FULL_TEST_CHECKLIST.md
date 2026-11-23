@@ -76,7 +76,7 @@ _Last organized: 2026-11-23. Current source: **v1.5.7 merged into main** (PR #11
 - [ ] F14: If custom companion needed, store persistent AI memory on microSD CompanionData, temporary screenshots only, test backup/restore and never let cleanup delete memories.
 
 ## Exit criteria before calling a public stable build
-- [ ] G01: GitHub Windows/Linux source CI green for exact merged candidate.
+- [x] G01: **Merged main source CI passed**: [run 45155602315](https://github.com/ValentineBSAA/RG-Rotate/actions/runs/45155602315), **279 Windows / 278 Linux passed, 1 skipped**. This does not imply real Windows/NAS acceptance.
 - [ ] G02: v1.5.7 user Windows screenshots show new console-shelf visual and scale/filter acceptance.
 - [ ] G03: v1.5.5+ destructive batch safety verified on disposable NAS test copies (if enabled for release).
 - [ ] G04: Actual card and representative handheld game launches pass before claiming RG Rotate-ready.
