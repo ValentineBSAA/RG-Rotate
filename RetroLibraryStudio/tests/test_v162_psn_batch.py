@@ -188,3 +188,22 @@ def test_cancellation_prevents_starting_next_game(tmp_path):
         psn_extractor=extractor)
     assert result['cancelled'] and len(calls)==1
     assert len(result['batch_items'])<=1
+
+
+def test_bundle_zip_with_two_different_psn_games_uses_inner_folder_titles(tmp_path):
+    """An archive titled 'My Collection' must not rename both games alike."""
+    a=fake_psn(tmp_path/'bundle'/'Final Fantasy VII'/'NPEF00069'/'EBOOT.PBP',b'A')
+    b=fake_psn(tmp_path/'bundle'/'Final Fantasy VIII'/'NPEF00070'/'EBOOT.PBP',b'B')
+    archive=tmp_path/'My PSN Collection.zip'
+    with zipfile.ZipFile(archive,'w') as z:
+        for p in sorted(a.parent.iterdir()):
+            z.write(p,arcname='Final Fantasy VII/NPEF00069/'+p.name)
+        for p in sorted(b.parent.iterdir()):
+            z.write(p,arcname='Final Fantasy VIII/NPEF00070/'+p.name)
+    virtual=tmp_path/'virtual'
+    result=batch_guided_import([archive],virtual,'PS1',mock_chdman(tmp_path),
+        auto_artwork=False,converter=mock_converter,psn_extractor=mock_extractor)
+    assert not result['errors'] and result['converted']==6 and result['playlists']==2
+    assert (virtual/'ROMs'/'psx'/'Final Fantasy VII'/'Final Fantasy VII.m3u').exists()
+    assert (virtual/'ROMs'/'psx'/'Final Fantasy VIII'/'Final Fantasy VIII.m3u').exists()
+    assert not (virtual/'ROMs'/'psx'/'My PSN Collection').exists()
