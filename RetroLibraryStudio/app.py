@@ -53,7 +53,7 @@ from system_shelves import (PRIMARY_SYSTEMS, console_counts, console_order_key,
                             console_visual, grouped_shelves)
 from workspace_setup import suggested_workspace, copy_existing_workspace, count_workspace_files
 
-VERSION = '1.6.3 Beta – Safe PS1 Titles & Reliable Batch Stop'
+VERSION = '1.6.4 Beta – Unicode-Safe PSN CHD Conversion'
 SCALE_CHOICES = [('100%', 100), ('110%', 110), ('125%', 125), ('140%', 140), ('150%', 150)]
 MAX_VISIBLE_FILES = 1200
 
