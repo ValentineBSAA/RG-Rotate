@@ -61,6 +61,8 @@ jobs:
                            'RetroLibraryStudio/friendly_dialogs.py',
                            'RetroLibraryStudio/ps1_psn.py',
                            'RetroLibraryStudio/ps1_progress.py',
+                           'RetroLibraryStudio/ps1_batch.py',
+                           'RetroLibraryStudio/tests/test_v162_batch_psn.py',
                            'RetroLibraryStudio/ps1_duplicates.py',
                            'RetroLibraryStudio/library_duplicates.py',
                            'RetroLibraryStudio/tests/test_v162_library_duplicates.py',
