@@ -8,7 +8,7 @@ import threading
 
 
 def test_old_version_practice_location_recovers_after_restart():
-    prior = r'C:\Users\soney\Documents\Retro Library Studio\PracticeTransfer'
+    prior = r'C:\Users\Example\Documents\Retro Library Studio\PracticeTransfer'
     default = Path(prior)
     assert restore_destination_mode(Path(prior), '', default) == 'practice'
     assert not is_volume_root(prior)
@@ -29,9 +29,9 @@ def test_card_root_cannot_be_reclassified_as_practice():
 
 
 def test_real_card_mode_is_not_inferred_from_an_arbitrary_folder():
-    folder=Path(r'C:\Users\soney\Documents\Some Folder')
-    assert restore_destination_mode(folder, 'physical', Path(r'C:\Users\soney\Documents\PracticeTransfer')) == 'unconfirmed'
-    assert same_location(folder, r'c:/USERS/SONEY/documents/Some Folder')
+    folder=Path(r'C:\Users\Example\Documents\Some Folder')
+    assert restore_destination_mode(folder, 'physical', Path(r'C:\Users\Example\Documents\PracticeTransfer')) == 'unconfirmed'
+    assert same_location(folder, r'c:/USERS/EXAMPLE/documents/Some Folder')
 
 
 def test_practice_second_run_still_verifies_all_existing(tmp_path):
