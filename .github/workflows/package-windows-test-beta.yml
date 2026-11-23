@@ -11,6 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      # Final v1.6.0 package includes responsive 100–150% dialog typography.
       - name: Package checked-out source without altering existing installs
         shell: bash
         run: |
