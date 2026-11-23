@@ -4,8 +4,8 @@
 
 | Feature | Code change/test | Real Windows/Synology | RG Rotate |
 | --- | --- | --- | --- |
-| PSP/PS1/DS/GBA/PS2/GameCube visual sections, count pills, search/filter/file list | Source and regression tests added to feature branch; CI **pending** | **Pending** A01-A09 | Not applicable |
-| Explicit PS2 and GameCube import organization | Source folder map + GCM classification test; CI **pending** | **Pending** A10 | Experimental gameplay F12 |
+| PSP/PS1/DS/GBA/PS2/GameCube visual sections, count pills, search/filter/file list | Source and optional Qt regression tests passed [PR run 45155293003](https://github.com/ValentineBSAA/RG-Rotate/actions/runs/45155293003): Windows 279 passed; Linux 278 passed, 1 skipped | **Pending** A01-A09 | Not applicable |
+| Explicit PS2 and GameCube import organization | Source folder map + GCM classification tests passed in PR CI (not tested against real NAS files) | **Pending** A10 | Experimental gameplay F12 |
 | Library titles, CHDs, covers, cancellation, backup safety | Existing behavior preserved by design; regression rerun **pending** | v1.5.4 single-disc CHDs observed; newer v1.5.5 batch safety **pending** | **Pending** |
 | v1.5.6 512 GB virtual + real capacity meter | CI passed on prior v1.5.6 commit | **Pending** 125% Windows UX and physical-card comparison | **Pending** |
 
