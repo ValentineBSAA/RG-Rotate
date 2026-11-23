@@ -3,7 +3,7 @@
 ## v1.6.8 · Correct PSXtract error output capture (new console launch)
 
 - [x] v1.6.7 real Windows Clock Tower retry failed again; 0 imported, 0 CHDs; generic 4294967295 despite earlier user-visible PGD errors.
-- [x] Read has207 upstream PSXtract v3: AttachConsole parent + freopen CONOUT$ steals stdout from Python pipe. Start helper in hidden Windows dedicated console to preserve stderr/stdout capture and Stop process handling.
+- [x] Read has207 upstream PSXtract v3: AttachConsole parent + freopen CONOUT$ steals stdout from Python pipe. Initial dedicated console approach FAILED Windows GUI-subsystem smoke (AttachConsole still returned 1), so was removed. Instead detach only the isolated import worker using FreeConsole before launching the direct PSXtract child, preserving stdout pipe and Stop/Job containment.
 - [x] Normalize Windows unsigned -1 code; distinguish known PGD authentication failure vs unavailable output; no key/ROM bytes disclosed.
 - [x] Check optional adjacent KEYS.BIN length only; preserve verified-v3-only key positional support.
 - [x] Synthetic tests + Windows GUI-subsystem/console AttachConsole smoke tests, no commercial data.
