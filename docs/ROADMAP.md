@@ -1,5 +1,10 @@
 # Living Roadmap · RG Rotate / Retro Library Studio
 
+- [x] **Batch PS1 Classics:** choose a directory of ZIP/7Z/EBOOT packages; isolated per-game queue with GAME N/TOTAL, readable summary and continuation after a bad archive.
+- [x] Multiple archives selected in Add Game Files are processed individually, not pooled into one potentially mislabeled PSN extraction.
+- [x] Repeat PSN EBOOT content checks prevent extra CHDs/M3Us even across renamed/repacked ZIP/7Z; non-PS1 PSP EBOOTs are not misconverted.
+- [ ] Batch real PSN archive acceptance at 125% after Windows/Linux CI.
+
 ## v1.6.2 · Live PS1 disc extraction + cross-console deduplication
 
 - [x] Live PSXtract output drain with bounded memory; translate only non-sensitive disc/milestone lines into user-facing progress. Do not expose keys, offsets, PSN IDs or stdout logs.
