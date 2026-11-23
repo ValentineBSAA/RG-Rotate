@@ -361,11 +361,16 @@ def guided_import(paths: list[Path], workspace: Path, fallback: str, binary: Pat
             # actual game title and becomes an anonymous game-code folder.
             # An archive can contain several different PSN EBOOT games.
             # Never force the single archive filename on every game in it.
-            from ps1_psn import is_ps1_classic
+            from ps1_psn import is_ps1_classic, meaningful_title
             eboots = [p for p in unpacked if p.suffix.lower() == '.pbp'
                       and is_ps1_classic(p)]
-            title_hint = psn_title_hint or (archives[0].stem
-                         if len(archives) == 1 and len(eboots) == 1 else None)
+            # Generic archive wrappers ('PS1.7z') must not become a title.
+            # The containing folder can supply a legitimate title; if neither
+            # is meaningful, package_title reads the PBP's PARAM.SFO instead.
+            title_hint = psn_title_hint
+            if not title_hint and len(archives) == 1 and len(eboots) == 1:
+                title_hint = (meaningful_title(archives[0].stem) or
+                              meaningful_title(archives[0].parent.name))
             return guided_import([p for p in paths if p not in archives] + unpacked,
                                 workspace, fallback, binary, progress=progress,
                                 cancel=cancel, auto_artwork=auto_artwork,
@@ -399,6 +404,7 @@ def guided_import(paths: list[Path], workspace: Path, fallback: str, binary: Pat
         psn_related.update(p for p in (doc, keys) if p is not None)
         try:
             title = package_title(pbp, psn_title_hint)
+            out['collection_title'] = title
             phase(f'Checking for an existing PS1 collection: {title}', 0, 0)
             digest = fingerprint_pbp(pbp, cancel=cancel)
             decision, note = decide_repeat(workspace, title, digest)
@@ -425,11 +431,20 @@ def guided_import(paths: list[Path], workspace: Path, fallback: str, binary: Pat
                 converted = stage_ps1_cues(prepared, workspace, binary, progress=phase,
                                           cancel=cancel, converter=converter,
                                           verify_existing=verify_existing)
-                if (not converted['cancelled'] and not converted['errors']
-                        and len(prepared) > 1
-                        and (converted['playlists'] == 1 or converted['playlists_updated'] == 1)):
-                    # A receipt is created only for an entirely completed
-                    # CHD/M3U set; previous/other editions are never overwritten.
+                # Only expose a finished collection folder as a successful
+                # import; do not direct the user to an unverified partial.
+                finished = (not converted['cancelled'] and not converted['errors']
+                            and len(prepared) > 0
+                            and (converted['copied'] > 0 or converted['skipped'] > 0))
+                if finished:
+                    out['collection_folder'] = str(Path(workspace) / 'ROMs' / 'psx' / title)
+                if (finished and
+                        ((len(prepared) == 1 and converted['converted'] == 1)
+                         or (len(prepared) > 1 and
+                             (converted['playlists'] == 1 or
+                              converted['playlists_updated'] == 1)))):
+                    # Create a receipt only for completed verified singles or
+                    # a complete CHD/M3U set; never for a partial conversion.
                     try:
                         record_import(workspace, Path(workspace) / 'ROMs' / 'psx' / title,
                                       digest, disc_count=len(prepared))
