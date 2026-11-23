@@ -1,6 +1,6 @@
 # Retro Library Studio v1.5.9 · Virtual exFAT + Multi-disc Details
 
-**Date:** 2026-11-23. **Status:** Source candidate pending CI and real Windows 125% acceptance.
+**Date:** 2026-11-23. **Status:** Merged source beta; [main CI 45242023081](https://github.com/ValentineBSAA/RG-Rotate/actions/runs/45242023081) passed 301 Windows/300 Linux plus 1 skip; ZIP clean extract 273 passed/28 skipped. Real Windows 125%/actual microSD still pending.
 
 ## Actual prior Windows evidence
 
@@ -21,7 +21,7 @@ User screenshots of v1.5.8 show **Resident Evil 2 (USA) Disc 1.chd, Disc 2.chd a
 
 ## Verification gate
 
-- [ ] GitHub Windows/Linux CI pass for exact PR/head.
+- [x] GitHub Windows/Linux CI pass for exact merged source.
 - [ ] Real Windows at 125%: original meter + exFAT overlay visible, 2 DISCS badge/format popup lists both discs.
 - [ ] Actual 512 GB card: verify filesystem, formatted capacity, free bytes and transfer preflight; do not automatically reformat a card.
 - [ ] Android RG Rotate: Cocoon single-game mapping, PS1 emulator M3U disc switching and save/playback.
