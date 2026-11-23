@@ -1,5 +1,8 @@
 # Living Roadmap · RG Rotate / Retro Library Studio
 
+**v1.6.3 source status (2026-11-23):** [PR #21 merged](https://github.com/ValentineBSAA/RG-Rotate/pull/21); [CI 379 Windows / 378 Linux passed, 1 skipped](https://github.com/ValentineBSAA/RG-Rotate/actions/runs/45269373105); [Windows source ZIP packaged and integrity-checked](https://github.com/ValentineBSAA/RG-Rotate/actions/runs/45269530914). Unchecked Windows NAS items below remain pending. Preserve all anonymous v1.6.2 CHDs for manual identification; do not bulk-clean.
+
+
 ## v1.6.3 · Real 30-game batch failure: highest priority
 
 - [x] Diagnose the generic PS1 source-label regression from user's Windows screenshots and source path: a wrapper stem of PS1 was accepted as a game title, yielding PS1/Disc 1 CHD and anonymous cover.
