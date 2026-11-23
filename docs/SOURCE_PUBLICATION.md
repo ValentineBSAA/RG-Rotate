@@ -50,3 +50,5 @@ The repository is public. No license has yet been selected explicitly; do not as
 - Source files and tests published to main [b0c02214](https://github.com/ValentineBSAA/RG-Rotate/commit/b0c02214917e0356d6c00645a40b7ef26090ac30).
 - Windows test ZIP: `RetroLibraryStudio_v1.5.4_Windows_Test_Beta.zip`, **3,094,825 bytes**, SHA-256 `86687bdf34c69a33cd93733311b36b2c86f6ca9ee81a2f82bd853caf99d4cc15`.
 - Local tests: 240 passed, 15 skipped. Physical Windows CHDman and user NAS acceptance remains pending.
+
+- **CI for v1.5.4 source:** [run 45144304702](https://github.com/ValentineBSAA/RG-Rotate/actions/runs/45144304702) succeeded, Windows 255 pass; Linux 254 pass / 1 skip. Real CHDman and original-image compatibility pending.

@@ -95,3 +95,5 @@ Tracked by [#8](https://github.com/ValentineBSAA/RG-Rotate/issues/8), committed 
 - [ ] User Windows acceptance: browse/select covers and observe full preview **before applying**; confirm attractive context menu at 125%.
 - [ ] User Windows acceptance: Convert Clock Tower real CUE + two BINs with CHDman and NAS, confirm CHD badge, only CHD in PSX directory, recovery outside virtual card, and preserved artwork.
 - [ ] User Windows acceptance: IMG raw-track test, verification failure rollback, incremental NAS practice transfer, and physical microSD/Cocoon later.
+
+- [x] v1.5.4 GitHub source CI: [run 45144304702](https://github.com/ValentineBSAA/RG-Rotate/actions/runs/45144304702) **255 passed on Windows**, **254 passed / 1 skipped on Linux**. These tests still do not establish real CHDman/NAS/handheld acceptance.

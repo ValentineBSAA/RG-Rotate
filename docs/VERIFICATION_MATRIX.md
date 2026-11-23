@@ -94,3 +94,7 @@ Never infer a PASS from a progress bar screenshot alone when the underlying veri
 - **v1.5.4 local source test:** **240 passed, 15 skipped** including 10 new organizer tests: CUE/BIN conversion/tidy, existing CHD, verify failure safety, cancel safety, external path refusal, shared BIN refusal, raw IMG, ambiguous IMG, CloneCD metadata blocking, and no single-disc M3U.
 - **Windows CI:** Pending at time of source publication. This is not evidence of actual user Windows interaction.
 - **User acceptance still pending:** 125% context menu, async artwork previews, real CHDman conversion, NAS file moves/recovery, real physical microSD and Cocoon playback. See [#8](https://github.com/ValentineBSAA/RG-Rotate/issues/8).
+
+### v1.5.4 GitHub Actions confirmation
+
+- [run 45144304702](https://github.com/ValentineBSAA/RG-Rotate/actions/runs/45144304702) passed: **255 Windows**, **254 Linux + 1 skipped**. Qt UI and PS1 organizer unit tests executed on CI. CHDman subprocess is mocked in conversion tests; physical Windows NAS hardware and emulator playback still pending.
