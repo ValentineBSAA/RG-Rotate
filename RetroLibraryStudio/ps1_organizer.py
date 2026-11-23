@@ -1,8 +1,9 @@
 """Explicit conversion of an existing PS1 library entry to CHD and recoverable tidy.
 
 Only operates on files already inside <virtual card>/ROMs/psx. The CHD is
-published/verified before any source file is moved; source is placed outside
-the virtual card rather than deleted. This module runs inside import_worker.
+published/verified before any source file is moved. Cleanup is an explicit
+policy: backup off-card, or delete *working copies inside the virtual card*.
+External original archives are never touched. Runs inside import_worker.
 """
 from __future__ import annotations
 
@@ -12,7 +13,7 @@ import uuid
 from pathlib import Path
 from typing import Callable
 
-from core import _cue_companions, within
+from core import _cue_companions, within, safe_walk
 from chd_convert import convert_cue, verify_existing_chd
 
 
@@ -95,9 +96,107 @@ def _recoverable_move(files: list[Path], workspace: Path, cancel, progress) -> P
     return destination
 
 
+def _delete_verified_working_sources(files: list[Path], workspace: Path) -> tuple[int, int]:
+    """Remove only source TRACKS inside the active virtual card after CHD verify.
+
+    This cannot ever remove an external imported original NAS file or a
+    recovery directory. The caller must require explicit user confirmation.
+    Do not poll cancellation mid-deletion: the verified CHD stays complete.
+    """
+    psx = workspace / 'ROMs' / 'psx'
+    for source in files:
+        if source.is_symlink() or not source.is_file() or not within(source, psx):
+            raise ValueError(f'Source is not a regular file inside the virtual PSX card: {source}')
+    removed, total = 0, 0
+    for source in files:
+        size = source.stat().st_size
+        source.unlink()
+        removed += 1
+        total += size
+    return removed, total
+
+
+def batch_sources(workspace: Path, cancel=None) -> list[Path]:
+    """Select each complete PS1 disc once; never treat a referenced IMG as a second disc."""
+    psx = Path(workspace) / 'ROMs' / 'psx'
+    all_items = [p for p in safe_walk(psx, cancel=cancel)
+                 if p.suffix.lower() in ('.cue', '.img')]
+    cues = [p for p in all_items if p.suffix.lower() == '.cue']
+    referenced = set()
+    for cue in cues:
+        if cancel is not None and cancel.is_set():
+            return []
+        try:
+            referenced.update(p.resolve() for p in _cue_companions(cue))
+        except (ValueError, OSError):
+            # Leave incomplete CUE in the candidates to report a clear error.
+            pass
+    imgs = [p for p in all_items if p.suffix.lower() == '.img' and p.resolve() not in referenced]
+    return sorted([*cues, *imgs], key=lambda p: str(p).casefold())
+
+
+def batch_convert_ps1(workspace: Path, binary: Path, *, cleanup_mode='backup',
+                      progress=None, cancel=None, converter=None, verifier=None) -> dict:
+    """Convert verified discs one at a time, with one overall progress bar.
+
+    Each source group is isolated. A failed disc is reported and left untouched;
+    this task never walks outside the virtual-card PSX subtree for conversion.
+    """
+    if cleanup_mode not in ('backup', 'delete'):
+        raise ValueError('Choose backup or delete mode explicitly')
+    workspace = Path(workspace).resolve()
+    result = {'converted': 0, 'skipped': 0, 'errors': [], 'cancelled': False,
+              'total': 0, 'completed': 0, 'deleted_files': 0,
+              'nas_bytes_reclaimed': 0, 'backups': [], 'games': [],
+              'cleanup_mode': cleanup_mode}
+    try:
+        if progress: progress('Finding PS1 CUE/IMG files in your virtual card', 0, 0)
+        candidates = batch_sources(workspace, cancel=cancel)
+        result['total'] = len(candidates)
+        if not candidates:
+            if cancel is not None and cancel.is_set():
+                result['cancelled'] = True
+            return result
+        if not Path(binary).is_file():
+            result['errors'].append('CHDman is missing. Prepare CHDman in Apps before batch converting.')
+            return result
+        for i, source in enumerate(candidates):
+            if cancel is not None and cancel.is_set():
+                result['cancelled'] = True
+                break
+            def step(message, current, total):
+                if progress:
+                    percent = 0 if not total else round(100*(i + max(0,min(current,total))/total)/len(candidates))
+                    progress(f'{i+1}/{len(candidates)} · {source.stem}: {message}',percent,100)
+            item = convert_selected_game(source,workspace,binary,progress=step,cancel=cancel,
+                                         converter=converter,verifier=verifier,
+                                         cleanup_mode=cleanup_mode)
+            result['games'].append({'source':str(source), 'output':item.get('output',''),
+                                    'errors':item.get('errors', []), 'backup':item.get('backup','')})
+            result['converted'] += item['converted']
+            result['skipped'] += item['skipped']
+            result['deleted_files'] += item.get('deleted_files',0)
+            result['nas_bytes_reclaimed'] += item.get('freed_bytes',0)
+            if item.get('backup'):
+                result['backups'].append(item['backup'])
+            for err in item['errors']:
+                result['errors'].append(f'{source.name}: {err}')
+            if item.get('cancelled'):
+                result['cancelled'] = True
+                break
+            result['completed'] += 1
+            if progress: progress(f'Processed {i+1} of {len(candidates)} PS1 discs',
+                                  round(100*(i+1)/len(candidates)),100)
+    except InterruptedError:
+        result['cancelled'] = True
+    except Exception as exc:
+        result['errors'].append(str(exc))
+    return result
+
+
 def convert_selected_game(source: Path, workspace: Path, binary: Path, *, progress=None,
                           cancel=None, converter: Callable | None=None,
-                          verifier: Callable | None=None) -> dict:
+                          verifier: Callable | None=None, cleanup_mode='backup') -> dict:
     """Explicit one-disc conversion from the existing library; never overwrite.
 
     Returns errors instead of raising for the import worker UI. The backup is
@@ -107,8 +206,10 @@ def convert_selected_game(source: Path, workspace: Path, binary: Path, *, progre
     if Path(source).is_symlink():
         return {'converted':0, 'copied':0, 'skipped':0, 'playlists':0, 'artwork_games':[],
                 'artwork_attempted':False, 'errors':['Linked or junction game sources cannot be optimized'],
-                'cancelled':False, 'output':'', 'backup':''}
+                'cancelled':False, 'output':'', 'backup':'', 'deleted_files':0, 'freed_bytes':0}
     workspace, source, binary = Path(workspace).resolve(), Path(source).resolve(), Path(binary)
+    if cleanup_mode not in ('backup', 'delete'):
+        raise ValueError('Invalid cleanup policy')
     out = {'converted':0, 'copied':0, 'skipped':0, 'playlists':0,
            'artwork_games':[], 'artwork_attempted':False, 'errors':[],
            'cancelled':False, 'output':'', 'backup':''}
@@ -148,6 +249,13 @@ def convert_selected_game(source: Path, workspace: Path, binary: Path, *, progre
             backups = [p for p in files if p != generated_cue]
             _referenced_elsewhere(cue, companions)
             final = source.parent / (cue.stem + '.chd')
+            # A CUE may refer to nested files; refuse unsafe cleanup until
+            # folder-preserving support exists. Never delete outside the game.
+            for original in backups:
+                if not within(original, psx) or original.parent.resolve() != source.parent.resolve() or original.is_symlink():
+                    raise ValueError('Tracks span multiple directories or leave the PSX folder. Leave originals untouched and convert this disc manually.')
+            if final.is_symlink():
+                raise ValueError('Existing CHD points to an unsafe link')
             if final.exists():
                 if progress: progress('Verifying existing CHD with CHDman',50,100)
                 (verifier or verify_existing_chd)(final,binary,cancel=cancel)
@@ -166,10 +274,18 @@ def convert_selected_game(source: Path, workspace: Path, binary: Path, *, progre
             (verifier or verify_existing_chd)(final,binary,cancel=cancel)
             if cancel is not None and cancel.is_set():
                 out['cancelled']=True; return out
-            if progress: progress('Moving original tracks into recovery backup',87,100)
-            backup = _recoverable_move(backups,workspace,cancel,progress)
-            out['output']=str(final); out['backup']=str(backup)
-            if progress: progress('Verified CHD ready; PSX folder tidied',100,100)
+            if cleanup_mode == 'delete':
+                if progress: progress('Removing verified virtual-card tracks only',87,100)
+                count, size = _delete_verified_working_sources(backups, workspace)
+                out['deleted_files'] = count
+                out['freed_bytes'] = size
+                out['output'] = str(final)
+                if progress: progress('CHD verified; virtual-card duplicates removed',100,100)
+            else:
+                if progress: progress('Moving original tracks into recovery backup',87,100)
+                backup = _recoverable_move(backups,workspace,cancel,progress)
+                out['output']=str(final); out['backup']=str(backup)
+                if progress: progress('Verified CHD ready; PSX folder tidied',100,100)
         finally:
             if generated_cue is not None:
                 generated_cue.unlink(missing_ok=True)
