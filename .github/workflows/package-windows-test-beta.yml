@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      # v1.6.2: safe per-disc extraction UI plus cross-platform library-wide SHA-256 duplicate protection.
+      # v1.6.2: real ZIP/7Z multi-package queue, 13-console dedupe, and PS1 per-disc status.
       - name: Package checked-out source without altering existing installs
         shell: bash
         run: |
@@ -28,8 +28,8 @@ jobs:
               '2. Open the RetroLibraryStudio folder.\n'
               '3. Double-click Start_Retro_Library_Studio.bat. Install Python dependencies if prompted.\n'
               '4. Select your EXISTING virtual NAS card location. Do not format or delete anything.\n'
-              '5. During PSN Classics import, watch the live Disc 1/2/3 status under the progress panel.\n'
-              '6. Reimport a verified game from a renamed ZIP/7Z: identical bytes skip; changed same-title files require review.\n'
+              '5. Choose a folder under Batch import PS1 Classics; watch GAME N/TOTAL and live Disc 1/2/3.\n'
+              '6. Retry a renamed ZIP/7Z containing the same EBOOT. Verify it is skipped with one tile.\n'
               'PS2/GameCube folders only organize files; performance is experimental.\n'
               'CHD batch delete is for disposable copies until real Windows verification.\n'
               'v1.6.2 checks: docs/LIBRARY_DEDUP_AND_PS1_PROGRESS.md; complete tests: docs/FULL_TEST_CHECKLIST.md\n'
@@ -62,7 +62,7 @@ jobs:
                            'RetroLibraryStudio/ps1_psn.py',
                            'RetroLibraryStudio/ps1_progress.py',
                            'RetroLibraryStudio/ps1_batch.py',
-                           'RetroLibraryStudio/tests/test_v162_batch_psn.py',
+                           'RetroLibraryStudio/tests/test_v162_psn_batch.py',
                            'RetroLibraryStudio/ps1_duplicates.py',
                            'RetroLibraryStudio/library_duplicates.py',
                            'RetroLibraryStudio/tests/test_v162_library_duplicates.py',
