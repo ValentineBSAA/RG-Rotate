@@ -6,7 +6,7 @@
 
 The user bought an **Anbernic RG Rotate** with a **512 GB microSD** for PSP, PS1, Nintendo DS, GBA and selected other systems. The main software is **Retro Library Studio**, a friendly Windows 11 PySide6 app that stages a console-organized library in a user-selected **Synology NAS** directory, installs/prepares useful software, and ultimately verifies a transfer to the real card. The Windows app should be deliberately beginner-friendly, not a developer utility. The user dislikes needless manual game-file reorganization and release after release of avoidable GUI problems.
 
-This GitHub repository was newly created and contained only an 11-byte placeholder README before the roadmap was established. **Source publication is still pending**; the complete v1.5.1 ZIP currently exists as a conversation artifact, not yet on GitHub. Do not assume `git clone` currently contains runnable code.
+This GitHub repository was newly created with only an 11-byte placeholder README. On 2026-11-23 the **64 UTF-8 text source and test files for v1.5.1** were committed under `RetroLibraryStudio/` (commit `b458028`). The optional generated cover image is not published. Cloning the repo now provides Python/Windows source; the user still must install dependencies and perform Windows acceptance tests.
 
 ## Current engineering baseline
 
@@ -55,7 +55,7 @@ Another reported example: **Resident Evil 2**, where one disc's CHD conversion f
 
 ## Next actions in order
 
-1. **Publish the actual v1.5.1 source files to this repo** and establish CI; no ROMs, keys or personal NAS addresses.
+1. **DONE:** Publish the actual v1.5.1 text source and tests (commit `b458028`). Next: establish CI, no ROMs, keys or personal NAS addresses.
 2. On Windows, exercise v1.5.1 with the real Clock Tower CUE/BIN set, verify CHDman output, single game tile, true game size, artwork, one progress bar, preserved originals, and safe Stop.
 3. Test one genuine multi-disc title and M3U disc-switching.
 4. Validate live Ninite downloads / installed tools and missing-artwork handling.
