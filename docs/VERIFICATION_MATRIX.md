@@ -105,3 +105,8 @@ Never infer a PASS from a progress bar screenshot alone when the underlying veri
 - **v1.5.5 local Linux code-only tests:** 248 passed, 16 skipped; new fixtures verify preserving external originals, delete-within-card only after verification, recovered backup mode, failed CHD preservation, cancel, multiple discs, duplicate IMG/CUE, and resized cover preview (Qt skipped on Linux). Clean-extracted ZIP integrity passed.
 - **Pending Windows v1.5.5:** Actual batch conversion including destructive cleanup confirmation, verifying external original and previous recovery backups untouched, genuine lossless CHDman verification, responsive GUI, fitted artwork preview.
 - **Pending RG Rotate:** Physical-device game launch and M3U disc switching.
+
+### GitHub v1.5.5 CI (2026-11-23)
+
+- **Passed:** [run 45148569884](https://github.com/ValentineBSAA/RG-Rotate/actions/runs/45148569884), **Windows 264 passed**, **Linux 263 passed / 1 skipped**, including Qt aspect-fit preview test. All conversion tools mocked in automated tests.
+- Package ZIP clean extraction on Linux: **248 passed / 16 skipped**. **Pending:** Real v1.5.5 Windows batch deletion and Synology NAS user acceptance.
