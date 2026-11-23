@@ -1,14 +1,57 @@
-# v1.5.1 priority acceptance: automatic PS1 import
+# v1.5.4 priority Windows acceptance
 
-- [ ] Keep v1.4.4 or another known-good install in a separate folder; do not reset or delete the NAS virtual library.
-- [ ] Verify installed chdman.exe genuinely runs on Windows. Select *Clock Tower: The First Fear* English patch complete CUE + two BIN tracks (or a safe test copy).
-- [ ] Observe one progress bar: Inspect → Convert → Verify → Stage → Artwork; no GUI freezing or unbounded NAS status lookup.
-- [ ] Confirm one playable `.chd`, one game tile, correct non-tiny game size. Original CUE and BINs untouched.
-- [ ] Remove or rename one referenced track in a **disposable copy**, confirm meaningful failure and no incomplete playable CHD.
-- [ ] Test a genuine two-disc game: two separate CHDs, ordered M3U, working emulator disc switch.
-- [ ] Test automatic cover result and manual “Search / Choose image” fallback for ambiguous editions.
-- [ ] Confirm Stop and resume and NAS→Windows practice hash-verification remain reliable.
-- [ ] Actual 512 GB microSD and Cocoon on RG Rotate must be checked separately.
+1. [ ] Open My Games at 125% and RIGHT-CLICK Clock Tower cover tile. Styled context menu should show the conversion action. Test right-click on File List as well.
+2. [ ] Search Clock Tower artwork, select USA and Japan entries: image **previews automatically** in the dialog before applying. No cover should change until `Use selected cover`.
+3. [ ] Right-click Clock Tower BIN/CUE, choose `Convert to verified CHD + tidy PSX folder`. Note the confirmation shows recovery location OUTSIDE the virtual card. Confirm and monitor single task progress.
+4. [ ] After completion, Clock Tower tile should show CHD; only its CHD should remain in original PSX game directory. Original CUE/BIN files present in adjacent `... - Conversion Backups` recovery folder. Artwork unchanged.
+5. [ ] On a *copy* of invalid CUE, verify conversion fails without moving original tracks or leaving a playable fake CHD.
+6. [ ] If an IMG game has CCD/SUB metadata, verify action refuses unsafe conversion. For single-track raw IMG, verify format detection works and conversion succeeds when supported.
+7. [ ] After conversion, run Library Check and NAS-to-Windows practice transfer; verify incremental SHA-256 results. Do not format microSD.
+
+---
+# v1.5.4 priority Windows acceptance
+
+1. [ ] Open My Games at 125% and RIGHT-CLICK Clock Tower cover tile. Styled context menu should show the conversion action. Test right-click on File List as well.
+2. [ ] Search Clock Tower artwork, select USA and Japan entries: image **previews automatically** in the dialog before applying. No cover should change until `Use selected cover`.
+3. [ ] Right-click Clock Tower BIN/CUE, choose `Convert to verified CHD + tidy PSX folder`. Note the confirmation shows recovery location OUTSIDE the virtual card. Confirm and monitor single task progress.
+4. [ ] After completion, Clock Tower tile should show CHD; only its CHD should remain in original PSX game directory. Original CUE/BIN files present in adjacent `... - Conversion Backups` recovery folder. Artwork unchanged.
+5. [ ] On a *copy* of invalid CUE, verify conversion fails without moving original tracks or leaving a playable fake CHD.
+6. [ ] If an IMG game has CCD/SUB metadata, verify action refuses unsafe conversion. For single-track raw IMG, verify format detection works and conversion succeeds when supported.
+7. [ ] After conversion, run Library Check and NAS-to-Windows practice transfer; verify incremental SHA-256 results. Do not format microSD.
+
+---
+# v1.5.1: Focused Windows acceptance check
+
+Use a **copy** of a small, lawfully obtained PS1 disc set for initial testing.
+
+- [ ] Open v1.5.1. Confirm existing NAS workspace and 125% scale are retained.
+- [ ] Confirm CHDman says Ready on Windows in Install Apps.
+- [ ] On My Games, confirm automatic CUE/BIN → CHD is enabled by default.
+- [ ] Add a NEW PS1 folder with `Game.cue`, `Game (Track 1).bin` and
+      `Game (Track 2).bin`. It should appear as **one** verified CHD, not
+      three entries. Both original tracks should remain unchanged.
+- [ ] Confirm the same activity bar reports **inspection → conversion →
+      verification → copying → artwork**, with Stop available. Conversion
+      can be indeterminate while CHDman is running.
+- [ ] Import two discs of one game (Disc 1 and Disc 2). Confirm there are two
+      verified CHDs and one correctly ordered M3U. A new Disc 2 imported later
+      should also create the playlist.
+- [ ] Open Cover gallery. A converted single disc appears once with its true
+      CHD size. A multi-disc title appears once via its M3U. File list can
+      still show the underlying disc files for troubleshooting.
+- [ ] If auto-artwork didn't find a confident match, confirm a visible review
+      state and use manual cover search. Never assign an unrelated edition.
+- [ ] For your ALREADY IMPORTED Clock Tower folder, choose **Convert earlier
+      PS1 imports…** and confirm it adds a verified CHD while preserving CUE
+      and BIN tracks. Original tracks are still on the virtual card.
+- [ ] Stop a disposable PS1 conversion while it is running. No incomplete CHD
+      should appear in the game library. Your original tracks stay intact.
+- [ ] Run Library Check. Preview then verify a disposable incremental transfer.
+- [ ] If any test fails, capture the exact operation, error, and Windows log.
+
+**Still unverified here:** Real Windows CHDman, live Libretro art, Windows Qt,
+Synology SMB timing, Cocoon recognition on Android and the actual RG Rotate.
+Do not delete any existing source disc files as part of this test.
 
 ---
 

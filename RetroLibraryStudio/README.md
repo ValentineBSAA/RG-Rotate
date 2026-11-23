@@ -1,4 +1,83 @@
-# Retro Library Studio 1.5.3 Beta — Windows PS1 Acceptance
+# Retro Library Studio 1.5.4 Beta — Artwork Previews, Right-click CHD Conversion
+
+**Windows 11 / PySide6 · RG Rotate · Cocoon Shell default**
+
+This version builds on the user-tested NAS import, verified practice copy and
+safe-stop fixes. The virtual microSD folder is **not** a 512 GB disk image;
+it grows only as games and software are staged. Your NAS remains supported.
+
+## The simple PS1 workflow
+
+1. In **My Games**, leave **Automatically convert PS1 CUE/BIN to CHD** enabled
+   (it is enabled by default).
+2. Open **Install Apps**, and make sure **CHDman** is ready on Windows.
+3. Choose **Add Game Files** and select the **CUE** file, or **Add Folder** to
+   select the complete game's folder. If selecting the folder, both BIN tracks
+   are discovered automatically. ZIP/7Z sets are unpacked safely first.
+4. Watch the SAME progress bar move through checking disc tracks, creating the
+   CHD, verifying it with CHDman, copying the finished CHD to the virtual card,
+   and looking up artwork. Because CHDman's progress cannot be measured
+   reliably, the bar animates during conversion instead of inventing a percent.
+5. A single-disc game becomes **one verified `.chd`** in the virtual PS1 library.
+   Multi-disc games get **one CHD per disc**, plus a small `.m3u` playlist that
+   lists those discs in order. M3U doesn't contain game data; it points to CHDs.
+
+**Important:** The originals are never deleted. For a *new* import, the original
+CUE/BIN tracks remain only where you selected them; the virtual ROM folder gets
+the verified CHD. If CHDman is missing, the new PS1 CUE import reports an error
+rather than silently importing incomplete BIN tracks. CUE/BIN names with
+legacy Windows accents (CP1252) are supported. Bare BIN files aren't assumed
+to be complete disc images. Files without CUE descriptors (such as raw IMG)
+are not automatically converted by this pipeline.
+
+### Existing Clock Tower and other previously imported discs
+
+Choose **Convert earlier PS1 imports…** in My Games. This non-destructively
+optimizes existing PS1 CUE/BIN folders on your virtual card. A verified CHD is
+added, and the gallery prefers it over its CUE; **the originals are still in
+that folder** and will also be copied to the real card until you explicitly
+review/relocate them later. Do not delete your only working disc source.
+
+The CUE's displayed size is now the **total of its referenced tracks**, not
+just the tiny text-descriptor size. The total physical card usage counter still
+counts actual files only once.
+
+### Cover art
+
+After a new import, the same worker tries the official Libretro cover catalog;
+if an index cannot be retrieved, it attempts a few exact canonical title/region
+names. Uncertain or modified editions are **not** automatically assigned a
+potentially incorrect cover. Use **Search for a game cover** to review results
+or choose your own PNG/JPG/WEBP. Covers are stored in `Media/BoxArt` and
+previewed from a local Windows cache. Online artwork requires internet access.
+
+## Start / safe usage
+
+Extract to a **new application folder**. Run `Start_Retro_Library_Studio.bat`.
+Keep your existing NAS workspace selected. The previous v1.5.0 or v1.4.4
+application folders can remain as backups. Don't extract the update directly
+into the NAS virtual-card directory.
+
+This build includes the GitHub CI-tested Windows ZIP/CUE track-path fix. It is still a **source beta**; real CHDman and Android game launching require your tests.
+
+The 512 GB planning profile, 8 GiB companion budget, 8 GiB always-free reserve,
+Cocoon APK workflow, Ninite-style downloader, disk health checker and verified
+incremental microSD transfer remain supported. Nothing formats the card.
+
+## Testing scope
+
+Run `RUN_TESTS_Windows.bat` and follow `WINDOWS_TEST_CHECKLIST.md`. Tests in the
+packaged source cover the PS1 conversion orchestration with a simulated CHDman.
+They do **not** establish that actual MAME CHDman conversion, Android emulator
+launch, live cover retrieval, Windows GUI layout or physical-card transfer
+passed in this environment. Validate these on Windows before importing the full
+collection or copying your physical card.
+
+---
+
+## Original 1.5.0 documentation (historical)
+
+# Retro Library Studio 1.5.0 Beta — Guided Setup & PlayStation Discs
 
 Windows 11 / PySide6 source release, based on the supplied v1.4.4 project.
 Extract into a **new application folder**. Keep your existing PC/NAS library
@@ -20,14 +99,6 @@ File list shows the actual individual files. Display-title edits save in Windows
 settings and do not rename files or change artwork identity. Multi-disc/region
 variants in the same folder share a gallery tile with their original paths in
 its tooltip. CUE-referenced tracks remain in File list, rather than separate game tiles.
-
-## Automatic PlayStation 1 preparation (new in 1.5.1)
-
-Choose **Add My Games** and select a complete PS1 CUE/BIN set, including ZIP/7Z packages when supported. The app now runs one guided task: inspect referenced tracks → convert **each actual game disc** to CHD with CHDman → verify the CHD → stage the playable output → build an M3U **only when multiple separate discs belong to the same game** → find artwork. Original source files remain untouched. For already-imported CUE/BIN sets, use the explicit optimize-existing option; it does not silently delete prior files on the NAS.
-
-My Games should show one logical title with its complete size instead of only the 226–228-byte CUE descriptor. During conversion, the unified progress area names each step; Stop must be safe on a network share. A missing track or failed CHDman verification must not publish a broken final game.
-
-This pipeline passed mocked tests in GitHub Actions (241 Windows / 240 Linux, 1 skipped), **but real CHDman conversion on your Windows machine and physical RG Rotate emulator tests remain pending**. See `RELEASE_REPORT_1_5_1.md`.
 
 ## PlayStation Disc Converter
 
@@ -286,6 +357,26 @@ The capacity check is non-destructive. Because the PySide6 UI and SMB network ca
 
 **Limitations:** The Windows Qt GUI and Synology SMB calls cannot be executed in this container. A subprocess hard-stop is tested locally but still requires a real Windows/NAS acceptance test. Other file-writing operations (APKs, CHD conversion, SD transfer) remain cooperatively cancellable; this change specifically isolates **game imports**. When Windows itself delays process termination, no software can promise an instantaneous OS-level stop. Never disconnect the NAS or unplug media during writes.
 
-## v1.5.3 · game file badges and alternate artwork source
+## v1.5.3: clear game formats and resilient cover search
 
-My Games shows a small CHD / BIN-CUE / M3U / ISO / PBP badge based on actual file extension. Click it for details. Artwork search uses official Libretro index with a GitHub fallback when unavailable; you can also pick your own cover.
+Click the **CHD**, **BIN/CUE**, **M3U** or other format badge on any cover tile to see what file exists and what still needs verification. Artwork search now falls back to the official Libretro thumbnail catalog on GitHub and shows a manual browse option when online search cannot complete.
+
+## v1.5.4: Visual cover previews and right-click conversion
+
+Clicking an artwork search result automatically loads a preview below the matching titles, without applying it until you confirm. The separate Preview button also remains available. This uses a cancellable background artwork helper.
+
+Right-click a PS1 game tile or file-list entry for a styled context menu: Rename, Search/Preview Cover, File Format Details, Convert to verified CHD and tidy the PSX folder, or Open Folder. BIN/CUE and safely identifiable single-track IMG are supported. CloneCD CCD/IMG/SUB and ambiguous IMG sets are **rejected instead of guessed**. If the original CUE/BIN still exists beside a CHD, right-click the CHD to verify it and move legacy tracks to a recoverable location.
+
+**Original source safety:** CHDman must first create and verify a CHD, then reverify the completed destination. Only after success does the program move the CUE/BIN or IMG into a sibling folder named `<virtual card> - Conversion Backups`, outside the virtual microSD. No permanent deletion; original files remain recoverable. The app never silently formats a drive. Keep backups until play-tested on RG Rotate.
+
+**Test scope:** Local 240 passed, 15 skipped. GUI and genuine MAME chdman conversion on the user's Windows NAS remain for acceptance testing.
+
+## v1.5.4: Visual cover previews and right-click conversion
+
+Clicking an artwork search result automatically loads a preview below the matching titles, without applying it until you confirm. The separate Preview button also remains available. This uses a cancellable background artwork helper.
+
+Right-click a PS1 game tile or file-list entry for a styled context menu: Rename, Search/Preview Cover, File Format Details, Convert to verified CHD and tidy the PSX folder, or Open Folder. BIN/CUE and safely identifiable single-track IMG are supported. CloneCD CCD/IMG/SUB and ambiguous IMG sets are **rejected instead of guessed**. If the original CUE/BIN still exists beside a CHD, right-click the CHD to verify it and move legacy tracks to a recoverable location.
+
+**Original source safety:** CHDman must first create and verify a CHD, then reverify the completed destination. Only after success does the program move the CUE/BIN or IMG into a sibling folder named `<virtual card> - Conversion Backups`, outside the virtual microSD. No permanent deletion; original files remain recoverable. The app never silently formats a drive. Keep backups until play-tested on RG Rotate.
+
+**Test scope:** Local 240 passed, 15 skipped. GUI and genuine MAME chdman conversion on the user's Windows NAS remain for acceptance testing.

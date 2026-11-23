@@ -22,7 +22,7 @@ from PySide6.QtWidgets import (
     QFileDialog, QCheckBox, QMessageBox, QLineEdit, QTableWidget, QTableWidgetItem,
     QHeaderView, QAbstractItemView, QPlainTextEdit, QDialog, QDialogButtonBox,
     QSplitter, QInputDialog, QSizePolicy, QListView, QListWidget, QListWidgetItem,
-    QStyledItemDelegate, QStyleOptionViewItem, QStyle, QGraphicsOpacityEffect,
+    QStyledItemDelegate, QStyleOptionViewItem, QStyle, QGraphicsOpacityEffect, QMenu,
 )
 
 from core import (CAPACITY, COMPANION_BUDGET, FREE_RESERVE, SYSTEM_DIR, SUPPORTED,
@@ -47,7 +47,7 @@ from chd_convert import convert_cue, verify_tool
 from library_presentation import group_games, preferred_title, gallery_columns, format_badge_info
 from workspace_setup import suggested_workspace, copy_existing_workspace, count_workspace_files
 
-VERSION = '1.5.3 Beta – Format Badges & Artwork Fallback'
+VERSION = '1.5.4 Beta – Covers & PS1 CHD Tools'
 SCALE_CHOICES = [('100%', 100), ('110%', 110), ('125%', 125), ('140%', 140), ('150%', 150)]
 MAX_VISIBLE_FILES = 1200
 
@@ -97,6 +97,11 @@ def theme(scale: int) -> str:
     QPushButton#FormatBadge {{background:#29415d; color:#cfe3ff; border:1px solid #698cad;
                border-radius:{px(8)}; padding:{px(5)} {px(10)}; font-weight:800;}}
     QPushButton#FormatBadge:hover {{background:#3b628c; color:#ffffff;}}
+    QMenu#GameContext {{background:#172944; color:#f2f8ff; border:1px solid #6b95bb;
+                     padding:{px(9)}; border-radius:{px(12)};}}
+    QMenu#GameContext::item {{padding:{px(11)} {px(22)}; border-radius:{px(7)};}}
+    QMenu#GameContext::item:selected {{background:#3c658c; color:#ffffff;}}
+    QMenu#GameContext::separator {{height:1px; background:#354f70; margin:{px(7)} {px(11)};}}
     QPushButton#FormatBadge[formatKind="CHD"] {{background:#194d48; color:#aaffdf; border-color:#399e86;}}
     QPushButton#FormatBadge[formatKind="BIN+CUE"] {{background:#51432b; color:#ffe5ac; border-color:#b9944c;}}
     QPushButton#FormatBadge[formatKind="M3U"] {{background:#3f3462; color:#e5d2ff; border-color:#9069bd;}}
@@ -677,6 +682,8 @@ class Window(QMainWindow):
         content.addLayout(disc_actions)
         self.game_views = QStackedWidget()
         self.card_table = self.file_table(['Game / file', 'System', 'Size', 'Location'])
+        self.card_table.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        self.card_table.customContextMenuRequested.connect(self.show_file_row_context_menu)
         self.game_views.addWidget(self.card_table)
         self.gallery_page = QWidget()
         self.gallery_grid = QGridLayout(self.gallery_page)
@@ -1399,6 +1406,7 @@ class Window(QMainWindow):
         entries = [e for e in self.card_entries if term in (e.label + str(e.path)).casefold()
                    and (system == 'All systems' or e.system == system)]
         shown = entries[:MAX_VISIBLE_FILES]
+        self.card_table_entries = shown
         self.card_table.setUpdatesEnabled(False)
         self.card_table.setRowCount(len(shown))
         for r,e in enumerate(shown):
@@ -1420,6 +1428,9 @@ class Window(QMainWindow):
         previews = 0
         for i, game in enumerate(shown):
             tile = QFrame(); tile.setObjectName('GameTile')
+            tile.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+            tile.customContextMenuRequested.connect(
+                lambda pos, g=game, frame=tile: self.show_game_context_menu(g, frame.mapToGlobal(pos)))
             tile.setMinimumWidth(round(158*self.scale_percent/100))
             t = QVBoxLayout(tile); t.setContentsMargins(10, 10, 10, 10); t.setSpacing(7)
             image = QLabel(); image.setObjectName('CoverPreview')
@@ -1445,7 +1456,8 @@ class Window(QMainWindow):
             game_name.setToolTip(game.label)
             t.addWidget(game_name)
             group = self.disc_groups.get(game_key(game.system, game.label), [game])
-            # The badge is based on the scanned file extension, not a promise of conversion.
+            # The badge comes from the actual scanned file extension, not the
+            # expected converter output or a stale task status.
             fmt = format_badge_info(game, group)
             details = QHBoxLayout(); details.setSpacing(6)
             details.addWidget(label(f'{game.system}  •  {pretty_bytes(game.size)}', 'Small', True), 1)
@@ -1471,6 +1483,87 @@ class Window(QMainWindow):
         missing = len(games) - previews
         self.cover_info.setText(f'{previews} covers visible  •  {missing} without a local cover preview. '
                                 'Use Find missing covers or choose a game to correct its cover.')
+
+    def show_file_row_context_menu(self, position):
+        row = self.card_table.rowAt(position.y())
+        entries = getattr(self, 'card_table_entries', [])
+        if 0 <= row < len(entries):
+            self.show_game_context_menu(entries[row], self.card_table.viewport().mapToGlobal(position))
+
+    def show_game_context_menu(self, entry, global_pos):
+        """Native right-click commands for a single logical game, without NAS operations in Qt."""
+        menu = QMenu(self); menu.setObjectName('GameContext')
+        title_action = menu.addAction('✎  Edit game title')
+        cover_action = menu.addAction('▧  Preview / change cover')
+        info_action = menu.addAction('ⓘ  File format & details')
+        menu.addSeparator()
+        candidate = self.ps1_legacy_source_for(entry)
+        eligible = candidate is not None
+        convert_action = menu.addAction(
+            '◆  Verify CHD + archive original tracks' if entry.extension.lower() == '.chd'
+            else '◆  Convert to verified CHD + tidy PSX folder') if eligible else None
+        if convert_action is None:
+            disabled_action = menu.addAction('✓  No unconverted PS1 disc sources here')
+            disabled_action.setEnabled(False)
+        menu.addSeparator()
+        folder_action = menu.addAction('▣  Open game folder')
+        chosen = menu.exec(global_pos)
+        if chosen is None: return
+        if chosen is title_action: self.edit_game_title(entry)
+        elif chosen is cover_action: self.open_manual_cover_search(entry)
+        elif chosen is info_action:
+            self.show_game_format(entry, self.disc_groups.get(game_key(entry.system, entry.label), [entry]))
+        elif chosen is convert_action: self.convert_game_to_chd(candidate)
+        elif chosen is folder_action: self.open_path(entry.path.parent)
+
+    def ps1_legacy_source_for(self, entry):
+        """Find a source inside our already scanned inventory, not with NAS stat calls."""
+        if entry.system != 'PS1': return None
+        if entry.extension.lower() in ('.cue', '.img'): return entry
+        if entry.extension.lower() != '.chd': return None
+        for item in self.card_entries:
+            if (item.system == 'PS1' and item.extension.lower() in ('.cue', '.img')
+                    and item.path.parent == entry.path.parent
+                    and item.path.stem.casefold() == entry.path.stem.casefold()):
+                return item
+        return None
+
+    def convert_game_to_chd(self, entry):
+        if self.current_task or not self.ensure_workspace(): return
+        if entry.system != 'PS1' or entry.extension.lower() not in ('.cue', '.img'):
+            QMessageBox.information(self, 'Conversion not available',
+                'Right-click a PlayStation 1 BIN/CUE game or IMG source to convert it.'); return
+        if not within(entry.path, self.workspace / 'ROMs' / 'psx'):
+            QMessageBox.warning(self, 'Not a PS1 library file',
+                'This game must live in the selected virtual-card PSX folder.'); return
+        recovery = self.workspace.parent / (self.workspace.name + ' - Conversion Backups')
+        answer = QMessageBox.question(self, 'Convert and tidy this PS1 game?',
+            f'Convert “{entry.label}” into one verified CHD in the SAME PSX folder?\n\n'
+            'Only after CHDman verifies the destination, the old CUE/BIN or IMG files '
+            'will be moved OUT of the virtual card into a recoverable backup.\n\n'
+            f'Recovery location:\n{recovery}\n\n'
+            'Nothing is permanently deleted. An ambiguous IMG or missing track will stop safely.\n\n'
+            'Continue?', QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No)
+        if answer != QMessageBox.StandardButton.Yes: return
+        self.start_import_process({'mode':'convert_selected_ps1', 'workspace':str(self.workspace),
+            'source':str(entry.path), 'binary':str(tools_root()/'chdman'/'chdman.exe')},
+            'Converting & Organizing PS1 Game', finished=self.single_chd_completed)
+
+    def single_chd_completed(self, result):
+        if result.get('cancelled'):
+            self.set_status('Conversion stopped. Original game files were protected.')
+        elif result.get('errors'):
+            QMessageBox.warning(self, 'CHD needs attention', '\n'.join(result['errors'][:6]))
+            self.set_status('Conversion could not finish safely; sources kept.')
+        else:
+            QMessageBox.information(self, 'PS1 game prepared',
+                'Verified CHD is ready in the original PSX game folder.\n\n'
+                f"Format: CHD\nOutput: {result.get('output','')}\n"
+                f"Recovery backup: {result.get('backup','')}\n\n"
+                'Only the verified CHD remains in the game folder; originals can be restored from the backup.')
+            self.set_status('CHD verified; original tracks moved to recovery outside the virtual card.')
+        self.refresh()
 
     def show_game_format(self, entry, group):
         info = format_badge_info(entry, group)
@@ -1568,12 +1661,17 @@ class Window(QMainWindow):
         self.manual_cover_results.setObjectName('CoverSearchResults')
         self.manual_cover_results.setMinimumHeight(190)
         self.manual_cover_results.itemSelectionChanged.connect(self.manual_cover_selection_changed)
-        self.manual_cover_results.itemDoubleClicked.connect(lambda _item: self.apply_manual_cover())
+        # A double click should preview, never accidentally apply unseen artwork.
+        self.manual_cover_results.itemDoubleClicked.connect(lambda _item: self.preview_manual_cover())
         layout.addWidget(self.manual_cover_results, 2)
+        self.manual_cover_preview_timer = QTimer(dialog)
+        self.manual_cover_preview_timer.setSingleShot(True)
+        self.manual_cover_preview_timer.setInterval(260)
+        self.manual_cover_preview_timer.timeout.connect(self.preview_manual_cover)
         self.manual_cover_preview = QLabel('Select a result and click Preview. No cover will be applied automatically.')
         self.manual_cover_preview.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.manual_cover_preview.setObjectName('CoverPreview')
-        self.manual_cover_preview.setMinimumHeight(175)
+        self.manual_cover_preview.setMinimumHeight(210)
         layout.addWidget(self.manual_cover_preview, 1)
         self.manual_cover_status = label('Edit the title and press Search to find artwork.', 'Small', True)
         layout.addWidget(self.manual_cover_status)
@@ -1597,6 +1695,8 @@ class Window(QMainWindow):
 
     def manual_dialog_closed(self, dialog):
         if self.manual_cover_dialog is dialog:
+            if hasattr(self, 'manual_cover_preview_timer'):
+                self.manual_cover_preview_timer.stop()
             self.manual_cover_dialog = None
             self.manual_cover_entry = None
 
@@ -1610,7 +1710,11 @@ class Window(QMainWindow):
         self.manual_preview_button.setEnabled(selected and not self.current_task)
         self.manual_apply_button.setEnabled(selected and not self.current_task)
         self.manual_cover_preview.setPixmap(QPixmap())
-        self.manual_cover_preview.setText('Select Preview to inspect this cover before applying it.')
+        self.manual_cover_preview.setText('Loading artwork preview for the selected edition…' if selected else
+                                         'Select an edition to preview its cover.')
+        self.manual_cover_preview_timer.stop()
+        if selected and not self.current_task:
+            self.manual_cover_preview_timer.start()
 
     def selected_manual_cover_title(self):
         items = self.manual_cover_results.selectedItems() if self.manual_cover_dialog else []
@@ -2506,7 +2610,8 @@ class Window(QMainWindow):
                 self.manual_cover_status.setText(
                     f'{len(results)} possible covers for “{result.get("query", "")}”. '
                     'Choose one, preview it, then apply when you are sure.')
-                self.manual_cover_preview.setText('Select Preview to inspect the cover.')
+                # SelectionChanged schedules a preview via the isolated artwork worker.
+                self.manual_cover_preview.setText('Loading first matching cover…')
             else:
                 self.manual_cover_status.setText(
                     'No matches found.' if result.get('catalog_size', 0) else
@@ -2515,13 +2620,17 @@ class Window(QMainWindow):
             return
         if mode == 'preview':
             if self.manual_cover_dialog is None: return
-            self.manual_cover_selection_changed()
+            if result.get('source_title') != self.selected_manual_cover_title():
+                self.manual_cover_selection_changed()
+                return
+            self.manual_preview_button.setEnabled(True)
+            self.manual_apply_button.setEnabled(True)
             image = QPixmap(str(result.get('preview_path', '')))
             if image.isNull():
                 self.manual_cover_preview.setText('Preview could not be displayed.')
             else:
                 self.manual_cover_preview.setText('')
-                self.manual_cover_preview.setPixmap(image.scaled(265, 235,
+                self.manual_cover_preview.setPixmap(image.scaled(270, 250,
                     Qt.AspectRatioMode.KeepAspectRatio,
                     Qt.TransformationMode.SmoothTransformation))
                 self.manual_cover_status.setText(f'Previewing “{result.get("source_title", "")}”. '

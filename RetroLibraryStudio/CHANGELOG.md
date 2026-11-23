@@ -1,28 +1,57 @@
-# v1.5.3 Beta — File format badges and artwork fallback (2026-11-23)
+# v1.5.4 Beta — Artwork Previews & Context-Menu CHD Organization (2026-11-23)
 
-- My Games cover tiles show actual **CHD, BIN/CUE, M3U, ISO, PBP**, etc. file-format badges. Click for the stored filename, type and truthful verification limits. A CHD extension is **not** proof of CHDman verification or successful game launch.
-- Legacy CUE/BIN imports display BIN/CUE until a CHD is actually present. M3U indicates a playlist of separate discs, not a combined CHD.
-- Artwork catalog now falls back from the Libretro thumbnail site to the official Libretro per-platform GitHub tree when the primary index fails. PNG download/preview also falls back to the official GitHub raw mirror. User can still browse or import their own cover. These paths are tested with simulated outages but real network availability is external.
-- A new regression suite covers badge classification, artwork fallback, and unsafe redirects.
-- Local clean-extraction: **230 passed, 15 skipped**. Actual Windows artwork/CHDman/NAS acceptance remains pending.
+- Automatic **selected cover preview** in the artwork results dialog, with a short debounce to avoid rapid repeated downloads. Double-click previews instead of applying an unseen cover. The explicit Preview selected button remains available.
+- Game-gallery cards now have a themed right-click menu: Edit Title, Preview/Change Cover, File Details, Convert to verified CHD + tidy PSX folder, and Open Game Folder.
+- An existing PS1 BIN/CUE set can be converted **in its current PSX folder**. After CHDman verifies the CHD on the NAS, the CUE and referenced BINs are moved to a separate recovery folder **alongside, but outside, the virtual microSD**. No permanent deletion.
+- Already-converted CUE/BIN sets with matching CHD show the cleanup option on the CHD tile, with verification before moving source files.
+- Single-track raw IMG conversion supported only for identifiable CD sectors (MODE1/2352, MODE2/2352 or recognized MODE1/2048). Ambiguous IMG and CloneCD CCD/IMG/SUB sets are rejected with clear guidance to avoid silently losing track/subchannel metadata.
+- Conversion, verification, backup and refresh run in isolated worker under one progress area. Partial conversion or failed verification never moves original sources.
+- Tests cover conversion/rollback and format detection; **real CHDman, live cover preview and Windows UI require user acceptance**.
 
-# v1.5.2 Beta — Windows acceptance candidate (2026-11-23)
+# Retro Library Studio v1.5.3 Beta — Format Badges and Artwork Fallback (2026-11-23)
 
-- Packaged the GitHub CI-tested v1.5.1 PS1 CUE/BIN → CHD import pipeline into a Windows launchable source distribution.
-- Canonicalized Windows ZIP/CUE companion paths so referenced BIN tracks do not reappear as standalone game imports, with regression coverage.
-- Preserved tested NAS import/cancellation, verified practice copy, CHD/M3U, artwork and one unified import progress workflow.
-- Local clean-extraction source test: **226 passed, 15 skipped**; matching GitHub CI core: **241 Windows passed; 240 Linux passed, 1 skipped**.
-- **Release gate still open:** real Windows CHDman conversion of Clock Tower with its two BIN tracks, online artwork, mapped NAS behavior for v1.5.2, and RG Rotate device testing.
+- Game tiles now show a **clickable, high-contrast file-format badge**: CHD, BIN/CUE, M3U, ISO, PBP, and other actual extensions, based on the scanned library file. Badges NEVER claim conversion or integrity verification by extension alone. Clicking opens a concise file-format explanation and the available library path/file list.
+- Legacy CUE/BIN sets say BIN/CUE until a real .chd is staged. Multi-disc M3U entries are playlists pointing to separate disc images, not a CHD themselves.
+- Missing-artwork search now attempts the Libretro thumbnail catalog first and its officially maintained platform-specific GitHub tree when the first catalog is unavailable. Preview and cover download can use the corresponding GitHub raw mirror when the main thumbnail endpoint fails. Cached indexes are reused. Online availability remains conditional on the user's network and both services.
+- Added direct “Browse Libretro covers” escape hatch for provider outages and retained “Choose image from PC instead.” Existing user covers and game files remain untouched.
+- **Tests:** 230 passed, 15 skipped (Linux, no real CHDman or live network); actual Windows UI, live artwork, NAS and RG Rotate still require physical user acceptance.
 
-# v1.5.1 Beta — Automatic PS1 CHD/M3U Import (November 23, 2026)
+## First test
 
-- Connected existing CUE inspection, CHDman create/verify, M3U generation and safe staging to the **normal Add My Games import**. The game enters My Games as a verified CHD, not an individual CUE/BIN track, when conversion succeeds.
-- One unified progress flow now reports inspection, conversion, verification, staging and cover retrieval. Originals remain unchanged; interruptions cannot release partial .chd output as playable.
-- Fixed My Games' misleading CUE-only 226–228-byte display by accounting for referenced BIN tracks when still in the legacy format.
-- Supports importing complete CUE/BIN sets from ZIP/7Z through local temporary extraction. Disc 1/Disc 2 remain independent CHD files and an M3U references them in order.
-- Improved artwork fallback for English patches while keeping ambiguous edition covers user-reviewable.
-- **GitHub Actions CI:** initially exposed Windows ZIP/CUE companion aliases, fixed by comparing canonical file paths and adding a regression test. [Run 45138220982](https://github.com/ValentineBSAA/RG-Rotate/actions/runs/45138220982) passed: **Windows 241 tests; Linux 240 tests with 1 skip**.
-- Real CHDman execution, live artwork providers, user Synology SMB, physical card and Android Cocoon setup still require acceptance testing.
+1. Extract to a NEW folder; double-click `Start_Retro_Library_Studio.bat`. Verify v1.5.3 title and remembered NAS library.
+2. Open **Add games / My Games**. The Clock Tower tile should show **BIN/CUE** if its underlying file is still `.cue`, or **CHD** only if a `.chd` exists and is selected. Click the badge for file details; this does not read/modify ROMs.
+3. Press **Search for cover** on Clock Tower. The catalog now retries via the official GitHub source; look for candidates and choose/preview/apply one. If both sources are unreachable, use Browse Libretro covers or Choose image from PC.
+4. Only then run the real Windows CHD conversion with the original CUE + both BIN tracks in their existing folder. Verify a genuine `.chd` is produced and reappears as a CHD badge after refreshing. The original source tracks must remain untouched.
+5. Report errors verbatim. We will not assume a successful conversion or artwork download from tests alone.
+
+---
+# 1.5.2 Beta — Windows PS1 acceptance candidate (2026-11-23)
+
+- Packaged Windows-launchable source based on the latest GitHub v1.5.1 CI-tested PS1 pipeline.
+- Fixed CUE-referenced BIN tracks with equivalent/aliased Windows paths being incorrectly interpreted as standalone game files during archive import.
+- Added a regression test for this path alias case; preserved the preexisting CHD, M3U, NAS Stop, artwork, and verified-transfer behavior.
+- UI geometry test handles clamped screen sizes on GitHub Actions runners; this does not constitute real 125% DPI acceptance.
+- This is a testable **source beta**, not a compiled EXE. Real CHDman conversion, online artwork and RG Rotate still require user acceptance.
+
+# v1.5.1 Beta — Automatic PS1 import and artwork progress
+
+- Added default-on conversion of complete PS1 CUE/BIN disc sets to verified CHD
+  **during game importing**, including safely unpacked ZIP/7Z sets.
+- Automatic M3U playlists for imported multi-disc CHD sets, with correct disc
+  ordering, no overwrite, and an incremental Disc 2 later workflow.
+- Added Convert earlier PS1 imports option. Old BIN/CUE files are preserved.
+- Corrected displayed CUE/M3U logical sizes; no double-counted storage usage.
+- M3U playlists are the single gallery entry for multi-disc games, while CHD
+  is preferred over an older CUE with the same name.
+- Integrated artwork lookup and review statuses into the same import-worker
+  progress flow. Added exact region fallback if the Libretro catalog is offline.
+- Fixed CP1252 CUE companion-name decoding and better standalone BIN guidance.
+- One global task bar shows indeterminate animation during CHDman processing,
+  rather than a fake percentage. Cancellation stays in the isolated worker.
+- No change to user's saved NAS path, existing artwork, imported games or
+  previous practice-card transfers.
+
+---
 
 # v1.5.0 Beta — Guided setup and PlayStation disc conversion (November 22, 2026)
 
