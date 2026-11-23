@@ -10,7 +10,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from core import safe_walk
-from ps1_psn import is_ps1_classic, meaningful_title, package_title
+from ps1_psn import is_ps1_classic, meaningful_title, package_title, psn_companions
 
 _MAX_GAMES = 1500
 _ARCHIVES = {'.zip', '.7z'}
@@ -66,7 +66,14 @@ def scan_psn_sources(folder: Path, *, cancel=None, progress=None,
             parent = p.parent
             product_code = parent.name if parent.name != root.name else ''
             kind = 'PS1 Classic EBOOT'
-            detail = 'EBOOT.PBP • companion KEYS.BIN detected automatically when present'
+            manual, keyfile = psn_companions(p)
+            detail = ('EBOOT.PBP • key file: ' + ('present' if keyfile else 'not found') +
+                      ' • manual: ' + ('present' if manual else 'not found') +
+                      '. Companion files are not separate games.')
+            if keyfile and not manual:
+                detail += (' A key-only positional argument is supported by '
+                           'receipt-verified PSXtract v3; other helpers use '
+                           'their built-in key derivation.')
         else:
             # Do not extract multi-GB archives merely to show this chooser.
             # The importer will identify a PBP inside after selection.

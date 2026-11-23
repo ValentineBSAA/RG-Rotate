@@ -1,5 +1,24 @@
 # Living Roadmap · RG Rotate / Retro Library Studio
 
+- [x] Confirm from has207 upstream v3 source that a verified helper can safely receive an empty missing-DOCUMENT positional argument followed by real adjacent KEYS.BIN, avoiding v1.6.6's built-in-key-only behavior when no DOCUMENT exists.
+- [x] Gate key-only forwarding on the app's pinned v3 installer receipt, preserve unknown helper fallback and source originals. Synthetic tests added.
+- [ ] Actual Clock Tower II EBOOT extraction with verified v3 + matching KEYS only, then CHDman verification; do NOT promise success until observed.
+
+## v1.6.7 · Real PSXtract encrypted-header failure, not CHDman
+
+- [x] User's v1.6.6 custom PS1 title chooser displayed 30 games including Clock Tower II (SLUS00695); selection worked. Keep title chooser.
+- [x] Diagnose actual Clock Tower failure from screenshot: PGD invalid 0x80 MAC hash, ISO header decryption failed; 0 imported / 0 CHDs. Not CHDman.
+- [x] Identify possible PSXtract CLI integration constraint: KEYS.BIN requires preceding DOCUMENT.DAT positional argument in legacy format. Do not make a fake document or assume the exact cause.
+- [x] Add public safe error explanation for PGD/MAC, key/manual presence, no CHD started; original files unchanged.
+- [x] Simplify picker header, label source by PS1 folder with full NAS path tooltip; tighten import results wording.
+- [x] Synthetic tests for PGD failure and no key-byte disclosure.
+- [ ] Full Windows/Linux CI; new v1.6.7 Windows ZIP/CRC and startup.
+- [ ] Real Windows screenshot and Clock Tower error checks after v1.6.7.
+- [ ] Only mark Clock Tower conversion fixed when the actual EBOOT completes PSXtract, CHD verify and artwork; no invented keys or workaround.
+- [ ] Continue proven-working Crash Bandicoot and other games; preserve all original files and legacy generic CHDs.
+[Acceptance](PSXTRACT_PGD_AND_PICKER_POLISH_v167.md).
+
+
 **v1.6.6 completion (November 23, 2026):** [PR #24](https://github.com/ValentineBSAA/RG-Rotate/pull/24) merged into main (squash `23ce722`). Exact branch-head [CI run 45280723949](https://github.com/ValentineBSAA/RG-Rotate/actions/runs/45280723949) passed **398 Windows tests, 397 Linux tests with 1 skipped**. [Windows source ZIP](https://github.com/ValentineBSAA/RG-Rotate/actions/runs/45280714622) at tested commit `2a778d5` packaged successfully (123 internal entries; ZIP CRC good), downloaded as `RetroLibraryStudio_v1.6.6_Windows_Source_Beta.zip`. **Still pending:** physical Windows 11 NAS test of the v1.6.6 single/multi PS1 title picker, real automatic cover after CHDman verify, and real repeat EBOOT skip; do not mark those passed from synthetic CI. v1.6.4 user-tested Crash Bandicoot CHD conversion and Stop are the baseline. Native Windows picker showing NPEE codes is intentionally replaced *inside the app* by a title-aware chooser when last folder is PS1; cannot actually rename Windows file-dialog folders. Verified CHDs remain valid if cover download fails. Old anonymous v1.6.2 PS1 entries remain untouched. [Exact v1.6.6 acceptance checklist](PS1_UNIFIED_PICKER_AND_POST_CHD_ART_v166.md).
 
 

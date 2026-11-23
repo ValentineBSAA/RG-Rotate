@@ -1,4 +1,4 @@
-name: Package v1.6.6 Windows test ZIP
+name: Package v1.6.7 Windows test ZIP
 on:
   workflow_dispatch:
   push:
@@ -11,9 +11,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      # v1.6.6 final candidate: exact branch HEAD after workspace guard and strict post-CHD art tests.
-      # and only auto-apply exact artwork AFTER verified CHD conversion.
-      # Synthetic tests are not real Windows NAS/CHDman acceptance.
+      # v1.6.7 exact final package: compact PS1 picker, precise PGD failure,
+      # adjacent KEYS on receipt-verified v3 with safe absent-manual argument.
+      # Do not infer Clock Tower decryption success from CI alone.
       - name: Package checked-out source without altering existing installs
         shell: bash
         run: |
@@ -22,9 +22,9 @@ jobs:
           root = pathlib.Path('.')
           out_dir = root / 'dist'
           out_dir.mkdir(exist_ok=True)
-          dest = out_dir / 'RetroLibraryStudio_v1.6.6_Windows_Test_Beta.zip'
+          dest = out_dir / 'RetroLibraryStudio_v1.6.7_Windows_Test_Beta.zip'
           text = (
-              'RETRO LIBRARY STUDIO v1.6.6 - WINDOWS SOURCE TEST BETA\n'
+              'RETRO LIBRARY STUDIO v1.6.7 - WINDOWS SOURCE TEST BETA\n'
               'This is a source beta (Python 3 + dependencies), NOT a compiled EXE.\n'
               '1. Extract the ZIP into a NEW folder separate from your old working build.\n'
               '2. Open the RetroLibraryStudio folder.\n'
@@ -38,12 +38,15 @@ jobs:
               '10. Add Game Files from a remembered PS1 folder must open the named title-aware picker.\n'
               '11. Check ONE real game and import it with same-folder KEYS handled automatically.\n'
               '12. Confirm the next picker opens at the previously selected folder.\n'
-              '13. Verify CHD is converted and VERIFIED before the exact USA artwork is applied.\n'
-              '14. After one verified CHD, reimport the same EBOOT; it should SKIP.\n'
+              '13. For Clock Tower II, observe PGD authentication failure messaging: CHD must NOT start.\n'
+              '14. With receipt-verified PSXtract v3, adjacent KEYS.BIN without DOCUMENT should be passed safely.\n'
+              '15. Never invent DOCUMENT or substitute key files; if header still fails, retain originals.\n'
+              '15. For another proven EBOOT, CHD must VERIFY before exact USA art is applied.\n'
+              '16. After one verified CHD, reimport same EBOOT; it should SKIP.\n'
               '15. Test Stop during a safe disposable batch; do not resume 30 games yet.\n'
               'PS2/GameCube folders only organize files; performance is experimental.\n'
               'CHD batch delete is for disposable copies until real Windows verification.\n'
-              'v1.6.6 checks: docs/PS1_UNIFIED_PICKER_AND_POST_CHD_ART_v166.md; full checklist: docs/FULL_TEST_CHECKLIST.md\n'
+              'v1.6.7 checks: docs/PSXTRACT_PGD_AND_PICKER_POLISH_v167.md; full checklist: docs/FULL_TEST_CHECKLIST.md\n'
               'GitHub CI does not establish real NAS or RG Rotate acceptance.\n'
           )
           with zipfile.ZipFile(dest,'w',compression=zipfile.ZIP_DEFLATED,compresslevel=9) as z:
@@ -54,9 +57,9 @@ jobs:
                       if p.suffix in ('.pyc', '.pyo'): continue
                       z.write(p,p.as_posix())
               z.write(root/'README.md','README_GITHUB.md')
-              z.writestr('READ_ME_FIRST_v1.6.6.txt',text)
+              z.writestr('READ_ME_FIRST_v1.6.7.txt',text)
               z.writestr('BUILD_METADATA.json',json.dumps({
-                  'version':'1.6.6', 'platform':'Windows source beta',
+                  'version':'1.6.7', 'platform':'Windows source beta',
                   'commit':os.environ.get('GITHUB_SHA',''),
                   'real_windows_nas_acceptance':'pending',
                   'real_RG_Rotate_acceptance':'pending',
@@ -80,6 +83,7 @@ jobs:
                            'RetroLibraryStudio/psn_picker.py',
                            'RetroLibraryStudio/tests/test_v165_psn_picker_and_auto_art.py',
                            'RetroLibraryStudio/tests/test_v166_unified_picker_post_chd_art.py',
+                           'RetroLibraryStudio/tests/test_v167_psn_extract_diagnostics.py',
                            'RetroLibraryStudio/ps1_duplicates.py',
                            'RetroLibraryStudio/library_duplicates.py',
                            'RetroLibraryStudio/tests/test_v162_library_duplicates.py',
@@ -88,6 +92,7 @@ jobs:
                            'docs/PSN_UNICODE_CHDMAN_v164.md',
                            'docs/PSN_GAME_PICKER_AND_ARTWORK_v165.md',
                            'docs/PS1_UNIFIED_PICKER_AND_POST_CHD_ART_v166.md',
+                           'docs/PSXTRACT_PGD_AND_PICKER_POLISH_v167.md',
                            'RetroLibraryStudio/tests/test_v161_psn_and_7z.py',
                            'docs/PSN_CLASSICS_IMPORT.md',
                            'RetroLibraryStudio/ps1_psn.py',
@@ -112,7 +117,7 @@ jobs:
       - name: Upload test beta ZIP
         uses: actions/upload-artifact@v4
         with:
-          name: RetroLibraryStudio_v1.6.6_Windows_Test_Beta
-          path: dist/RetroLibraryStudio_v1.6.6_Windows_Test_Beta.zip
+          name: RetroLibraryStudio_v1.6.7_Windows_Test_Beta
+          path: dist/RetroLibraryStudio_v1.6.7_Windows_Test_Beta.zip
           if-no-files-found: error
           retention-days: 30

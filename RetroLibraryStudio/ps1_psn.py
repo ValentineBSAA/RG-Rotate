@@ -167,6 +167,77 @@ def package_title(pbp: Path, title_hint: str | None = None) -> str:
         'in PARAM.SFO. Generic PS1/PlayStation/Disc names are not game titles.')
 
 
+def verified_psxtract_v3_key_only(helper: Path) -> bool:
+    """Only app-verified upstream v3 helpers get the empty DOCUMENT slot.
+
+    v3 checks fopen(document_file) for NULL and safely skips an empty path.
+    An older/custom PSXtract may incorrectly fclose(NULL) or interpret the
+    empty arg differently. Never try this with an unknown/unverified binary.
+    """
+    helper = Path(helper)
+    if (helper.name.casefold() != 'psxtract.exe'
+            or helper.parent.name.casefold() != 'psxtract'):
+        return False
+    try:
+        from tool_setup import tool_status
+        return bool(tool_status(helper.parent.parent)['PSXtract']['installed'])
+    except (OSError, KeyError, ValueError, TypeError):
+        return False
+
+
+def describe_extractor_failure(milestone, *, has_document: bool,
+                               has_keys: bool, returncode: int, key_was_supplied=False) -> str:
+    """Explain a failed third-party extraction without echoing key bytes or logs.
+
+    A PGD MAC check failure is not a CHDman failure. The old positional CLI
+    cannot use KEYS alone without also supplying a DOCUMENT argument; never
+    forge a fake DOCUMENT.DAT or try a key from another game.
+    """
+    if milestone.pgd_header_failed or milestone.iso_header_failed:
+        detail = (
+            'PSXtract could not authenticate the protected PS1 ISO header '
+            '(0x80 MAC check failed). CHD conversion never started. '
+            'The EBOOT may require a matching companion or a different '
+            'extractor-compatible package. '
+        )
+        if has_keys and not has_document:
+            if key_was_supplied:
+                detail += (
+                    'The adjacent KEYS.BIN was passed to the verified v3 '
+                    'helper using an empty optional manual argument, but '
+                    'authentication still failed. Check that the original '
+                    'EBOOT and companion belong together. '
+                )
+            else:
+                detail += (
+                    'A KEYS.BIN was found but no DOCUMENT.DAT was present, '
+                    'and the helper could not safely accept a key-only '
+                    'argument, so this attempt used the '
+                    'helper built-in key calculation. Do not fabricate a '
+                    'manual or substitute keys from another game. '
+                )
+        elif not has_keys:
+            detail += (
+                'No adjacent KEYS.BIN was detected; the helper attempted '
+                'its built-in key calculation. '
+            )
+        else:
+            detail += (
+                'Available companion files were supplied; verify that they '
+                'belong to this exact EBOOT. '
+            )
+        return detail + 'Original files remain untouched.'
+    if milestone.md5_failed:
+        return ('PSXtract reported an MD5 integrity mismatch during extraction. '
+                'No CHDs were published; original files remain untouched.')
+    return (
+        'PSXtract stopped before producing a complete PS1 disc image. '
+        'CHD conversion was not attempted. Verify this EBOOT and matching '
+        'companion files or try another supported package. '
+        f'Helper status: {returncode}. Original files remain untouched.'
+    )
+
+
 def extract_psn_with_helper(pbp: Path, output: Path, helper: Path, *,
                             cancel=None, progress=None):
     """Run separately-provided PSXtract in disposable local storage, no shell."""
@@ -183,13 +254,21 @@ def extract_psn_with_helper(pbp: Path, output: Path, helper: Path, *,
                          'it will not be converted as a PSP game or renamed blindly')
     document, keys = psn_companions(pbp)
     args = [str(helper.resolve()), '-c', str(pbp.resolve())]
+    key_was_supplied = False
     if document:
         args.append(str(document.resolve()))
         if keys:
             args.append(str(keys.resolve()))
-    # PSXtract accepts positional DOCUMENT.DAT then KEYS.BIN; without a
-    # document, do not misinterpret a KEYS.BIN as a document. The extractor
-    # may use the PBP's internal metadata instead.
+            key_was_supplied = True
+    elif keys and verified_psxtract_v3_key_only(helper):
+        # Verified has207/psxtract-2 v3 checks fopen("") for NULL and skips
+        # the nonexistent optional manual safely. The next argument stays
+        # in the actual KEYS.BIN slot. NEVER do this on unknown older builds,
+        # which may fclose(NULL). No dummy files or key copies are created.
+        args.extend(['', str(keys.resolve())])
+        key_was_supplied = True
+    # If no verified v3 is installed, fall back to the helper's built-in
+    # key calculation rather than forging DOCUMENT.DAT or misplacing keys.
     if cancel is not None and cancel.is_set():
         raise InterruptedError('PSN extraction stopped')
     if progress:
@@ -249,12 +328,16 @@ def extract_psn_with_helper(pbp: Path, output: Path, helper: Path, *,
             time.sleep(.2)
         reader.join(timeout=3)
         send_friendly_events()
-        if proc.returncode:
-            raise RuntimeError('PSXtract could not extract complete PS1 disc images. '
-                               'Conversion stopped; original EBOOT and keys unchanged. '
-                               f'Helper exit code: {proc.returncode}.')
+        if proc.returncode or milestone.pgd_header_failed or milestone.iso_header_failed:
+            raise RuntimeError(describe_extractor_failure(
+                milestone, has_document=bool(document), has_keys=bool(keys),
+                returncode=int(proc.returncode or 1),
+                key_was_supplied=key_was_supplied))
         if milestone.md5_failed:
-            raise RuntimeError('PSXtract reported an MD5 mismatch. No disc images were published.')
+            raise RuntimeError(describe_extractor_failure(
+                milestone, has_document=bool(document), has_keys=bool(keys),
+                returncode=int(proc.returncode or 1),
+                key_was_supplied=key_was_supplied))
         if progress:
             progress('PS1 Classic extracted • checking each disc before CHD conversion', 0, 0)
     finally:
