@@ -1,5 +1,14 @@
 # RG Rotate · Retro Library Studio
 
+## v1.6.8 Beta candidate · Clock Tower extractor error capture (not a CHDman fix)
+
+- **Real Windows v1.6.7 still failed:** Clock Tower II (SLUS00695) selected correctly from the 30-title PS1 picker, but returned 0 imported and 0 CHDs with an opaque Windows status `4294967295`.
+- **Output capture cause found in PSXtract v3 source:** `AttachConsole(ATTACH_PARENT_PROCESS)` then `freopen("CONOUT$")` steals stdout from the app's `Popen(stdout=PIPE)` when the helper attaches to the batch launcher's terminal. On Windows, v1.6.8 now **detaches only the disposable import worker** from the inherited terminal using Win32 FreeConsole before launching the unchanged direct PSXtract child. This prevents the helper from reattaching to the parent's visible terminal and keeps the captured stdout pipe intact. Windows GUI-subsystem CI proved that creating a new console for the helper itself is NOT sufficient; that method was removed. Bounded friendly milestones can report the actual error.
+- Key-only argument logic from v1.6.7 retained; new KEYS.BIN length-only validation catches an incomplete companion; exit `4294967295` displayed as **-1** rather than a giant number. No key contents are read by the app or exposed through the UI.
+- **Clock Tower real compatibility remains unknown until another physical Windows run**; this fix provides accurate diagnostics but cannot manufacture decryption support. Source EBOOT, keys and older CHDs untouched. All PS1 titles remain independently selectable.
+- [v1.6.8 Windows acceptance](docs/PSXTRACT_CONSOLE_CAPTURE_v168.md).
+
+
 **v1.6.7 extractor integration update:** A source-level review of the pinned has207 PSXtract v3 confirms it can safely skip an empty optional manual argument while reading an actual adjacent KEYS.BIN. The v1.6.7 wrapper now uses that layout only when the installer receipt validates v3; unknown/helper binaries remain on the older fallback path. This is a real key-only CLI compatibility fix, but Clock Tower II's actual success remains pending a new Windows test. No fabricated DOCUMENT.DAT or changes to source keys.
 
 

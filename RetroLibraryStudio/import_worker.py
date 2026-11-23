@@ -134,6 +134,29 @@ def handle(request: dict, cancel: threading.Event) -> dict:
     return import_grouped(files, workspace, fallback, progress=progress, cancel=cancel)
 
 
+def detach_parent_console_for_psxtract() -> bool:
+    """Only in the disposable Windows import worker, not in the Qt app.
+
+    has207 PSXtract v3 calls AttachConsole(ATTACH_PARENT_PROCESS), then
+    reopens CONOUT$/CONERR$, which steals its logs from the stdout PIPE.
+    Detaching the worker from the batch-launcher's console means the helper's
+    AttachConsole fails and the Python parent can still capture its output.
+    QProcess's redirected stdin/stdout are independent pipe handles. This
+    does not spawn proxies, change process ownership, or weaken Stop/Job
+    containment. Never call FreeConsole on the main user-facing app.
+    """
+    if os.name != 'nt':
+        return False
+    try:
+        import ctypes
+        kernel = ctypes.WinDLL('kernel32', use_last_error=True)
+        kernel.FreeConsole.argtypes = []
+        kernel.FreeConsole.restype = ctypes.c_int
+        return bool(kernel.FreeConsole())
+    except (OSError, AttributeError, ValueError):
+        return False
+
+
 def main() -> int:
     cancel = threading.Event()
     try:
@@ -146,6 +169,11 @@ def main() -> int:
         if request.get('mode') == 'convert_discs' or request.get('auto_ps1_chd') or request.get('mode') in ('optimize_existing_ps1', 'convert_selected_ps1', 'batch_convert_ps1'):
             from worker_lifetime import contain_children
             contain_children()
+        if request.get('auto_ps1_chd'):
+            # A console-less worker is the key: psxtract cannot reattach to
+            # our batch launcher and bypass stdout PIPE. This preserves
+            # all existing direct child cancellation and job containment.
+            detach_parent_console_for_psxtract()
         watcher = threading.Thread(target=_listen_for_stop, args=(cancel,), daemon=True)
         watcher.start()
         emit('started', mode=request.get('mode', 'unknown'))

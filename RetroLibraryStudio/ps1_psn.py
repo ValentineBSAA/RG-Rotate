@@ -234,8 +234,17 @@ def describe_extractor_failure(milestone, *, has_document: bool,
         'PSXtract stopped before producing a complete PS1 disc image. '
         'CHD conversion was not attempted. Verify this EBOOT and matching '
         'companion files or try another supported package. '
-        f'Helper status: {returncode}. Original files remain untouched.'
+        f'Helper status: {friendly_helper_status(returncode)}. '
+        'Original files remain untouched.'
     )
+
+
+def friendly_helper_status(code: int) -> str:
+    """Avoid Windows displaying -1 as the meaningless 4294967295."""
+    n = int(code or 0)
+    if n >= 0x80000000 and n <= 0xFFFFFFFF:
+        n -= 0x100000000
+    return str(n)
 
 
 def extract_psn_with_helper(pbp: Path, output: Path, helper: Path, *,
@@ -253,6 +262,14 @@ def extract_psn_with_helper(pbp: Path, output: Path, helper: Path, *,
         raise ValueError('This PBP is not a recognized PS1 Classics disc package; '
                          'it will not be converted as a PSP game or renamed blindly')
     document, keys = psn_companions(pbp)
+    if keys:
+        # The v3 helper reads the first 16 bytes of KEYS.BIN. Check only file
+        # length, never key material; an incomplete file is not a valid key.
+        if keys.stat().st_size < 16:
+            raise ValueError(
+                'The adjacent KEYS.BIN is shorter than the 16 bytes expected '
+                'by PSXtract. No extraction or CHD conversion was attempted. '
+                'Restore the matching original companion file for this EBOOT.')
     args = [str(helper.resolve()), '-c', str(pbp.resolve())]
     key_was_supplied = False
     if document:
@@ -273,11 +290,19 @@ def extract_psn_with_helper(pbp: Path, output: Path, helper: Path, *,
         raise InterruptedError('PSN extraction stopped')
     if progress:
         progress('Extracting PS1 Classic into temporary Windows storage', 0, 0)
+        progress('PS1 source check • matching key ' +
+                 ('provided' if key_was_supplied else
+                  ('found but helper using internal derivation' if keys else
+                   'not present • helper using internal derivation')), 0, 0)
     from ps1_progress import PSXtractMilestones
     milestone = PSXtractMilestones()
     friendly_events = queue.Queue(maxsize=80)
     # An actively draining reader prevents a noisy converter from deadlocking
     # on an unconsumed stdout pipe. No raw log or decrypted source is persisted.
+    # The isolated import_worker detaches its own console on Windows before
+    # running PSXtract. Thus upstream's AttachConsole(parent) cannot redirect
+    # our stdout pipe to CONOUT$. Do not create a new console for this GUI
+    # helper: Windows may still attach it to the parent's console.
     proc = subprocess.Popen(args, cwd=output, stdout=subprocess.PIPE,
                             stderr=subprocess.STDOUT,
                             stdin=subprocess.DEVNULL, shell=False)
@@ -329,10 +354,15 @@ def extract_psn_with_helper(pbp: Path, output: Path, helper: Path, *,
         reader.join(timeout=3)
         send_friendly_events()
         if proc.returncode or milestone.pgd_header_failed or milestone.iso_header_failed:
-            raise RuntimeError(describe_extractor_failure(
+            error = describe_extractor_failure(
                 milestone, has_document=bool(document), has_keys=bool(keys),
                 returncode=int(proc.returncode or 1),
-                key_was_supplied=key_was_supplied))
+                key_was_supplied=key_was_supplied)
+            if not milestone.pgd_header_failed and not milestone.iso_header_failed:
+                error += (' PSXtract did not report a recognized decryption '
+                          'milestone to the app; inspect companion presence '
+                          'and source compatibility before retrying.')
+            raise RuntimeError(error)
         if milestone.md5_failed:
             raise RuntimeError(describe_extractor_failure(
                 milestone, has_document=bool(document), has_keys=bool(keys),
