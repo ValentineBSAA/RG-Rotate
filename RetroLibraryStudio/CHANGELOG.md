@@ -1,6 +1,6 @@
 ## v1.5.6 Beta · Live 512 GB Card Planner (2026-11-23)
 
-## v1.6.0 candidate · Friendly Detail Panels & Card Detection
+## v1.6.0 merged source beta · Friendly Detail Panels & Card Detection
 
 - Replaced three dense modal text dumps with accessible dark-themed information cards, clear game/file names and memory figures, collapsible technical bytes and Copy details.
 - Added background Windows card candidate discovery when Copy to Card is open; removable USB readers and plausible 512 GB fixed readers are shown for **explicit review**, not automatically trusted.
