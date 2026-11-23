@@ -19,7 +19,7 @@
 - Only process titles users are authorized to possess and convert.
 
 ## Real Windows/handheld acceptance
-- [ ] A01: Windows/Linux CI green for actual 7z archive tests and safe ZIP paths.
+- [x] A01: [Main GitHub Windows/Linux CI](https://github.com/ValentineBSAA/RG-Rotate/actions/runs/45251934269) green: 326 Windows passed; 325 Linux passed/1 skipped. Real 7z synthetic archive extraction and safe ZIP path tests passed. User real FFVII PSN extraction still pending.
 - [ ] A02: Optional PSXtract checkbox/consent installs pinned release and checks SHA-256; no automatic binary execution on install.
 - [ ] A03: Choose the actual Final Fantasy VII (English)(PSN) .7z and PS1 fallback; recognizes EBOOT.PBP, KEYS.BIN and DOCUMENT.DAT as one PS1 Classic.
 - [ ] A04: Real PSXtract yields complete, correctly ordered three CUE/BIN disc sets. Failure leaves the NAS unchanged.
