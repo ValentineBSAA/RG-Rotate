@@ -212,7 +212,7 @@ This update corrects the failed Cocoon APK import acceptance test on a Synology 
 - The installer list refreshes after a successful import (using a stoppable read-only NAS scan).
 - A partial `.retro-part` file is never displayed as an installed/ready APK. Retrying is safe when the existing partial matches the source.
 
-**Test Cocoon 3.11:** Open Install Apps -> scroll to **Already downloaded an Android app?** -> **Add APK Files** -> choose your existing `Cocoon*.apk`. Watch the active task indicator. You should see **APK import completed** with a destination such as `\\Joes-Plex\G Drive\Gaming RG Rotate\RG Rotate Virtual Card\SetupPackages\Cocoon-3.11.apk`. Click **Open Android installers folder** and verify the file is present. The Cocoon status should become **My APK ready • publisher unverified**, not **installed on Android**.
+**Test Cocoon 3.11:** Open Install Apps -> scroll to **Already downloaded an Android app?** -> **Add APK Files** -> choose your existing `Cocoon*.apk`. Watch the active task indicator. You should see **APK import completed** with a destination such as `\\NAS\Shared\RG Rotate Virtual Card\SetupPackages\Cocoon-3.11.apk`. Click **Open Android installers folder** and verify the file is present. The Cocoon status should become **My APK ready • publisher unverified**, not **installed on Android**.
 
 **Important:** A valid APK is a ZIP archive with an `AndroidManifest.xml` entry. Renamed HTML pages and unsupported bundle formats (`.apkm`/`.xapk`/`.apks`) are not accepted as single APKs. The app can test structure and integrity, but **cannot verify the publisher identity of user-provided APKs**.
 
