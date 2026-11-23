@@ -9,7 +9,7 @@
 - [x] Code: consecutive 1..N ordered M3U; safe incremental extension with conflict checks; reject ambiguous/duplicate/missing tracks, playlist clashes, unsafe CUE paths.
 - [x] Code: one My Games gallery tile/cover and N DISCS badge using scan-worker M3U members; do not hide discs behind broken playlist; raw File List remains detailed.
 - [x] Synthetic Python/optional Qt tests added in `tests/test_v158_collections.py` (pending GitHub CI evidence).
-- [ ] GitHub Windows and Linux tests of the actual v1.5.8 branch pass.
+- [x] v1.5.8 [PR #13](https://github.com/ValentineBSAA/RG-Rotate/pull/13) merged; [GitHub CI run 45162967417](https://github.com/ValentineBSAA/RG-Rotate/actions/runs/45162967417) passed 289 Windows / 288 Linux with 1 skipped. GitHub packaging and clean extracted local source tests also passed; **not** Windows/NAS gameplay acceptance.
 - [ ] Physical Windows 11 / Synology acceptance M01–M09 from [MULTIDISC_ACCEPTANCE.md](MULTIDISC_ACCEPTANCE.md), starting with a disposable complete Resident Evil 2 (USA) two-disc set.
 - [ ] Real RG Rotate/Cocoon game-launch and disc-swap acceptance M10, only after hardware arrives.
 - [ ] v1.5.5 destructive cleanup / v1.5.6 capacity meter regression acceptance remains separate, never silently inferred.
