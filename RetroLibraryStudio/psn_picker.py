@@ -16,6 +16,26 @@ _MAX_GAMES = 1500
 _ARCHIVES = {'.zip', '.7z'}
 
 
+
+def ps1_parent_from_last_location(last_location: Path) -> Path | None:
+    """Choose a *remembered* PS1 source root by path spelling alone.
+
+    No UI-thread NAS IO. A user who last selected .../PS1/NPEE00008/EBOOT.PBP
+    gets the *PS1 parent*, allowing one or many games to be chosen together.
+    This function never turns an arbitrary ROM folder into PS1.
+    """
+    p = Path(last_location)
+    if p.name.casefold() == 'eboot.pbp':
+        p = p.parent
+    parts = p.parts
+    for pos in range(len(parts) - 1, -1, -1):
+        if parts[pos].casefold() == 'ps1':
+            if (pos == len(parts) - 1 or
+                    (pos + 1 < len(parts) and
+                     parts[pos + 1].upper().startswith(('NPE', 'NPU', 'NPJ', 'NPH', 'SLUS', 'SLES', 'SCUS', 'SCES')))):
+                return Path(*parts[:pos + 1])
+    return None
+
 def scan_psn_sources(folder: Path, *, cancel=None, progress=None,
                      max_items: int = _MAX_GAMES) -> dict:
     root = Path(folder)
