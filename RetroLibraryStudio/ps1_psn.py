@@ -210,8 +210,9 @@ def describe_extractor_failure(milestone, *, has_document: bool,
                 )
             else:
                 detail += (
-                    'A KEYS.BIN was found but the helper could not safely '
-                    'accept a key-only argument, so this attempt used the '
+                    'A KEYS.BIN was found but no DOCUMENT.DAT was present, '
+                    'and the helper could not safely accept a key-only '
+                    'argument, so this attempt used the '
                     'helper built-in key calculation. Do not fabricate a '
                     'manual or substitute keys from another game. '
                 )
