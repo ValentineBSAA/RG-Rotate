@@ -1,6 +1,6 @@
 # v1.5.9 · Virtual Windows SDXC / exFAT format projection
 
-**Status:** Simulation only. No SD card, NAS directory, partition, filesystem, sparse image, format operation, or existing file is created/deleted/rewritten by this feature.
+**Status:** v1.5.9 merged source beta; [main CI](https://github.com/ValentineBSAA/RG-Rotate/actions/runs/45242023081) passed 301 Windows/300 Linux (1 skip). User Windows/physical card acceptance pending. Simulation only. No SD card, NAS directory, partition, filesystem, sparse image, format operation, or existing file is created/deleted/rewritten by this feature.
 
 ## What the user requested
 
