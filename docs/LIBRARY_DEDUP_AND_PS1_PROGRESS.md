@@ -1,5 +1,7 @@
 # v1.6.2 · Live PS1 disc progress + duplicate checks for all consoles
 
+**Source status:** v1.6.2 merged in [PR #20](https://github.com/ValentineBSAA/RG-Rotate/pull/20). Exact-source [GitHub CI run 45261322930](https://github.com/ValentineBSAA/RG-Rotate/actions/runs/45261322930) **364 Windows passed; 363 Linux passed, 1 skipped**. Real PSN batch folder and device acceptance remain pending.
+
 ## Real user observations (2026-11-23)
 - Original v1.6.1 screenshot sequence: FinalFantasyVII(English)(PSN).7z entered the real Windows importer; unpacked into local temporary storage; PSXtract recognized multi-disc PBP; the console identified **Disc 1, 2, 3** (SCES Europe), reconstructed the tracks and printed successful conversion lines; user observed MD5 PASS; GUI subsequently showed **converting Disc 1 to CHD**.
 - The user explicitly noted PSXtract progress was invisible without a debug terminal. **Final verification, 3 CHDs, M3U and handheld disc switching were not yet shown.**
