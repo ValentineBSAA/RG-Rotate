@@ -17,21 +17,16 @@ from typing import Callable
 from core import CAPACITY, FREE_RESERVE, COMPANION_BUDGET, copy_atomic, safe_walk, same_file, inventory
 from library_import import infer_system, import_grouped
 from disc_sets import inspect_cue, write_playlist
+from ps1_collections import (disc_identity as collection_identity, folder_title,
+                             disc_numbers_are_contiguous, publish_playlist)
 
 _DISC_TAG = re.compile(r'\s*\((?:disc|disk|cd)\s*([0-9]{1,2})\)|\s*\[(?:disc|disk|cd)\s*([0-9]{1,2})\]', re.I)
 _RE2_PERSON = re.compile(r'\s*\((?:Claire|Leon)\)(?=\s*$)', re.I)
 
 
 def disc_identity(stem: str) -> tuple[str, int | None]:
-    """Only explicit disc numbers trigger multi-disc grouping. Preserve edition tags."""
-    m = _DISC_TAG.search(stem)
-    if not m:
-        return stem.strip(), None
-    number = int(m.group(1) or m.group(2))
-    basename = _DISC_TAG.sub('', stem).strip(' -._')
-    if basename.casefold().startswith('resident evil 2'):
-        basename = _RE2_PERSON.sub('', basename).strip(' -._')
-    return basename, number
+    """Compatibility API for callers; shared identity lives in ps1_collections."""
+    return collection_identity(stem)
 
 
 def _unique_cues(paths: list[Path]) -> list[Path]:
@@ -70,7 +65,7 @@ def stage_ps1_cues(cues: list[Path], workspace: Path, binary: Path, *, progress=
         from chd_convert import verify_existing_chd
         verify_existing = verify_existing_chd
     cues = list(dict.fromkeys(Path(x) for x in cues))
-    out = {'converted': 0, 'playlists': 0, 'copied': 0, 'skipped': 0,
+    out = {'converted': 0, 'playlists': 0, 'playlists_updated': 0, 'copied': 0, 'skipped': 0,
            'errors': [], 'artwork_games': [], 'cancelled': False}
     if not cues:
         return out
@@ -87,12 +82,21 @@ def stage_ps1_cues(cues: list[Path], workspace: Path, binary: Path, *, progress=
     for name, items in grouped.items():
         items.sort(key=lambda row: (row[1] is None, row[1] or 0, row[0].name.casefold()))
         base = disc_identity(items[0][0].stem)[0]
+        disc_numbers = [number for _, number in items if number is not None]
+        if len(disc_numbers) != len(set(disc_numbers)):
+            out['errors'].append(f'{base}: More than one source CUE claims the same disc number. Review names; no disc was automatically merged.')
+            continue
+        try:
+            safe_base = folder_title(base) if any(n is not None for _, n in items) else base
+        except ValueError as exc:
+            out['errors'].append(f'{base}: {exc}')
+            continue
         # An already-imported CUE is optimized in its existing folder; never
         # silently reorganize or delete that user's imported originals.
         if optimize_existing:
             destination = items[0][0].parent
         else:
-            destination = Path(workspace) / 'ROMs' / 'psx' / base if any(n is not None for _, n in items) else Path(workspace) / 'ROMs' / 'psx'
+            destination = Path(workspace) / 'ROMs' / 'psx' / safe_base if any(n is not None for _, n in items) else Path(workspace) / 'ROMs' / 'psx'
         staged: list[tuple[int, Path]] = []
         for index, (cue, number) in enumerate(items, 1):
             disc_index += 1
@@ -172,19 +176,26 @@ def stage_ps1_cues(cues: list[Path], workspace: Path, binary: Path, *, progress=
         staged += existing
         if len(staged) >= 2:
             playlist = destination / f'{base}.m3u'
-            ordered = [p for _, p in sorted(staged, key=lambda r: r[0])]
+            ordered_pairs = sorted(staged, key=lambda r: r[0])
+            numbers = [number for number, _ in ordered_pairs]
+            if not disc_numbers_are_contiguous(numbers):
+                missing = [n for n in range(1, max(numbers) + 1) if n not in numbers]
+                out['errors'].append(f'{base}: disc numbers are duplicated or gaps remain ({missing}). Existing CHDs are safe; no incomplete playlist was published.')
+                continue
+            ordered = [p for _, p in ordered_pairs]
             try:
-                if playlist.exists():
-                    if playlist.read_text(encoding='utf-8-sig').splitlines() != [p.name for p in ordered]:
-                        raise FileExistsError('Existing M3U differs from detected disc order; nothing overwritten')
-                else:
-                    write_playlist(ordered, playlist)
-                    out['playlists'] += 1
+                state = publish_playlist(ordered, playlist, cancel=cancel)
+                if state == 'created': out['playlists'] += 1
+                if state == 'updated': out['playlists_updated'] += 1
                 out['artwork_games'].append({'system': 'PS1', 'label': base})
+            except InterruptedError:
+                out['cancelled'] = True
+                return out
             except Exception as exc:
                 out['errors'].append(f'{base}: M3U could not be prepared: {exc}')
         elif staged:
-            out['artwork_games'].append({'system': 'PS1', 'label': staged[0][1].stem})
+            label = base if any(n is not None for _, n in items) else staged[0][1].stem
+            out['artwork_games'].append({'system': 'PS1', 'label': label})
     return out
 
 
@@ -251,7 +262,7 @@ def guided_import(paths: list[Path], workspace: Path, fallback: str, binary: Pat
                                 cancel=cancel, auto_artwork=auto_artwork,
                                 converter=converter, verify_existing=verify_existing,
                                 optimize_existing=optimize_existing)
-    out = {'copied': 0, 'skipped': 0, 'converted': 0, 'playlists': 0,
+    out = {'copied': 0, 'skipped': 0, 'converted': 0, 'playlists': 0, 'playlists_updated': 0,
            'errors': [], 'cancelled': False, 'artwork_attempted': False,
            'artwork': {}, 'artwork_games': []}
     if cancel is not None and cancel.is_set():
@@ -298,7 +309,7 @@ def guided_import(paths: list[Path], workspace: Path, fallback: str, binary: Pat
                                                    0 if t == 0 else 100),
                                   cancel=cancel, converter=converter, verify_existing=verify_existing,
                                   optimize_existing=optimize_existing)
-    for key in ('copied', 'skipped', 'converted', 'playlists'):
+    for key in ('copied', 'skipped', 'converted', 'playlists', 'playlists_updated'):
         out[key] += disc_result[key]
     out['errors'] += disc_result['errors']
     out['artwork_games'].extend(disc_result['artwork_games'])
