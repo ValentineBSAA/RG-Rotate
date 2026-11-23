@@ -53,7 +53,7 @@ from system_shelves import (PRIMARY_SYSTEMS, console_counts, console_order_key,
                             console_visual, grouped_shelves)
 from workspace_setup import suggested_workspace, copy_existing_workspace, count_workspace_files
 
-VERSION = '1.6.2 Beta – Disc Progress & Library-Wide Duplicate Checks'
+VERSION = '1.6.3 Beta – Safe PS1 Titles & Reliable Batch Stop'
 SCALE_CHOICES = [('100%', 100), ('110%', 110), ('125%', 125), ('140%', 140), ('150%', 150)]
 MAX_VISIBLE_FILES = 1200
 
@@ -1370,20 +1370,38 @@ class Window(QMainWindow):
             return
         self.import_stopped = True
         self.cancel_requested = True
+        self.cancel_signal.set()
         self.cancel_btn.setEnabled(False)
-        self.task_title.setText('Stopping APK import…' if self.import_kind == 'apks' else 'Stopping game import…')
-        self.set_status('Stopping isolated import worker. Original files remain protected.')
+        self.cancel_btn.setText('Stopping…')
+        self.task_title.setText('Stopping batch • no next package will start…'
+                                if self.import_kind == 'batch_psn_folder'
+                                else 'Stopping import…')
+        self.set_status('Stop sent. Waiting for the current safe checkpoint; '
+                        'completed CHDs and original archives are preserved.')
         if proc.state() == QProcess.ProcessState.NotRunning:
             return
-        proc.write(b'STOP\n')  # Cooperative cancellation for current copy/archive operation.
-        QTimer.singleShot(1400, lambda p=proc: self._terminate_stuck_import(p))
+        # STOP is handled by the worker's stdin watcher. Closing the write
+        # channel flushes the command and delivers EOF, instead of leaving
+        # the watcher waiting indefinitely for another line.
+        proc.write(b'STOP\n')
+        proc.closeWriteChannel()
+        QTimer.singleShot(1800, lambda p=proc: self._terminate_stuck_import(p))
 
     def _terminate_stuck_import(self, proc):
         if self.import_process is not proc or proc.state() == QProcess.ProcessState.NotRunning:
             return
-        self.task_title.setText('Stopping unresponsive NAS import…')
-        self.set_status('NAS file operation did not respond. Ending isolated import process safely.')
-        proc.kill()  # No published partial files: core writes to .retro-part first.
+        self.task_title.setText('Stopping unresponsive import worker…')
+        self.set_status('Stop was not acknowledged. Requesting process shutdown; '
+                        'no further games may be started.')
+        proc.terminate()
+        QTimer.singleShot(2000, lambda p=proc: self._force_kill_import(p))
+
+    def _force_kill_import(self, proc):
+        if self.import_process is not proc or proc.state() == QProcess.ProcessState.NotRunning:
+            return
+        self.set_status('Ending unresponsive import worker. Incomplete temporary files '
+                        'must be reviewed before another import.')
+        proc.kill()  # Windows job containment also ends PSXtract/CHDman children.
         QTimer.singleShot(3500, lambda p=proc: self._warn_import_shutdown(p))
 
     def _warn_import_shutdown(self, proc):
@@ -1478,8 +1496,10 @@ class Window(QMainWindow):
             self.ps1_disc_phase.show()
         elif 'PS1 Classic extracted' in str(name):
             count = sum(1 for stage in self.ps1_disc_steps.values() if stage == '✓')
+            message = (f'{count} disc(s) reported reconstructed'
+                       if count else 'disc count not reported by extractor')
             self.ps1_disc_phase.setText(
-                f'PS1 EXTRACTION ✓  •  {count} disc(s) reconstructed  •  preparing CHDs')
+                f'PS1 EXTRACTION ✓  •  {message}  •  preparing CHDs')
             self.ps1_disc_phase.show()
         if name == '@capacity':
             self.staged_bytes = max(0, int(current))
@@ -1952,6 +1972,12 @@ class Window(QMainWindow):
                               f'{len(group)} disc / file variants • files kept separate')
                     discs = label(detail, 'Small', True)
                     discs.setToolTip('\n'.join(str(e.path) for e in group)); t.addWidget(discs)
+                if game.system == 'PS1':
+                    from ps1_psn import meaningful_title
+                    if meaningful_title(game.label) is None:
+                        t.addWidget(label('Title needs review before copying to card',
+                                          'Small', True))
+                t.addWidget(button('Open game folder', lambda _=False, g=game: self.open_path(g.path.parent)))
                 t.addWidget(button('Edit display title…', lambda _=False, g=game: self.edit_game_title(g)))
                 info = self.cover_index.get(game_key(game.system, game.label), {})
                 st = info.get('status', '')
@@ -2598,8 +2624,12 @@ class Window(QMainWindow):
                         ('New playlists', f"{result.get('playlists', 0)}"),
                     ]),
                 ],
-                items=[f"{row['status']}  •  {row['name']}"
-                       for row in items[:100]],
+                items=[
+                    (f"{row['status']}  •  {row['name']}"
+                     + (f"  •  {row.get('discs', 0)} CHD(s)" if row.get('discs') else '')
+                     + (f"  •  Folder: {row['folder']}" if row.get('folder') else '')
+                     + (f"  •  {row['message']}" if row.get('message') else ''))
+                    for row in items[:100]],
                 note='Unrecognized or different editions were not overwritten. '
                      'Any failed game can be retried without disturbing the others.',
                 technical='\n'.join(result.get('errors', [])),
