@@ -34,9 +34,13 @@ def _listen_for_stop(cancel: threading.Event) -> None:
 
 def handle(request: dict, cancel: threading.Event) -> dict:
     mode = request.get('mode')
-    if mode in ('inspect_discs', 'convert_discs', 'playlist', 'setup', 'optimize_existing_ps1', 'convert_selected_ps1'):
+    if mode in ('inspect_discs', 'convert_discs', 'playlist', 'setup', 'optimize_existing_ps1', 'convert_selected_ps1', 'batch_convert_ps1'):
         def progress(message, current, total):
             emit('progress', message=str(message), current=int(current), total=int(total))
+        if mode == 'batch_convert_ps1':
+            from ps1_organizer import batch_convert_ps1
+            return batch_convert_ps1(Path(request['workspace']), Path(request['binary']),
+                  progress=progress, cancel=cancel, cleanup_mode=request.get('cleanup_mode','backup'))
         if mode == 'convert_selected_ps1':
             from ps1_organizer import convert_selected_game
             return convert_selected_game(Path(request['source']), Path(request['workspace']),
@@ -115,7 +119,7 @@ def main() -> int:
         request = json.loads(request_line)
         if not isinstance(request, dict):
             raise ValueError('Import request must be an object')
-        if request.get('mode') == 'convert_discs' or request.get('auto_ps1_chd') or request.get('mode') in ('optimize_existing_ps1', 'convert_selected_ps1'):
+        if request.get('mode') == 'convert_discs' or request.get('auto_ps1_chd') or request.get('mode') in ('optimize_existing_ps1', 'convert_selected_ps1', 'batch_convert_ps1'):
             from worker_lifetime import contain_children
             contain_children()
         watcher = threading.Thread(target=_listen_for_stop, args=(cancel,), daemon=True)
