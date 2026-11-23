@@ -31,6 +31,7 @@ from core import (CAPACITY, COMPANION_BUDGET, FREE_RESERVE, SYSTEM_DIR, SUPPORTE
 from sync_engine import SyncPlan, make_plan, transfer_verified
 from transfer_feedback import preview_explanation, copy_explanation
 from card_capacity import planned_card_budget, physical_card_preview, decimal_gb, binary_gib
+from virtual_exfat import virtual_exfat_preview, MODEL_CLUSTER_BYTES
 from drives import list_windows_volumes, validate_physical_root
 from destination_mode import is_volume_root, restore_destination_mode
 from software import SOFTWARE, download_selected
@@ -50,7 +51,7 @@ from system_shelves import (PRIMARY_SYSTEMS, console_counts, console_order_key,
                             console_visual, grouped_shelves)
 from workspace_setup import suggested_workspace, copy_existing_workspace, count_workspace_files
 
-VERSION = '1.5.8 Beta – Smart Multi-disc Collections'
+VERSION = '1.5.9 Beta – exFAT Planner & Disc Collection Details'
 SCALE_CHOICES = [('100%', 100), ('110%', 110), ('125%', 125), ('140%', 140), ('150%', 150)]
 MAX_VISIBLE_FILES = 1200
 
@@ -409,6 +410,7 @@ class Window(QMainWindow):
         self.staged_bytes = 0
         self.staged_files = 0
         self.staged_companion = 0
+        self.staged_cluster_padding = 0  # Background scan estimate, not NAS I/O in Qt.
         self.last_physical_plan = None
         self.current_task = False
         self.current_task_name = ''
@@ -576,6 +578,17 @@ class Window(QMainWindow):
         plan_box.addWidget(self.card_plan_bar)
         self.card_plan_note = label('Blue: staged files • Purple: AI space • Gold: protected free space', 'Small', True)
         plan_box.addWidget(self.card_plan_note)
+        # Additional non-destructive formatting projection overlay. Never creates
+        # an image, partition, filesystem, reservation or physical-card format.
+        exfat_heading = QHBoxLayout()
+        self.exfat_title = label('SIMULATED Windows 11 exFAT • not yet measured', 'Small', True)
+        exfat_heading.addWidget(self.exfat_title, 1)
+        exfat_heading.addWidget(button('exFAT details…', self.show_virtual_exfat_details))
+        plan_box.addLayout(exfat_heading)
+        self.exfat_bar = CardFillMeter()
+        plan_box.addWidget(self.exfat_bar)
+        self.exfat_summary = label('Format model only; no files changed.', 'Small', True)
+        plan_box.addWidget(self.exfat_summary)
         r.addWidget(plan_strip)
         self.stack = QStackedWidget(); r.addWidget(self.stack, 1)
         self.make_home(); self.make_library(); self.make_apps(); self.make_copy(); self.make_health(); self.make_prefs()
@@ -1123,10 +1136,12 @@ class Window(QMainWindow):
                 payload = result
             elif mode == 'inventory':
                 self.cue_tracks = {os.path.normcase(os.path.abspath(p)) for p in result.get('disc_tracks', [])}
-                entries = [Entry(Path(row[0]), row[1], row[2], int(row[3]), row[4])
+                entries = [Entry(Path(row[0]), row[1], row[2], int(row[3]), row[4],
+                                 tuple(str(x) for x in row[5]) if len(row) > 5 else ())
                            for row in result['entries']]
                 payload = (Path(result['path']), entries, int(result['used']),
-                           int(result['count']), int(result['companion']))
+                           int(result['count']), int(result['companion']),
+                           int(result.get('exfat_cluster_padding', 0)))
             else:
                 payload = (int(result['count']), int(result['used']))
         except (KeyError, ValueError, IndexError, TypeError) as exc:
@@ -1541,12 +1556,13 @@ class Window(QMainWindow):
         if result is None or result[4] is None:
             self.set_status('Virtual-card check stopped. Your files were not changed.')
             return
-        scan_path, entries, size, count, companion = result
+        scan_path, entries, size, count, companion, cluster_padding = result
         if scan_path != self.workspace:
             self.refresh()
             return
         self.card_entries, self.staged_bytes, self.staged_files = entries, size, count
         self.staged_companion = companion
+        self.staged_cluster_padding = cluster_padding
         self.update_card_plan()
         if self.last_physical_plan is not None:
             self.reset_physical_plan('Staged files changed or were rescanned. Preview the card again for current numbers.')
