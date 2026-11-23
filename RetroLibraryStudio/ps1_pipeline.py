@@ -364,13 +364,12 @@ def guided_import(paths: list[Path], workspace: Path, fallback: str, binary: Pat
             from ps1_psn import is_ps1_classic, meaningful_title
             eboots = [p for p in unpacked if p.suffix.lower() == '.pbp'
                       and is_ps1_classic(p)]
-            # Generic archive wrappers ('PS1.7z') must not become a title.
-            # The containing folder can supply a legitimate title; if neither
-            # is meaningful, package_title reads the PBP's PARAM.SFO instead.
+            # Generic archives ('PS1.7z') must use PBP metadata or an
+            # inner per-game folder, NEVER the shared parent batch/download
+            # directory; that would falsely merge unrelated PS1 games.
             title_hint = psn_title_hint
             if not title_hint and len(archives) == 1 and len(eboots) == 1:
-                title_hint = (meaningful_title(archives[0].stem) or
-                              meaningful_title(archives[0].parent.name))
+                title_hint = meaningful_title(archives[0].stem)
             return guided_import([p for p in paths if p not in archives] + unpacked,
                                 workspace, fallback, binary, progress=progress,
                                 cancel=cancel, auto_artwork=auto_artwork,
