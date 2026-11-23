@@ -12,7 +12,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       # v1.6.3 fix-candidate source artifact. Real Windows Stop and game-title tests pending.
-      # v1.6.3: forbid generic PS1 game titles, bounded PBP TITLE metadata, reliable Stop, folder links.
+      # v1.6.3 candidate after regression corrections: checked-out SHA only; do not infer Windows NAS acceptance.
       # Package checked-out branch or main source; do not claim physical Windows acceptance.
       - name: Package checked-out source without altering existing installs
         shell: bash
