@@ -1,25 +1,23 @@
 {
-  "version": "1.6.0",
-  "title": "Readable Game/Card Details and Safe USB microSD Identification",
+  "version": "1.6.1",
+  "title": "PS1 Classics EBOOT/PBP + verified 7Z archive handling",
   "build_date": "2026-11-23",
   "platform": "Windows source (PySide6)",
   "source_CI": {
-    "status": "pending Windows/Linux source CI for v1.6.0"
+    "status": "pending Linux/Windows source CI"
   },
   "local_pytest": {
     "passed": 266,
     "skipped": 25
   },
-  "windows_real_acceptance": "v1.5.9 2 DISCS and virtual exFAT UI user confirmed; new v1.6.0 dialog and USB card tests pending",
-  "device_acceptance": "USB microSD detection, physical card formatted capacity, first verified transfer and RG Rotate game launches pending",
+  "windows_real_acceptance": "v1.6.0 game details verified, real PS1 Classics PSXtract conversion pending",
+  "device_acceptance": "PSXtract not auto-installed; real FFVII PSN extraction and RG Rotate disc switching not verified",
   "source_files": [
     "app.py",
-    "drives.py",
-    "card_identity.py",
-    "friendly_dialogs.py",
-    "transfer_worker.py",
-    "sync_engine.py",
-    "tests/test_v160_readable_cards.py"
+    "import_worker.py",
+    "ps1_pipeline.py",
+    "ps1_psn.py",
+    "tests/test_v161_psn_and_7z.py"
   ],
-  "safety": "No formatting, partitioning, automatic copying or deletion. Physical transfer requires Windows volume GUID/serial identity, exFAT, explicit user drive-letter confirmation and per-file identity recheck."
+  "safety": "PSN key/manual never transformed into CHD or copied as standalone game; preserves source EBOOT and archive; missing helper refuses, no unverified disc order."
 }

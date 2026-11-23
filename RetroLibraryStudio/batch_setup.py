@@ -14,17 +14,18 @@ import software
 import tool_setup
 
 RECOMMENDED = ('Cocoon Shell', 'PPSSPP', 'RetroArch', 'Android Platform Tools', 'CHDman')
-OPTIONAL = ('DuckStation',)
+OPTIONAL = ('DuckStation', 'PSXtract')
 DESCRIPTION = {
     'Cocoon Shell': 'Default RG Rotate launcher',
     'PPSSPP': 'PlayStation Portable games',
     'RetroArch': 'Retro console emulation',
     'Android Platform Tools': 'USB setup utility for Windows',
     'CHDman': 'PS1 disc-image utility for Windows',
+    'PSXtract': 'Optional PSN EBOOT.PBP extractor (community release; checksum-verified)',
     'DuckStation': 'Optional PS1 emulator; Cocoon launch compatibility warning',
 }
 ANDROID = ('Cocoon Shell', 'PPSSPP', 'RetroArch')
-WINDOWS = ('Android Platform Tools', 'CHDman')
+WINDOWS = ('Android Platform Tools', 'CHDman', 'PSXtract')
 
 
 
@@ -71,9 +72,11 @@ def readiness(workspace: Path, host_tools: Path) -> dict[str, str]:
     result = {name: 'Not prepared' for name in (*RECOMMENDED, *OPTIONAL)}
     local_status = tool_setup.tool_status(host_tools)
     for name in WINDOWS:
-        if local_status[name]['installed']:
-            result[name] = 'Ready on Windows'
-        elif local_status[name].get('file_present'):
+        row = local_status.get(name, {})
+        if row.get('installed'):
+            result[name] = ('Helper downloaded; real PSN extraction not verified'
+                            if name == 'PSXtract' else 'Ready on Windows')
+        elif row.get('file_present'):
             result[name] = 'Needs attention: run setup to verify the existing Windows executable'
     for name in ANDROID:
         receipt = workspace / '.retro-library' / 'receipts' / (name.replace(' ', '_') + '.json')
@@ -162,10 +165,12 @@ def prepare_batch(
                             on_state(name, f'Downloading {percent}%' if percent is not None else 'Downloading…')
                 if name == 'Android Platform Tools':
                     answer = tool_setup.install_adb(host_tools, progress=tool_progress, cancel=cancel)
+                elif name == 'PSXtract':
+                    answer = tool_setup.install_psxtract(host_tools, progress=tool_progress, cancel=cancel)
                 else:
                     answer = tool_setup.install_chdman(host_tools, progress=tool_progress, cancel=cancel)
                 item = {'name': name, 'ok': bool(answer['ok']),
-                        'state': 'Ready on Windows' if answer['ok'] else answer['state']}
+                        'state': (answer['state'] if name == 'PSXtract' else 'Ready on Windows') if answer['ok'] else answer['state']}
             else:
                 item = {'name': name, 'ok': False,
                         'state': 'Needs compatibility review • use official download page'}

@@ -106,7 +106,8 @@ def handle(request: dict, cancel: threading.Event) -> dict:
         from ps1_pipeline import guided_import
         return guided_import(files, workspace, fallback, Path(request['binary']),
                              progress=progress, cancel=cancel,
-                             auto_artwork=bool(request.get('auto_artwork', True)))
+                             auto_artwork=bool(request.get('auto_artwork', True)),
+                             psxtract_binary=request.get('psxtract_binary'))
     return import_grouped(files, workspace, fallback, progress=progress, cancel=cancel)
 
 

@@ -24,6 +24,10 @@ ADB_URL = 'https://dl.google.com/android/repository/platform-tools-latest-window
 MAME_API = 'https://api.github.com/repos/mamedev/mame/releases/latest'
 ADB_DOCS = 'https://developer.android.com/tools/releases/platform-tools'
 CHDMAN_DOCS = 'https://www.mamedev.org/release.html'
+PSXTRACT_DOCS = 'https://github.com/has207/psxtract-2/releases/tag/v3.0'
+PSXTRACT_ZIP = 'https://github.com/has207/psxtract-2/releases/download/v3.0/psxtract-2.zip'
+PSXTRACT_SHA256 = '7bca7a8d982f7503a0d9348a3cc043385ee22264eb59ef7edf7fac9388b72013'
+MAX_PSXTRACT_ARCHIVE = 50 * 1024**2
 MAX_ADB_ARCHIVE = 100 * 1024**2
 MAX_MAME_ARCHIVE = 240 * 1024**2
 
@@ -86,10 +90,22 @@ def tool_status(root: Path | None = None) -> dict[str, dict]:
         adb_ready = (data.get('size') == info.st_size and data.get('mtime_ns') == info.st_mtime_ns
                      and data.get('executable_test_passed') is True)
     except (OSError, ValueError, TypeError): pass
+    psx = root / 'psxtract' / 'psxtract.exe'
+    receipt = psx.parent / '.checked.json'
+    psx_ready = False
+    try:
+        record = json.loads(receipt.read_text(encoding='utf-8'))
+        psx_ready = (psx.is_file() and record.get('size') == psx.stat().st_size
+                     and record.get('mtime_ns') == psx.stat().st_mtime_ns
+                     and record.get('release_sha256') == PSXTRACT_SHA256)
+    except (OSError, ValueError, TypeError):
+        pass
     return {
         'Android Platform Tools': {'installed': adb_ready, 'file_present': present(adb), 'path': str(adb), 'source': ADB_DOCS},
         'CHDman': {'installed': chd_ready, 'file_present': present(chd),
                    'path': str(chd), 'source': CHDMAN_DOCS},
+        'PSXtract': {'installed': psx_ready, 'file_present': present(psx),
+                     'path': str(psx), 'source': PSXTRACT_DOCS},
     }
 
 
@@ -294,6 +310,90 @@ def install_chdman(root: Path, progress=None, cancel=None) -> dict:
     return {'name': 'CHDman', 'ok': True, 'state': 'downloaded, unpacked and executable verified'}
 
 
+
+def _extract_psxtract_zip(archive: Path, destination: Path) -> Path:
+    """Extract a PINNED upstream PSXtract release, rejecting unsafe ZIP entries.
+
+    No downloaded binary or installer is executed by this function.
+    """
+    with zipfile.ZipFile(archive) as z:
+        infos = z.infolist()
+        if len(infos) > 3000:
+            raise ValueError('PSXtract release contains too many files')
+        size, unique = 0, set()
+        for info in infos:
+            name = sanitize_archive_member(info.filename)
+            if stat.S_IFMT(info.external_attr >> 16) == stat.S_IFLNK:
+                raise ValueError('Unsafe symlink in PSXtract release')
+            key = str(name).replace('\\', '/').casefold()
+            if key in unique:
+                raise ValueError('Duplicate case-insensitive path in PSXtract release')
+            unique.add(key)
+            size += info.file_size
+            if size > 250 * 1024**2:
+                raise ValueError('PSXtract release exceeds extraction safety limit')
+        z.extractall(destination)
+    exact = list(destination.rglob('psxtract.exe'))
+    if len(exact) != 1:
+        matches = [p for p in destination.rglob('*.exe') if p.stem.casefold().startswith('psxtract')
+                   and 'gui' not in p.stem.casefold()]
+        if len(matches) != 1:
+            raise RuntimeError('Expected one PSXtract command-line executable in pinned release')
+        executable = matches[0]
+    else:
+        executable = exact[0]
+    if executable.is_symlink() or not executable.is_file():
+        raise RuntimeError('PSXtract executable missing or linked')
+    return executable
+
+
+def install_psxtract(root: Path, progress=None, cancel=None) -> dict:
+    """Opt-in pinned third-party helper for PSN EBOOT conversion (never auto-run)."""
+    dest = Path(root) / 'psxtract'
+    if dest.exists():
+        state = tool_status(root).get('PSXtract', {})
+        if state.get('installed'):
+            return {'name': 'PSXtract', 'ok': True,
+                    'state': 'Pinned helper installed; real game extraction not yet verified'}
+        raise FileExistsError('Existing unverified PSXtract folder; no overwrite. Review manually first.')
+    root.mkdir(parents=True, exist_ok=True)
+    with tempfile.TemporaryDirectory(prefix='retro-psxtract-', dir=root) as directory:
+        temp = Path(directory)
+        archive = temp / 'psxtract-2.zip'
+        digest = _download(PSXTRACT_ZIP, archive, MAX_PSXTRACT_ARCHIVE, progress, cancel)
+        if digest.casefold() != PSXTRACT_SHA256:
+            raise RuntimeError('PSXtract upstream SHA-256 checksum mismatch; download refused')
+        if cancel is not None and cancel.is_set():
+            raise InterruptedError('PSXtract setup stopped')
+        if progress: progress('Checking PSXtract release archive', 0, 0)
+        unpack = temp / 'unpacked'; unpack.mkdir()
+        exe = _extract_psxtract_zip(archive, unpack)
+        # Keep sibling DLLs, CUE lookup data and resources with the executable.
+        package_dir = exe.parent
+        if exe.name.casefold() != 'psxtract.exe':
+            renamed = package_dir / 'psxtract.exe'
+            if renamed.exists():
+                raise FileExistsError('Ambiguous PSXtract executables; nothing installed')
+            exe.rename(renamed)
+        if cancel is not None and cancel.is_set():
+            raise InterruptedError('PSXtract setup stopped')
+        if dest.exists():
+            raise FileExistsError('PSXtract installation folder appeared unexpectedly')
+        package_dir.rename(dest)
+    binfile = dest / 'psxtract.exe'
+    if not binfile.is_file():
+        raise RuntimeError('PSXtract executable was not installed')
+    info = binfile.stat()
+    (dest / '.checked.json').write_text(json.dumps({
+        'size': info.st_size, 'mtime_ns': info.st_mtime_ns,
+        'release_sha256': PSXTRACT_SHA256,
+        'meaning': 'Official release ZIP SHA-256 checked. Actual EBOOT extraction still untested.'
+    }), encoding='utf-8')
+    _write_receipt(root, 'psxtract', PSXTRACT_ZIP, digest)
+    return {'name': 'PSXtract', 'ok': True,
+            'state': 'Checksum-verified helper installed; PSN extraction awaits real test'}
+
+
 def _write_receipt(root: Path, name: str, url: str, digest: str) -> None:
     (root / (name + '.json')).write_text(json.dumps({
         'source': url, 'sha256_of_downloaded_package': digest,
@@ -303,7 +403,8 @@ def _write_receipt(root: Path, name: str, url: str, digest: str) -> None:
 
 def install_selected(names: list[str], root: Path | None = None, progress=None, cancel=None) -> list[dict]:
     root = root or tools_root()
-    functions = {'Android Platform Tools': install_adb, 'CHDman': install_chdman}
+    functions = {'Android Platform Tools': install_adb, 'CHDman': install_chdman,
+                 'PSXtract': install_psxtract}
     results = []
     for idx, name in enumerate(names, 1):
         if cancel is not None and cancel.is_set():

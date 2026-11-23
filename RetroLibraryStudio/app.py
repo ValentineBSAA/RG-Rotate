@@ -37,7 +37,7 @@ from card_identity import card_candidate, fingerprint, verify_card, matches as m
 from friendly_dialogs import DetailsDialog
 from destination_mode import is_volume_root, restore_destination_mode
 from software import SOFTWARE, download_selected
-from tool_setup import tool_status, tools_root, install_selected, ADB_DOCS, CHDMAN_DOCS, validate_installed_chdman
+from tool_setup import tool_status, tools_root, install_selected, ADB_DOCS, CHDMAN_DOCS, PSXTRACT_DOCS, validate_installed_chdman
 from health import inspect_library
 from android_setup import connected_devices, install_local_apks
 from library_import import infer_system, import_grouped
@@ -53,7 +53,7 @@ from system_shelves import (PRIMARY_SYSTEMS, console_counts, console_order_key,
                             console_visual, grouped_shelves)
 from workspace_setup import suggested_workspace, copy_existing_workspace, count_workspace_files
 
-VERSION = '1.6.0 Beta – Friendly Details & Safe microSD Detection'
+VERSION = '1.6.1 Beta – PS1 Classics EBOOT & 7Z Import'
 SCALE_CHOICES = [('100%', 100), ('110%', 110), ('125%', 125), ('140%', 140), ('150%', 150)]
 MAX_VISIBLE_FILES = 1200
 
@@ -784,7 +784,8 @@ class Window(QMainWindow):
         content.addWidget(self.library_notice)
         content.addWidget(label('PS1 game collections: choose a complete game folder or all CUE/BIN discs together. '
             'Each disc becomes a verified CHD inside ROMs/psx/Game Title. One M3U playlist and one cover tile '
-            'represent the collection. Missing tracks are never guessed or deleted.', 'Small', True))
+            'represent the collection. Missing tracks are never guessed or deleted. '
+            'PSN EBOOT.PBP + KEYS.BIN requires an optional PSXtract helper.', 'Small', True))
         self.card_search = QLineEdit(); self.card_search.setPlaceholderText('Search the games you have added…')
         self.card_search.textChanged.connect(self._gallery_search_changed)
         content.addWidget(self.card_search)
@@ -896,6 +897,7 @@ class Window(QMainWindow):
             ('RetroArch', 'Other classic systems', True),
             ('Android Platform Tools', 'USB-assisted device setup on Windows', True),
             ('CHDman', 'Optional PS1 disc conversion on Windows', True),
+            ('PSXtract', 'Optional PS1 Classics PSN EBOOT.PBP extraction', False),
             ('DuckStation', 'Optional PS1 app, Cocoon compatibility needs testing', False),
         ]
         self.install_state_labels: dict[str, QLabel] = {}
@@ -2400,7 +2402,8 @@ class Window(QMainWindow):
     def ps1_import_options(self):
         return {'auto_ps1_chd': self.auto_ps1_chd.isChecked(),
                 'auto_artwork': self.auto_cover.isChecked(),
-                'binary': str(tools_root() / 'chdman' / 'chdman.exe')}
+                'binary': str(tools_root() / 'chdman' / 'chdman.exe'),
+                'psxtract_binary': str(tools_root() / 'psxtract' / 'psxtract.exe')}
 
     def optimize_existing_ps1(self):
         if not self.ensure_workspace(): return
@@ -2434,7 +2437,8 @@ class Window(QMainWindow):
         self.start_import_process({'mode': 'folder', 'folder': str(folder),
                                    'workspace': str(self.workspace), 'fallback': 'PS1',
                                    'auto_ps1_chd': True, 'auto_artwork': self.auto_cover.isChecked(),
-                                   'binary': str(tools_root() / 'chdman' / 'chdman.exe')},
+                                   'binary': str(tools_root() / 'chdman' / 'chdman.exe'),
+                                   'psxtract_binary': str(tools_root() / 'psxtract' / 'psxtract.exe')},
                                   'Importing PS1 Game Collection')
 
     def pick_folder(self):
@@ -2933,6 +2937,7 @@ class Window(QMainWindow):
             ('RetroArch', SOFTWARE['RetroArch']['homepage']),
             ('Android Platform Tools (Google)', ADB_DOCS),
             ('CHDman (MAME)', CHDMAN_DOCS),
+            ('PSXtract (community PSN helper)', PSXTRACT_DOCS),
             ('DuckStation (optional)', SOFTWARE['DuckStation']['homepage'])]:
             lay.addWidget(button(f'{name}   ↗', lambda _=False, u=url: QDesktopServices.openUrl(QUrl(u))))
         lay.addWidget(button('Close', dlg.accept))

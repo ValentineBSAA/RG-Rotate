@@ -114,3 +114,23 @@ _Last organized: 2026-11-23. Current source: **v1.5.7 merged into main** (PR #11
 - [ ] J05: Real exFAT card small transfer SHA-256 verifies; repeat 0-new-files verifies again; preserve 8 GiB free.
 - [ ] J06: All prior v1.5.9 CHDs/M3U/artwork/NAS/CompanionData untouched. No card formatted or cleaned.
 [Full v1.6.0 testing plan](CARD_DETECTION_AND_READABLE_DIALOGS.md).
+
+## K · v1.6.1 PS1 Classics EBOOT from .7z
+
+- [ ] K01: Real 7z archive with three CUE/BIN fixtures passes tests on Windows and Linux; unsafe/nested archives refused.
+- [ ] K02: Opt-in PSXtract setup pinned SHA-256 passes and does not install without user approval or launch on install.
+- [ ] K03: Real FFVII PSN EBOOT plus KEYS.BIN/DOCUMENT.DAT extracted into complete, correctly ordered disc CUE/BIN files locally; source untouched.
+- [ ] K04: CHDman independently verifies three CHDs; Final Fantasy VII M3U Disc 1–3 order, one artwork tile with 3 DISCS.
+- [ ] K05: Fail closed on missing helper, incomplete or ambiguous discs, cancellation and malformed archives; no key data in ROMs, prior RE2 intact.
+- [ ] K06: Verify Final Fantasy VII actually runs/switches discs on RG Rotate hardware.
+
+[Full PS1 Classics verification](PS1_CLASSICS_7Z_ACCEPTANCE.md).
+
+## K · v1.6.1 PSOne Classics / 7Z
+- [ ] K01: Real .7z archive with ordinary CUE/BIN multi-disc game converts through verified CHDman to single M3U tile.
+- [ ] K02: FFVII `EBOOT.PBP`/`KEYS.BIN`/`DOCUMENT.DAT` classified as a PS1 Classics package, not PSP or separate BIN disc.
+- [ ] K03: Missing PSXtract gives clear error, no partial file/image/silent copy; real upstream extractor installed by explicit user action.
+- [ ] K04: Real PSXtract outputs valid CUE/BIN, ordered CHDs and M3U, with original archive and keys intact.
+- [ ] K05: Final Fantasy VII renders one tile and number of discs matching **actual extracted game**, no guess based on packaging.
+- [ ] K06: Windows/Synology unchanged from v1.6.0; physical microSD and RG Rotate emulator disc swap still require separate test.
+[Full PSN/7Z acceptance](PSN_CLASSICS_IMPORT.md).

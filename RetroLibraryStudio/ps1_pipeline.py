@@ -299,7 +299,8 @@ def stage_ps1_chds(chds: list[Path], workspace: Path, binary: Path, *, progress=
 
 def guided_import(paths: list[Path], workspace: Path, fallback: str, binary: Path, *,
                   progress=None, cancel=None, auto_artwork=True, converter=None, verify_existing=None,
-                  optimize_existing=False) -> dict:
+                  optimize_existing=False, psxtract_binary=None, psn_extractor=None,
+                  psn_title_hint=None) -> dict:
     """One coherent progress-driven task for copy, CHD, M3U, and artwork."""
     paths = list(dict.fromkeys(Path(p) for p in paths))
     archives = [p for p in paths if p.suffix.lower() in ('.zip', '.7z')]
@@ -352,14 +353,20 @@ def guided_import(paths: list[Path], workspace: Path, fallback: str, binary: Pat
                     raise ValueError('Nested archives must be unpacked separately')
                 unpacked.extend(p for p in extracted if p.suffix.lower() in (
                     '.cue','.bin','.m3u','.chd','.img','.iso','.cso','.pbp','.gba','.gb','.gbc',
-                    '.nes','.sfc','.smc','.md','.gen','.nds','.n64','.z64','.v64','.gdi','.cdi'))
+                    '.nes','.sfc','.smc','.md','.gen','.nds','.n64','.z64','.v64','.gdi','.cdi')
+                    or p.name.casefold() == 'document.dat')
             if not unpacked:
                 raise ValueError('No recognized game files found inside the archive')
+            # An archive containing an NPEF... directory otherwise loses the
+            # actual game title and becomes an anonymous game-code folder.
+            title_hint = psn_title_hint or (archives[0].stem if len(archives) == 1 else None)
             return guided_import([p for p in paths if p not in archives] + unpacked,
                                 workspace, fallback, binary, progress=progress,
                                 cancel=cancel, auto_artwork=auto_artwork,
                                 converter=converter, verify_existing=verify_existing,
-                                optimize_existing=optimize_existing)
+                                optimize_existing=optimize_existing,
+                                psxtract_binary=psxtract_binary,
+                                psn_extractor=psn_extractor, psn_title_hint=title_hint)
     out = {'copied': 0, 'skipped': 0, 'converted': 0, 'playlists': 0, 'playlists_updated': 0,
            'errors': [], 'cancelled': False, 'artwork_attempted': False,
            'artwork': {}, 'artwork_games': []}
@@ -373,6 +380,59 @@ def guided_import(paths: list[Path], workspace: Path, fallback: str, binary: Pat
             current = highest[0]
         if progress: progress(msg, current, total)
     phase('Preparing selected games and checking disc companions', 3, 100)
+    # PSN PSOne Classics EBOOT is a PS1 container, not a native PSP ISO.
+    # KEYS.BIN is a companion to the package, NEVER a separate PS1 disc.
+    from ps1_psn import (is_ps1_classic, psn_companions, pbp_disc_signature,
+                         package_title, extract_psn_with_helper, ordered_psn_cues)
+    psn_files = [p for p in paths if p.suffix.lower() == '.pbp' and is_ps1_classic(p)]
+    psn_consumed = set(psn_files)
+    psn_related = set()
+    for pbp in psn_files:
+        doc, keys = psn_companions(pbp)
+        psn_related.update(p for p in (doc, keys) if p is not None)
+        try:
+            title = package_title(pbp, psn_title_hint)
+            with tempfile.TemporaryDirectory(prefix='rgl-psn-extract-') as temp:
+                dest = Path(temp)
+                extract = psn_extractor or extract_psn_with_helper
+                helper = Path(psxtract_binary) if psxtract_binary else Path('psxtract.exe')
+                if progress:
+                    phase(f'Inspecting PS1 Classic {title}', 10, 100)
+                extracted = extract(pbp, dest, helper, cancel=cancel, progress=phase)
+                prepared = ordered_psn_cues(
+                    extracted, title, multi_expected=pbp_disc_signature(pbp) == 'multi')
+                converted = stage_ps1_cues(prepared, workspace, binary, progress=phase,
+                                          cancel=cancel, converter=converter,
+                                          verify_existing=verify_existing)
+                for key in ('copied', 'skipped', 'converted', 'playlists', 'playlists_updated'):
+                    out[key] += converted[key]
+                out['errors'].extend(converted['errors'])
+                out['artwork_games'].extend(converted['artwork_games'])
+                if converted['cancelled']:
+                    out['cancelled'] = True
+                    return out
+        except InterruptedError:
+            out['cancelled'] = True
+            return out
+        except Exception as exc:
+            out['errors'].append(f'{pbp.name} (PS1 Classics): {exc}')
+    # DOCUMENT.DAT is a digital manual and KEYS.BIN is key material, not an
+    # ISO, disc track or native PSP game. Never put them on the virtual card.
+    orphan = [p for p in paths if p.name.casefold() in ('keys.bin','document.dat')
+              and p not in psn_related]
+    for p in orphan:
+        out['errors'].append(f'{p.name}: This is PS1 Classics companion data, '
+                             'not a game image. Select its matching EBOOT.PBP.')
+    excluded = psn_consumed | psn_related | set(orphan)
+    # Unknown .PBP with a PS1 fallback may actually be a native PSP EBOOT:
+    # refuse ambiguous automatic classification instead of corrupting PS1.
+    unsafe_pbp = [p for p in paths if p.suffix.lower() == '.pbp'
+                  and p not in excluded and infer_system(p, fallback) == 'PS1']
+    for p in unsafe_pbp:
+        out['errors'].append(f'{p.name}: Not a recognizable PS1 Classics PBP. '
+                             'For a native PSP EBOOT, select PSP instead.')
+    excluded.update(unsafe_pbp)
+    paths = [p for p in paths if p not in excluded]
     cue_sources = _unique_cues(paths)
     # Exclude BIN tracks that are companions to any CUE/M3U. Standalone BINs
     # cannot be converted reliably and must not show up as separate PS1 games.
