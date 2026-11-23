@@ -78,7 +78,7 @@ There is no unattended GitHub update running. “Continuously update” means up
 
 - [x] Add clickable format badges on My Games tiles from **actual scanned file extensions** (CHD / BIN-CUE / M3U / ISO / PBP etc), and file details popup. CHD badge does **not** claim integrity verification.
 - [x] Add offline-tested Libretro catalog fallback to official platform-specific GitHub tree; image download fallback to raw.githubusercontent.com; manual browser and PC-image options remain.
-- [x] Package source-based Windows test ZIP `RetroLibraryStudio_v1.5.3_Windows_Test_Beta.zip`; clean-extract Linux test: **230 passed, 15 skipped**.
+- [x] Package source-based Windows test ZIP `RetroLibraryStudio_v1.5.3_Windows_Test_Beta.zip`; clean-extract local Linux test: **230 passed, 15 skipped**; [GitHub CI run 45141431778](https://github.com/ValentineBSAA/RG-Rotate/actions/runs/45141431778): **245 passed Windows / 244 passed + 1 skipped Linux**.
 - [ ] **User acceptance:** Confirm Clock Tower shows BIN/CUE until an actual CHD is stored, then CHD after Refresh. A 118.0 MB reported size alone is not proof of CHD.
 - [ ] **User acceptance:** Perform live artwork search on Windows; if both public providers fail, capture exact network status/error.
 - [ ] User confirms genuine CHDman conversion and verified card transfer with the real files.
