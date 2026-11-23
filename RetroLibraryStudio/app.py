@@ -33,7 +33,7 @@ from transfer_feedback import preview_explanation, copy_explanation
 from card_capacity import planned_card_budget, physical_card_preview, decimal_gb, binary_gib
 from virtual_exfat import virtual_exfat_preview, MODEL_CLUSTER_BYTES
 from drives import list_windows_volumes, validate_physical_root, system_drive_root
-from card_identity import card_candidate, fingerprint, verify_card
+from card_identity import card_candidate, fingerprint, verify_card, matches as matches_card_identity
 from friendly_dialogs import DetailsDialog
 from destination_mode import is_volume_root, restore_destination_mode
 from software import SOFTWARE, download_selected
@@ -414,6 +414,10 @@ class Window(QMainWindow):
         self.staged_companion = 0
         self.staged_cluster_padding = 0  # Background scan estimate, not NAS I/O in Qt.
         self.last_physical_plan = None
+        self.confirmed_card_identity = None
+        self.detected_card_volumes = []
+        self.card_probe_busy = False
+        self._last_candidate_keys = set()
         self.current_task = False
         self.current_task_name = ''
         self.scan_process = None  # Disposable child; safe to terminate for READ-ONLY scans.
@@ -466,6 +470,14 @@ class Window(QMainWindow):
         self.resize(1240, 805)
         self.create_ui()
         self.apply_scale()
+        # Poll through a separate thread, ONLY on Copy to card. The GUI never
+        # synchronously scans an unplugged reader every few seconds.
+        self.card_probe_pool = QThreadPool(self)
+        self.card_probe_pool.setMaxThreadCount(1)
+        self.card_probe_timer = QTimer(self)
+        self.card_probe_timer.setInterval(6000)
+        self.card_probe_timer.timeout.connect(self._poll_inserted_card)
+        self.card_probe_timer.start()
         geometry = self.settings.value('window_geometry')
         if geometry: self.restoreGeometry(geometry)
         state = self.settings.value('window_state')
@@ -644,7 +656,9 @@ class Window(QMainWindow):
             QTimer.singleShot(0, self.reflow_commands)
         if i == 2 and refresh_apps and i != previous and not self.current_task:
             self.update_tools_status()
-        if i==3: self.update_destination_hint()
+        if i==3:
+            self.update_destination_hint()
+            QTimer.singleShot(50, self._poll_inserted_card)
         if i==5: self.update_pref_paths()
 
     def register(self, b: QPushButton):
@@ -960,6 +974,10 @@ class Window(QMainWindow):
         r.addWidget(self.register(button('Find inserted card', self.detect_card, 'Primary')))
         r.addWidget(self.register(button('Choose drive or folder…', self.choose_destination)))
         first.addLayout(r)
+        self.card_detection_status = label(
+            'Connect your microSD with the USB reader. The app watches for new card candidates here.',
+            'Small', True)
+        first.addWidget(self.card_detection_status)
         first.addWidget(self.register(button('Try a safe practice copy first', self.prepare_practice, 'Accent')))
         self.simulation = QCheckBox('Practice folder (not a real microSD)')
         self.simulation.setChecked(self.saved_destination_mode == 'practice')
@@ -3349,6 +3367,7 @@ class Window(QMainWindow):
         self.settings.setValue('target', str(target))
         self.settings.setValue('target_mode', mode)
         self.saved_destination_mode = mode
+        self.confirmed_card_identity = None
         self.simulation.blockSignals(True)
         self.simulation.setChecked(mode == 'practice')
         self.simulation.blockSignals(False)
@@ -3374,6 +3393,7 @@ class Window(QMainWindow):
             return
         self.settings.setValue('target_mode', 'practice' if practice else 'unconfirmed')
         self.saved_destination_mode = 'practice' if practice else 'unconfirmed'
+        self.confirmed_card_identity = None
         self.update_destination_hint()
         self.reset_physical_plan('Destination type changed. Run Preview again.')
         self.preflight_text.setText('Destination mode changed. Run a new preview before copying.')
@@ -3424,18 +3444,81 @@ class Window(QMainWindow):
         self._remember_destination(directory, 'practice')
         self.preflight_text.setText('Practice folder ready. Click “Check what would be copied” to preview.')
 
+    def _poll_inserted_card(self):
+        """Nonblocking background discovery; never silently select or copy."""
+        if (os.name != 'nt' or self.current_task or self.card_probe_busy or
+                not hasattr(self, 'stack') or self.stack.currentIndex() != 3):
+            return
+        self.card_probe_busy = True
+        worker = Job(list_windows_volumes)
+        worker.signals.done.connect(self._card_probe_complete)
+        worker.signals.failed.connect(self._card_probe_failed)
+        self.card_probe_pool.start(worker)
+
+    def _card_probe_failed(self, _reason):
+        self.card_probe_busy = False
+        if hasattr(self, 'card_detection_status'):
+            self.card_detection_status.setText(
+                'Windows card scan could not complete. Use Find inserted card or choose the drive manually.')
+
+    def _card_probe_complete(self, volumes):
+        self.card_probe_busy = False
+        self.detected_card_volumes = [
+            v for v in volumes if card_candidate(v, system_drive_root())]
+        keys = {(str(v.root).casefold(), str(v.guid).casefold(), int(v.serial))
+                for v in self.detected_card_volumes}
+        if keys != self._last_candidate_keys:
+            self._last_candidate_keys = keys
+            if self.detected_card_volumes:
+                self.card_detection_status.setText(
+                    f'{len(self.detected_card_volumes)} possible card drive(s) detected. '
+                    'Click Find inserted card to review and choose the correct one.')
+            else:
+                self.card_detection_status.setText(
+                    'No card candidate yet. Insert the microSD in your USB reader, then review it.')
+        if self.target and self.saved_destination_mode == 'physical':
+            selected = next((v for v in volumes if str(v.root).casefold() ==
+                             str(self.target).casefold()), None)
+            if selected is None:
+                self.confirmed_card_identity = None
+                self.reset_physical_plan('Card disconnected. Reinsert and run Preview again.')
+            elif self.confirmed_card_identity and not matches_card_identity(
+                    self.confirmed_card_identity, selected):
+                self.confirmed_card_identity = None
+                self.reset_physical_plan('Different card detected. Copy blocked until a new preview.')
+
     def detect_card(self):
-        candidates = [v for v in list_windows_volumes() if v.removable]
+        """Offer likely cards, including USB adapters reported as FIXED.
+
+        A fixed drive is *never* automatically trusted as an SD card.
+        """
+        candidates = list(self.detected_card_volumes)
+        if not candidates and os.name == 'nt':
+            # Explicit click: if the periodic worker has not finished, use
+            # currently available Windows volumes to populate a manual choice.
+            candidates = [v for v in list_windows_volumes()
+                          if card_candidate(v, system_drive_root())]
         if not candidates:
-            QMessageBox.information(self, 'No removable microSD found',
-                'Insert your microSD into a card reader first.\n\n'
-                'Some readers appear as fixed disks in Windows. If yours does, you can choose it manually; '
-                'the app will ask for extra confirmation before a real transfer.'); return
-        choices = [f'{v.root}   {v.label or "Untitled"}   {v.filesystem}   {pretty_bytes(v.free)} free' for v in candidates]
-        selected, ok = QInputDialog.getItem(self, 'Which card is yours?',
-                                           'Detected removable drives:', choices, 0, False)
-        if ok and selected:
-            self._remember_destination(candidates[choices.index(selected)].root, 'physical')
+            QMessageBox.information(self, 'No candidate card found',
+                'Connect the card reader and choose Find inserted card again. '
+                'Some USB readers appear as fixed drives and may need manual selection.'); return
+        choices = [
+            f'{v.root}   {v.label or "Unlabeled"}  •  {v.filesystem}  •  '
+            f'{decimal_gb(v.total)}  •  '
+            + ('REMOVABLE' if v.removable else 'POSSIBLE CARD / WINDOWS SAYS FIXED')
+            for v in candidates
+        ]
+        chosen, ok = QInputDialog.getItem(self, 'Review detected card',
+                        'Which drive is your actual microSD? No files will be copied.',
+                        choices, 0, False)
+        if not ok or not chosen:
+            return
+        candidate = candidates[choices.index(chosen)]
+        self._remember_destination(candidate.root, 'physical')
+        self.card_detection_status.setText(
+            f'Selected {candidate.root} for PREVIEW only • '
+            f'{candidate.filesystem} • {decimal_gb(candidate.total)}. '
+            'Please verify this in Windows Explorer before copying.')
 
     def update_destination_hint(self):
         if not hasattr(self, 'dest_name'): return
