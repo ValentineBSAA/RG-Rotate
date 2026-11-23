@@ -11,9 +11,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      # v1.6.7 final candidate: clear PS1 picker, PGD diagnostics, and
-      # receipt-gated verified PSXtract v3 EBOOT+KEYS without manual.
-      # Only physical Windows conversion can establish actual game compatibility.
+      # v1.6.7 exact final package: compact PS1 picker, precise PGD failure,
+      # adjacent KEYS on receipt-verified v3 with safe absent-manual argument.
+      # Do not infer Clock Tower decryption success from CI alone.
       - name: Package checked-out source without altering existing installs
         shell: bash
         run: |
