@@ -12,7 +12,7 @@
 - [x] Exact duplicates skipped; same title with different data held for review; different regions/revisions preserved; ignore CUE/BIN/M3U companions to protect multi-track discs.
 - [x] PSN EBOOT source fingerprint receipt under ignored .retro-library metadata (no spurious extra ROM tile); old and unproven same-title CHD sets preserved.
 - [x] Added synthetic tests: all-platform duplicate handling, 7Z/ZIP, game formats, safe read-only receipts, PSXtract console milestones.
-- [ ] GitHub Windows + Linux CI green for exact candidate.
+- [x] [PR #20](https://github.com/ValentineBSAA/RG-Rotate/pull/20) merged to main; [source CI 45261322930](https://github.com/ValentineBSAA/RG-Rotate/actions/runs/45261322930) **364 Windows passed; 363 Linux passed / 1 skipped**.
 - [ ] User 125% screenshots of per-disc extraction, skipped duplicates, no new tiles for reimports.
 - [ ] Actual real FFVII triple-CHD/M3U gallery and RG Rotate gameplay verification.
 
