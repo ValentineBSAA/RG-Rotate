@@ -8,7 +8,7 @@ User-supplied **real v1.5.9 screenshots verified** one Resident Evil 2 M3U cover
 
 `drives.py` includes Windows volume GUID/volume serial via Win32 API; `card_identity.py` defines candidate detection and strict comparisons. `app.py` polls candidate volumes asynchronously **only on Copy to card**, leaves selection to user, flags Windows-fixed USB adapters as uncertain, requires fresh preview and typed drive-letter confirmation; `transfer_worker.py` refuses copy without an expected identity and revalidates; `sync_engine.py` revalidates identity **before every file**. Keep legacy practice-folder behavior unchanged. **Volume ID is not a cryptographic physical card proof**; user must still check Explorer/Disk Management. Protect NAS originals, verified CHDs/M3U and CompanionData, and never format.
 
-[Testing plan](CARD_DETECTION_AND_READABLE_DIALOGS.md); GitHub CI and physical Windows USB adapter acceptance pending.
+[Testing plan](CARD_DETECTION_AND_READABLE_DIALOGS.md). [PR #15](https://github.com/ValentineBSAA/RG-Rotate/pull/15) merged to main. GitHub source CI passed 311 Windows / 310 Linux + 1 skip; final packaged v1.6.0 ZIP 99 files CRC verified, extracted source passed 279 tests / 32 skipped locally due missing GUI dependencies. Actual USB adapter and real card verification remain pending.
 
 
 ## v1.5.9 source candidate · Resident Evil 2 detail repair + virtual exFAT overlay
