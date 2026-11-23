@@ -1,5 +1,18 @@
 # Living Roadmap · RG Rotate / Retro Library Studio
 
+## v1.6.8 · Correct PSXtract error output capture (new console launch)
+
+- [x] v1.6.7 real Windows Clock Tower retry failed again; 0 imported, 0 CHDs; generic 4294967295 despite earlier user-visible PGD errors.
+- [x] Read has207 upstream PSXtract v3: AttachConsole parent + freopen CONOUT$ steals stdout from Python pipe. Start helper in hidden Windows dedicated console to preserve stderr/stdout capture and Stop process handling.
+- [x] Normalize Windows unsigned -1 code; distinguish known PGD authentication failure vs unavailable output; no key/ROM bytes disclosed.
+- [x] Check optional adjacent KEYS.BIN length only; preserve verified-v3-only key positional support.
+- [x] Synthetic tests + Windows GUI-subsystem/console AttachConsole smoke tests, no commercial data.
+- [ ] Windows and Linux exact-source CI, v1.6.8 source ZIP CRC.
+- [ ] Real Clock Tower EBOOT Windows retest: captured PGD progress/error, key sidecar usage, possible real conversion (not assumed).
+- [ ] Continue working PS1 titles and physical RG Rotate card copy with verified files only; preserve old library folders.
+[Full v1.6.8 checklist](PSXTRACT_CONSOLE_CAPTURE_v168.md).
+
+
 **v1.6.7 final source status (Nov 23, 2026):** [PR #25](https://github.com/ValentineBSAA/RG-Rotate/pull/25) merged into main as `a8550f1`. [Exact-source CI run 45283622819](https://github.com/ValentineBSAA/RG-Rotate/actions/runs/45283622819) **408 Windows passed; 407 Linux passed, 1 skipped**. [Windows v1.6.7 source ZIP run 45283608206](https://github.com/ValentineBSAA/RG-Rotate/actions/runs/45283608206) at commit `d313878` passed artifact CRC/manifest: 125 internal files. This build adds **receipt-gated PSXtract v3 key-only CLI forwarding** with actual adjacent KEYS.BIN and missing DOCUMENT.DAT safely represented as an empty optional argument, **no fake files**; unverified helpers stay conservative. Also fixes PGD/0x80 MAC error reporting and declutters 30-game title chooser. **Real Clock Tower II (SLUS00695) conversion has NOT been retested and must not be claimed fixed.** Physical RG Rotate microSD game testing and post-CHD artwork acceptance remain separate pending checks. Original EBOOT/KEYS, legacy generic PS1 CHDs and successful Crash Bandicoot games must remain unchanged. [v1.6.7 real Windows checklist](PSXTRACT_PGD_AND_PICKER_POLISH_v167.md).
 
 
