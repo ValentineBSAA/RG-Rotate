@@ -96,6 +96,16 @@ def batch_guided_import(paths, workspace, fallback, binary, *, progress=None,
                 progress(f'Batch {number}/{total} • {display} • needs attention; next game is safe',
                          number, total)
             continue
+        # Even if the current extractor/converter returned just as Stop was
+        # pressed, never enter another package job. Report cancellation rather
+        # than silently showing a completed batch.
+        if cancel is not None and cancel.is_set():
+            result['cancelled'] = True
+            result['batch_items'].append({
+                'name': display, 'status': 'stopped',
+                'message': 'Stopped before starting the next game; inspect verified files.'
+            })
+            break
         for metric in _METRICS:
             result[metric] += int(part.get(metric, 0))
         errors = [f'{display}: {str(e)}' for e in part.get('errors', [])]
