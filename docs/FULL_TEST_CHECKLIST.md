@@ -134,3 +134,25 @@ _Last organized: 2026-11-23. Current source: **v1.5.7 merged into main** (PR #11
 - [ ] K05: Final Fantasy VII renders one tile and number of discs matching **actual extracted game**, no guess based on packaging.
 - [ ] K06: Windows/Synology unchanged from v1.6.0; physical microSD and RG Rotate emulator disc swap still require separate test.
 [Full PSN/7Z acceptance](PSN_CLASSICS_IMPORT.md).
+
+
+## L · v1.6.2 PS1 real-time extraction + all-console safe duplicates
+
+- [ ] L01: During PS1 Classics extraction, UI shows each detected Disc 1, 2, 3 and reconstructed status without opening debug console or displaying guessed percent.
+- [ ] L02: Import same PSP ISO/PBP, GBA, DS, PS2, GameCube or other supported game from new ZIP/7Z; exact content skipped with no extra tile.
+- [ ] L03: Different bytes but matching title held for review; different regions/editions/versions are not collapsed; cross-console imports are independent.
+- [ ] L04: CUE/BIN tracks and M3U companions remain intact; RE2 two-disc and FFVII three-disc collections retain correct order.
+- [ ] L05: Re-import PS1 Classics EBOOT even with different archive filename; completed source receipt under ignored .retro-library prevents redundant extraction and does not create a game tile.
+- [ ] L06: Unproven older PS1 collections safely held for review, originals and keys untouched; no deletions or overwrites.
+- [ ] L07: Actual FFVII CHDman completes and 3 CHDs + M3U display one artwork tile; hardware test and disc switching pending separately.
+
+[Full v1.6.2 list](LIBRARY_DEDUP_AND_PS1_PROGRESS.md).
+
+
+## M · v1.6.2 multi-game PSN batch folder tests
+- [ ] M01: A folder containing several ZIP, 7Z and PS1 Classics EBOOT.PBP files imports each game separately, with its own artwork, verified CHDs and M3U.
+- [ ] M02: GUI clearly displays GAME N/TOTAL and the active Disc 1/2/3 reconstruction stage at 125%; failures are summarized by game.
+- [ ] M03: Same EBOOT from two repackaged archives skips the second conversion with a single title tile.
+- [ ] M04: Broken archive does not prevent valid later games; cancellation stops future games and preserves originals.
+- [ ] M05: Unrelated PSP-native EBOOT in PS1 queue is flagged rather than turned into a corrupt PS1 CHD.
+- [ ] M06: All 13 supported consoles retain independent exact-content duplicate protection, separate regions and editions preserved.

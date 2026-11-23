@@ -77,7 +77,7 @@ def handle(request: dict, cancel: threading.Event) -> dict:
     fallback = str(request['fallback'])
     if mode == 'files':
         files = [Path(p) for p in request['paths']]
-    elif mode == 'folder':
+    elif mode in ('folder', 'batch_psn_folder'):
         folder = Path(request['folder'])
         # Check overlap inside worker, not the GUI. Avoid blocking on NAS path.resolve().
         src_norm = os.path.normcase(os.path.abspath(str(folder)))
@@ -89,7 +89,9 @@ def handle(request: dict, cancel: threading.Event) -> dict:
         if common in (src_norm, dst_norm):
             raise ValueError('Original games folder must not overlap the virtual card')
         # Keep the potentially unresponsive SMB folder enumeration inside the child.
-        files = [p for p in safe_walk(folder, cancel=cancel) if p.suffix.lower() in SUPPORTED]
+        files = [p for p in safe_walk(folder, cancel=cancel)
+                 if (p.suffix.lower() in ('.zip', '.7z', '.pbp') if mode == 'batch_psn_folder'
+                     else p.suffix.lower() in SUPPORTED)]
         if not files:
             return {'copied': 0, 'skipped': 0, 'errors': [], 'empty': not cancel.is_set(),
                     'cancelled': cancel.is_set()}
@@ -104,6 +106,16 @@ def handle(request: dict, cancel: threading.Event) -> dict:
 
     if request.get('auto_ps1_chd', False):
         from ps1_pipeline import guided_import
+        archives_or_pbps = [p for p in files if p.suffix.lower() in ('.zip', '.7z', '.pbp')]
+        # Run a separate game job for each archive/PBP when batch is requested
+        # or there are multiple package inputs. Direct CUE/BIN files remain a
+        # single set so their existing M3U collection semantics don't change.
+        if mode == 'batch_psn_folder' or len(archives_or_pbps) > 1:
+            from ps1_batch import batch_guided_import
+            return batch_guided_import(files, workspace, fallback, Path(request['binary']),
+                                       progress=progress, cancel=cancel,
+                                       auto_artwork=bool(request.get('auto_artwork', True)),
+                                       psxtract_binary=request.get('psxtract_binary'))
         return guided_import(files, workspace, fallback, Path(request['binary']),
                              progress=progress, cancel=cancel,
                              auto_artwork=bool(request.get('auto_artwork', True)),

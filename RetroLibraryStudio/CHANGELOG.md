@@ -1,5 +1,14 @@
 ## v1.5.6 Beta · Live 512 GB Card Planner (2026-11-23)
 
+## v1.6.2 source beta · Live disc extraction and all-console deduplication
+
+- Adds PS1 Classics Disc 1, Disc 2, Disc 3 user-facing extraction milestones sourced from sanitized PSXtract stdout, with no fabricated percentage, offsets or key content.
+- Adds shared per-system SHA-256 game payload screening across PS1, PSP, PS2, DS, GBA, GB, GBC, NES, SNES, Genesis, N64, Dreamcast and GameCube for direct files and ZIP/7Z payloads.
+- Renamed/repackaged exact files skipped, differing same-title files flagged rather than overwritten; distinct regions/revisions stay distinct. CUE/BIN/M3U companions excluded from independent dedupe.
+- Completes PS1 Classics EBOOT source provenance under ignored .retro-library metadata; never copy/record keys.
+- Real Final Fantasy VII CHD/M3U completion and on-device gameplay still awaiting user evidence.
+
+
 ## v1.6.1 source candidate · PS1 Classics EBOOT/PBP + 7Z verification
 
 - Identifies PS1 Classics package header, preserves `EBOOT.PBP`, `KEYS.BIN` and `DOCUMENT.DAT` as a unit, and avoids treating key/manual as a standalone disc.

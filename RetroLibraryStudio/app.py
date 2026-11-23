@@ -53,7 +53,7 @@ from system_shelves import (PRIMARY_SYSTEMS, console_counts, console_order_key,
                             console_visual, grouped_shelves)
 from workspace_setup import suggested_workspace, copy_existing_workspace, count_workspace_files
 
-VERSION = '1.6.1 Beta – PS1 Classics EBOOT & 7Z Import'
+VERSION = '1.6.2 Beta – Disc Progress & Library-Wide Duplicate Checks'
 SCALE_CHOICES = [('100%', 100), ('110%', 110), ('125%', 125), ('140%', 140), ('150%', 150)]
 MAX_VISIBLE_FILES = 1200
 
@@ -625,6 +625,23 @@ class Window(QMainWindow):
         activity.addWidget(self.task_title)
         self.status = label('Choose what you want to do next.', 'Small', True)
         activity.addWidget(self.status)
+        # Live disc-by-disc status is visible ONLY during PS1 Classics work.
+        # It is driven by interpreted PSXtract milestones, not guessed
+        # percentages or arbitrary raw console output.
+        self.ps1_disc_steps = {}
+        self.ps1_disc_phase = label('', 'Small', True)
+        self.ps1_disc_phase.setStyleSheet(
+            'color:#e9dcff; background-color:#292650;'
+            'border:1px solid #7564ab; border-radius:8px; padding:5px 9px;')
+        self.ps1_disc_phase.hide()
+        activity.addWidget(self.ps1_disc_phase)
+        self.batch_count_label = label('', 'Small', True)
+        self.batch_count_label.setStyleSheet(
+            'color:#9ee3d5; background:#163944; border:1px solid #327f82; '
+            'border-radius:7px; padding:5px 9px;')
+        self.batch_count_label.hide()
+        self.active_batch_index = 0
+        activity.addWidget(self.batch_count_label)
         b.addLayout(activity, 2)
         self.bar = QProgressBar(); self.bar.setRange(0,100); self.bar.setValue(0)
         self.bar.setTextVisible(False); b.addWidget(self.bar, 1)
@@ -760,7 +777,12 @@ class Window(QMainWindow):
         row.addWidget(self.register(button('＋ Add Game Files', self.pick_files, 'Primary')), 0, 0)
         row.addWidget(self.register(button('＋ Add Folder', self.pick_folder, 'Accent')), 0, 1)
         row.addWidget(self.register(button('Find Games in Downloads', self.find_downloads)), 1, 0, 1, 2)
+        row.addWidget(self.register(button('◆ Batch import PS1 Classics (PSN ZIP/7Z/EBOOT) …',
+                                           self.pick_psn_batch_folder, 'Accent')), 2, 0, 1, 2)
         actions.addLayout(row)
+        actions.addWidget(label('Select a folder containing many PS1 Classics archives or EBOOT.PBP games. '
+                                'Each game is processed separately; existing duplicates are preserved. '
+                                'Native PSP games are not converted into PS1 CHDs.', 'Small', True))
         game_drop = FileDropZone('Or drop your game files here', 'Game files, ZIP/7Z archives, or one game folder from Windows Explorer')
         game_drop.dropped.connect(self.handle_game_drop)
         actions.addWidget(game_drop)
@@ -1231,6 +1253,10 @@ class Window(QMainWindow):
             return
         self.current_task = True
         self.current_task_name = task_name
+        self.ps1_disc_steps = {}
+        self.ps1_disc_phase.hide()
+        self.active_batch_index = 0
+        self.batch_count_label.hide()
         self.import_finished_callback = finished or self.import_completed
         self.import_kind = request.get('mode', 'games')
         self.cancel_requested = False
@@ -1419,6 +1445,42 @@ class Window(QMainWindow):
         self.set_status(f'{name}: {state}')
 
     def on_progress(self, name, current, total):
+        if str(name).startswith('Batch '):
+            import re
+            match = re.match(r'^Batch (\d+)/(\d+) • ([^•]+)', str(name))
+            if match:
+                index, count, label_name = int(match.group(1)), int(match.group(2)), match.group(3).strip()
+                if self.active_batch_index != index:
+                    self.ps1_disc_steps = {}
+                    self.ps1_disc_phase.hide()
+                self.active_batch_index = index
+                self.batch_count_label.setText(f'GAME {index} / {count}  •  {label_name}')
+                self.batch_count_label.show()
+            elif 'Batch complete' in str(name):
+                self.batch_count_label.setText(str(name))
+                self.batch_count_label.show()
+        if 'Extracting PS1 Classic •' in str(name):
+            import re
+            disc_match = re.search(r'Disc (\d{1,2})', name)
+            if disc_match:
+                num = int(disc_match.group(1))
+                self.ps1_disc_steps[num] = ('✓' if 'reconstructed ✓' in name
+                                            else '●')
+                display = '    '.join(
+                    f'{self.ps1_disc_steps[n]} Disc {n}'
+                    for n in sorted(self.ps1_disc_steps))
+                self.ps1_disc_phase.setText('PS1 EXTRACT  •  ' + display)
+            elif 'MD5' in name:
+                self.ps1_disc_phase.setText(
+                    self.ps1_disc_phase.text() + '    •    MD5 check')
+            else:
+                self.ps1_disc_phase.setText('PS1 EXTRACT  •  detecting and preparing discs')
+            self.ps1_disc_phase.show()
+        elif 'PS1 Classic extracted' in str(name):
+            count = sum(1 for stage in self.ps1_disc_steps.values() if stage == '✓')
+            self.ps1_disc_phase.setText(
+                f'PS1 EXTRACTION ✓  •  {count} disc(s) reconstructed  •  preparing CHDs')
+            self.ps1_disc_phase.show()
         if name == '@capacity':
             self.staged_bytes = max(0, int(current))
             self.update_card_plan()
@@ -1426,7 +1488,9 @@ class Window(QMainWindow):
             self.home_meter.setValue(min(10000, int(10000 * current/max(1, CAPACITY))))
         else:
             self.set_status(name)
-            if total == 0 and name.lower().startswith(('converting', 'extracting')):
+            if total == 0 and ('converting' in name.lower() or
+                               'extracting' in name.lower() or
+                               'rebuilding game data' in name.lower()):
                 # CHDman does not expose a trustworthy percentage here. Keep
                 # ONE progress bar, animated rather than falsely frozen at 20%.
                 self.bar.setRange(0, 0)
@@ -2441,6 +2505,25 @@ class Window(QMainWindow):
                                    'psxtract_binary': str(tools_root() / 'psxtract' / 'psxtract.exe')},
                                   'Importing PS1 Game Collection')
 
+    def pick_psn_batch_folder(self):
+        """One explicit opt-in import of multiple PS1 Classics ZIP/7Z/EBOOTs."""
+        if not self.ensure_workspace(): return
+        directory = QFileDialog.getExistingDirectory(
+            self, 'Choose folder containing your PS1 Classics ZIP/7Z/EBOOT games',
+            str(self.incoming))
+        if not directory:
+            return
+        self.navigate(1)
+        self.set_status('Batch scanning PS1 Classics packages. Originals and existing games stay safe.')
+        self.start_import_process({
+            'mode': 'batch_psn_folder', 'folder': str(directory),
+            'workspace': str(self.workspace), 'fallback': 'PS1',
+            'auto_ps1_chd': True,
+            'auto_artwork': self.auto_cover.isChecked(),
+            'binary': str(tools_root() / 'chdman' / 'chdman.exe'),
+            'psxtract_binary': str(tools_root() / 'psxtract' / 'psxtract.exe')
+        }, 'Batch Importing PS1 Classics')
+
     def pick_folder(self):
         if not self.ensure_workspace(): return
         folder = QFileDialog.getExistingDirectory(self, 'Choose a folder containing your existing games', str(self.incoming))
@@ -2489,7 +2572,39 @@ class Window(QMainWindow):
             self.set_status(f'{len(unsupported)} unsupported item(s) skipped; importing recognized files…')
 
     def import_completed(self, result):
-        if result.get('cancelled'):
+        if hasattr(self, 'ps1_disc_phase'):
+            self.ps1_disc_phase.hide()
+        if hasattr(self, 'batch_count_label'):
+            self.batch_count_label.hide()
+        if result.get('batch_items') is not None:
+            items = result.get('batch_items') or []
+            imported = int(result.get('batch_completed', 0))
+            skipped = int(result.get('batch_skipped', 0))
+            issues = int(result.get('batch_needs_attention', 0))
+            self.library_notice.setText(
+                f'Batch: {imported} game(s) imported, {skipped} already present/no changes, '
+                f'{issues} need attention. Original source files were preserved.')
+            self.set_status('PS1 Classics batch finished. Review each game result.')
+            DetailsDialog(self, title='Batch game import results',
+                subtitle=(f'{len(items)} package(s) checked  •  '
+                          f'{imported} imported  •  {skipped} already present  •  '
+                          f'{issues} need attention'),
+                sections=[
+                    ('Collection status', [
+                        ('Imported', f'{imported} game(s)'),
+                        ('Already present', f'{skipped} game(s)'),
+                        ('Needs attention', f'{issues} game(s)'),
+                        ('Verified CHDs', f"{result.get('converted', 0)} disc(s)"),
+                        ('New playlists', f"{result.get('playlists', 0)}"),
+                    ]),
+                ],
+                items=[f"{row['status']}  •  {row['name']}"
+                       for row in items[:100]],
+                note='Unrecognized or different editions were not overwritten. '
+                     'Any failed game can be retried without disturbing the others.',
+                technical='\n'.join(result.get('errors', [])),
+                accent='#8fdaca').exec()
+        elif result.get('cancelled'):
             self.library_notice.setText('Import stopped. Any files successfully copied are still safely on the virtual card.')
         elif result.get('empty'):
             QMessageBox.information(self, 'No recognized games found',
@@ -2501,7 +2616,8 @@ class Window(QMainWindow):
         else:
             self.library_notice.setText(f"✓ Added {result['copied']:,} file(s). {result['skipped']:,} already present. Your originals were not moved or deleted.")
             self.set_status('Import finished. Your new games are in My Games.')
-        if result.get('converted') or result.get('playlists') or result.get('playlists_updated'):
+        if (result.get('batch_items') is None and
+                (result.get('converted') or result.get('playlists') or result.get('playlists_updated'))):
             summary = (f"{result.get('converted', 0)} PS1 disc(s) converted to verified CHD; "
                        f"{result.get('playlists', 0)} M3U playlist(s) created, "
                        f"{result.get('playlists_updated', 0)} extended with new discs.")

@@ -1,23 +1,28 @@
 {
-  "version": "1.6.1",
-  "title": "PS1 Classics EBOOT/PBP + verified 7Z archive handling",
+  "version": "1.6.2",
+  "title": "Live PS1 Disc Progress, 13-console Dedupe and PSN Batch Import",
   "build_date": "2026-11-23",
   "platform": "Windows source (PySide6)",
   "source_CI": {
-    "status": "pending Linux/Windows source CI"
+    "status": "pending final Windows/Linux source CI for v1.6.2 batch queue"
   },
   "local_pytest": {
     "passed": 266,
     "skipped": 25
   },
-  "windows_real_acceptance": "v1.6.0 game details verified, real PS1 Classics PSXtract conversion pending",
-  "device_acceptance": "PSXtract not auto-installed; real FFVII PSN extraction and RG Rotate disc switching not verified",
+  "windows_real_acceptance": "v1.6.1 user observed FFVII 7Z PSN disc 1-3 reconstructed, MD5 pass and CHDman start; final 3 CHDs/M3U and v1.6.2 125% UI batch test not yet observed.",
+  "device_acceptance": "RG Rotate PSP/PS1 real gameplay, microSD first transfer and FFVII disc swapping remain pending",
   "source_files": [
     "app.py",
-    "import_worker.py",
-    "ps1_pipeline.py",
+    "core.py",
     "ps1_psn.py",
-    "tests/test_v161_psn_and_7z.py"
+    "ps1_progress.py",
+    "ps1_pipeline.py",
+    "ps1_duplicates.py",
+    "library_duplicates.py",
+    "tests/test_v162_library_duplicates.py",
+    "ps1_batch.py",
+    "tests/test_v162_psn_batch.py"
   ],
-  "safety": "PSN key/manual never transformed into CHD or copied as standalone game; preserves source EBOOT and archive; missing helper refuses, no unverified disc order."
+  "safety": "13-console dedupe is per-platform, SHA-256 for exact bytes; uncertain same-title variants held for review. Batch PS1 Classics ZIP/7Z/PBP imports isolated per game, preserve original sources and KEYS.BIN; native PSP EBOOT not turned into PS1 CHD. No automatic deletion or format."
 }
