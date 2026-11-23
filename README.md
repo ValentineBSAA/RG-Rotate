@@ -1,5 +1,16 @@
 # RG Rotate · Retro Library Studio
 
+## v1.6.2 source beta · PS1 disc-by-disc progress + all-console duplicate prevention
+
+- A live PlayStation Classics extraction strip now shows each detected disc and its stage; CHDman verification retains its own progress, without pretending to know extractor percentages.
+- **All 13 supported consoles** share strict game-file SHA-256 duplicate detection (PS1, PSP, PS2, DS, GB, GBC, GBA, NES, SNES, Genesis, N64, Dreamcast, GameCube). This works on direct files and inside .zip/.7z archives, not just on PlayStation titles. Scans are limited to the destination console, preserving intentional multi-platform releases.
+- Byte-identical renamed/repackaged game files are skipped. Different payload with the same title is held for review; regions, editions and revisions remain separate. CUE/BIN track companions are excluded from independent file-level deduplication.
+- PS1 Classics import additionally fingerprints EBOOT.PBP so a completed CHD/M3U collection can be recognized across renamed/repacked ZIP/7Z/PBP sources. Small receipts are written under **.retro-library/psn-sources** (ignored by the game scanner); key files are never hashed or copied into ROMs. Existing legacy PS1 collections with no receipt are preserved and flagged, never silently claimed identical.
+- The previous real Windows Final Fantasy VII PSN screenshots show 7Z extraction, three reconstructed discs and CHD conversion started. Actual final three-CHD/M3U user acceptance and on-device play remain pending.
+
+[Full v1.6.2 test checklist](docs/LIBRARY_DEDUP_AND_PS1_PROGRESS.md).
+
+
 ## v1.6.1 PS1 Classics package recognition & 7Z verification (source candidate)
 
 - A Windows FFVII PSN folder can contain `EBOOT.PBP`, `KEYS.BIN` and `DOCUMENT.DAT` rather than per-disc CUE/BIN. The importer now recognizes PS1 Classics PBP signatures and keeps the key and manual as **companions**, never standalone discs or PSP titles.
