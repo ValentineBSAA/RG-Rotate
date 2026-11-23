@@ -42,7 +42,9 @@ def test_code_folder_is_identified_by_actual_pbp_title_not_fake_np_database(tmp_
     assert all(x['identified'] for x in entries['games'])
     assert all(x['kind'] == 'PS1 Classic EBOOT' for x in entries['games'])
     assert all(x['path'].endswith('EBOOT.PBP') for x in entries['games'])
-    assert 'KEYS.BIN' not in str(entries['games'])
+    # The explanation may mention the sidecar, but the picker must not expose
+    # it as a separately selectable game.
+    assert all(not x['path'].upper().endswith('KEYS.BIN') for x in entries['games'])
 
 
 def test_unnamed_pbp_does_not_invent_identity_from_product_code(tmp_path):
