@@ -25,29 +25,23 @@ def scan(mode: str, path: Path) -> int:
         if mode == 'inventory':
             def report(message: str, current: int, total: int) -> None:
                 emit('progress', message=message, current=current, total=total)
-            entries, used, count = inventory(path, progress=report)
+            from virtual_exfat import MODEL_CLUSTER_BYTES
+            metrics = {'allocation_unit': MODEL_CLUSTER_BYTES}
+            entries, used, count = inventory(path, progress=report, metrics=metrics)
             from disc_sets import cue_references
             disc_tracks = []
             for entry in entries:
                 if entry.extension.lower() == '.cue':
                     try: disc_tracks.extend(cue_references(entry.path))
                     except OSError: pass  # Converter reports unavailable tracks in detail.
-                elif entry.extension.lower() == '.m3u':
-                    # M3U is the playable multi-disc entry. Its individual CHDs
-                    # should not become duplicate gallery tiles.
-                    try:
-                        for line in entry.path.read_text(encoding='utf-8-sig').splitlines():
-                            line = line.strip()
-                            if line and not line.startswith('#'):
-                                from pathlib import PurePath
-                                rel = Path(line.replace('\\', '/'))
-                                if not rel.is_absolute() and '..' not in rel.parts:
-                                    disc_tracks.append(str(entry.path.parent / rel))
-                    except OSError: pass
+                # M3U CHDs are NOT discarded. The gallery needs their scan
+                # entries to build one validated collection with N DISCS info.
+                # library_presentation hides them only after membership checks.
             companion = sum(f.stat().st_size for f in safe_walk(path/'CompanionData'))
             emit('result', mode=mode, path=str(path), used=used, count=count,
-                 companion=companion, disc_tracks=disc_tracks, entries=[
-                     [str(e.path), e.label, e.system, e.size, e.extension]
+                 companion=companion, disc_tracks=disc_tracks,
+                 exfat_cluster_padding=int(metrics['cluster_padding']), entries=[
+                     [str(e.path), e.label, e.system, e.size, e.extension, list(e.members)]
                      for e in entries])
         elif mode == 'apps':
             from tool_setup import tool_status, tools_root
