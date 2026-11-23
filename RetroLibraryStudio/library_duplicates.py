@@ -50,7 +50,11 @@ def inspect_game_duplicate(source: Path, workspace: Path, system: str,
         source_size = stat.st_size
     except OSError:
         return 'new', ''
-    source_key = game_title_key(source.stem)
+    # Generic container filenames carry no title; content can still match,
+    # but unrelated PSP homebrew EBOOT.PBP files must never collide by name.
+    generic_names = {'eboot', 'game', 'rom', 'image', 'disc', 'disk', 'track01'}
+    source_key = ('' if source.stem.casefold() in generic_names
+                  else game_title_key(source.stem))
     same_size = []
     same_name = []
     for candidate in safe_walk(root, cancel=cancel):
@@ -66,7 +70,7 @@ def inspect_game_duplicate(source: Path, workspace: Path, system: str,
             continue
         if cstat.st_size == source_size:
             same_size.append(candidate)
-        if game_title_key(candidate.stem) == source_key:
+        if source_key and game_title_key(candidate.stem) == source_key:
             same_name.append(candidate)
     if same_size:
         digest = sha256(source, cancel=cancel)
