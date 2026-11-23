@@ -1,5 +1,16 @@
 # Project handoff · read this before working
 
+## v1.6.0 candidate · Clear dialogs and USB card identity gates
+
+User-supplied **real v1.5.9 screenshots verified** one Resident Evil 2 M3U cover tile with 2 DISCS badge, correct two CHD entries in the detail popup, and two distinct capacity bars at 125%. The dialog was deemed too text-heavy. A real branded 512 GB microSD is arriving and will be inserted into Windows 11 via microSD-to-USB adapter.
+
+**v1.6.0 branch** `feature/v1.6.0-friendly-details-and-card-identity`: `friendly_dialogs.py` contains the styled scannable, selectable grouped cards and expandable technical detail panel. Only `show_game_format`, `show_virtual_exfat_details` and `show_card_plan_details` were replaced; existing layouts, importing, conversion and artwork remain untouched.
+
+`drives.py` includes Windows volume GUID/volume serial via Win32 API; `card_identity.py` defines candidate detection and strict comparisons. `app.py` polls candidate volumes asynchronously **only on Copy to card**, leaves selection to user, flags Windows-fixed USB adapters as uncertain, requires fresh preview and typed drive-letter confirmation; `transfer_worker.py` refuses copy without an expected identity and revalidates; `sync_engine.py` revalidates identity **before every file**. Keep legacy practice-folder behavior unchanged. **Volume ID is not a cryptographic physical card proof**; user must still check Explorer/Disk Management. Protect NAS originals, verified CHDs/M3U and CompanionData, and never format.
+
+[Testing plan](CARD_DETECTION_AND_READABLE_DIALOGS.md); GitHub CI and physical Windows USB adapter acceptance pending.
+
+
 ## v1.5.9 source candidate · Resident Evil 2 detail repair + virtual exFAT overlay
 
 From user real Windows 11 v1.5.8 screenshots: verified Resident Evil 2 Disc 1/Disc 2 CHDs in one parent folder, correctly ordered two-line M3U and artwork; the gallery only showed an `M3U` badge and the details popup only showed the playlist. **Root cause:** read-only `readonly_scan.py` omitted `Entry.members` in JSON, `app.py` reconstructed five-column entries without membership, and `disc_tracks` prematurely hid referenced M3U CHDs. **Fix:** worker transmits six fields including members, CHD files survive until validated grouping in `library_presentation.py`, app restores members, old 5-column JSON tolerated. This is *not* a gameplay or live-device pass.

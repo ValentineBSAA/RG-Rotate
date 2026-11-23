@@ -1,5 +1,14 @@
 ## v1.5.6 Beta · Live 512 GB Card Planner (2026-11-23)
 
+## v1.6.0 candidate · Friendly Detail Panels & Card Detection
+
+- Replaced three dense modal text dumps with accessible dark-themed information cards, clear game/file names and memory figures, collapsible technical bytes and Copy details.
+- Added background Windows card candidate discovery when Copy to Card is open; removable USB readers and plausible 512 GB fixed readers are shown for **explicit review**, not automatically trusted.
+- Fresh physical Preview captures Windows GUID/serial/fstype/capacity; physical copy requires matching identity, exFAT, typed drive letter and repeat worker/per-file identity validation. The existing verified copy/resume/nonoverwrite logic remains.
+- No automatic format/partition/delete, existing NAS CHD/M3U data and artwork preserved.
+- Real card/Android verification pending after GitHub CI.
+
+
 ## v1.5.9 candidate · exFAT Simulation + 2 DISCS Details
 
 - Fixed scan serialization: the gallery now receives verified `Entry.members` from background inventory and keeps referenced CHDs until a playlist is validated. Expected Resident Evil 2 behavior is **one cover + 2 DISCS**, with all three files in the details popup. Original verified CHDs/M3U are never changed.

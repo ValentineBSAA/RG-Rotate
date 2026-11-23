@@ -32,7 +32,9 @@ from sync_engine import SyncPlan, make_plan, transfer_verified
 from transfer_feedback import preview_explanation, copy_explanation
 from card_capacity import planned_card_budget, physical_card_preview, decimal_gb, binary_gib
 from virtual_exfat import virtual_exfat_preview, MODEL_CLUSTER_BYTES
-from drives import list_windows_volumes, validate_physical_root
+from drives import list_windows_volumes, validate_physical_root, system_drive_root
+from card_identity import card_candidate, fingerprint, verify_card, matches as matches_card_identity
+from friendly_dialogs import DetailsDialog
 from destination_mode import is_volume_root, restore_destination_mode
 from software import SOFTWARE, download_selected
 from tool_setup import tool_status, tools_root, install_selected, ADB_DOCS, CHDMAN_DOCS, validate_installed_chdman
@@ -51,7 +53,7 @@ from system_shelves import (PRIMARY_SYSTEMS, console_counts, console_order_key,
                             console_visual, grouped_shelves)
 from workspace_setup import suggested_workspace, copy_existing_workspace, count_workspace_files
 
-VERSION = '1.5.9 Beta – exFAT Planner & Disc Collection Details'
+VERSION = '1.6.0 Beta – Friendly Details & Safe microSD Detection'
 SCALE_CHOICES = [('100%', 100), ('110%', 110), ('125%', 125), ('140%', 140), ('150%', 150)]
 MAX_VISIBLE_FILES = 1200
 
@@ -412,6 +414,10 @@ class Window(QMainWindow):
         self.staged_companion = 0
         self.staged_cluster_padding = 0  # Background scan estimate, not NAS I/O in Qt.
         self.last_physical_plan = None
+        self.confirmed_card_identity = None
+        self.detected_card_volumes = []
+        self.card_probe_busy = False
+        self._last_candidate_keys = set()
         self.current_task = False
         self.current_task_name = ''
         self.scan_process = None  # Disposable child; safe to terminate for READ-ONLY scans.
@@ -464,6 +470,14 @@ class Window(QMainWindow):
         self.resize(1240, 805)
         self.create_ui()
         self.apply_scale()
+        # Poll through a separate thread, ONLY on Copy to card. The GUI never
+        # synchronously scans an unplugged reader every few seconds.
+        self.card_probe_pool = QThreadPool(self)
+        self.card_probe_pool.setMaxThreadCount(1)
+        self.card_probe_timer = QTimer(self)
+        self.card_probe_timer.setInterval(6000)
+        self.card_probe_timer.timeout.connect(self._poll_inserted_card)
+        self.card_probe_timer.start()
         geometry = self.settings.value('window_geometry')
         if geometry: self.restoreGeometry(geometry)
         state = self.settings.value('window_state')
@@ -642,7 +656,9 @@ class Window(QMainWindow):
             QTimer.singleShot(0, self.reflow_commands)
         if i == 2 and refresh_apps and i != previous and not self.current_task:
             self.update_tools_status()
-        if i==3: self.update_destination_hint()
+        if i==3:
+            self.update_destination_hint()
+            QTimer.singleShot(50, self._poll_inserted_card)
         if i==5: self.update_pref_paths()
 
     def register(self, b: QPushButton):
@@ -958,6 +974,10 @@ class Window(QMainWindow):
         r.addWidget(self.register(button('Find inserted card', self.detect_card, 'Primary')))
         r.addWidget(self.register(button('Choose drive or folder…', self.choose_destination)))
         first.addLayout(r)
+        self.card_detection_status = label(
+            'Connect your microSD with the USB reader. The app watches for new card candidates here.',
+            'Small', True)
+        first.addWidget(self.card_detection_status)
         first.addWidget(self.register(button('Try a safe practice copy first', self.prepare_practice, 'Accent')))
         self.simulation = QCheckBox('Practice folder (not a real microSD)')
         self.simulation.setChecked(self.saved_destination_mode == 'practice')
@@ -1469,76 +1489,90 @@ class Window(QMainWindow):
         self.start_readonly_scan('inventory', active_workspace, self.render_scan)
 
     def show_virtual_exfat_details(self):
-        """Simulation only: no NAS/card formatting, allocation or file writes."""
+        """Readable model first, exact byte arithmetic on demand."""
         ex = virtual_exfat_preview(
             self.staged_bytes, self.staged_companion, self.staged_cluster_padding)
-        message = (
-            'SIMULATED WINDOWS 11 SDXC / exFAT PROFILE\n\n'
-            'This is an overlay of your EXISTING files, not a real format. '
-            'No card, virtual folder, partition, filesystem or disk image is changed.\n\n'
-            f'Advertised 512 GB: {ex.nominal_bytes:,} bytes ({binary_gib(ex.nominal_bytes)})\n'
-            f'Modeled partition + filesystem overhead: {ex.estimated_format_bytes:,} bytes\n'
-            f'Modeled formatted capacity: {ex.modeled_formatted_bytes:,} bytes '
-            f'({decimal_gb(ex.modeled_formatted_bytes)} / {binary_gib(ex.modeled_formatted_bytes)})\n'
-            f'Assumed allocation unit: {ex.cluster_bytes:,} bytes (128 KiB)\n'
-            f'Files staged: {ex.staged_file_bytes:,} bytes\n'
-            f'Estimated allocation padding: {ex.estimated_cluster_padding_bytes:,} bytes\n'
-            f'Modeled allocated data: {ex.estimated_allocated_bytes:,} bytes\n'
-            f'Unspent companion budget: {ex.companion_remaining_bytes:,} bytes\n'
-            f'Protected free-space reserve: {ex.protected_free_bytes:,} bytes\n'
-            f'Modeled room for more games: {ex.estimated_room_for_games:,} bytes '
-            f'({decimal_gb(ex.estimated_room_for_games)})\n\n'
-            'ESTIMATE ONLY: The real card can have a different sector count, '
-            'partition alignment or cluster size. Windows does not automatically '
-            'format every inserted card. Use Copy to card > choose the actual '
-            'microSD > Preview to measure real formatted capacity and free space.'
-        )
+        sections = [
+            ('What your virtual card looks like', [
+                ('Card size', decimal_gb(ex.nominal_bytes) + ' advertised'),
+                ('Estimated formatted', decimal_gb(ex.modeled_formatted_bytes)),
+                ('Files already staged', decimal_gb(ex.staged_file_bytes)),
+            ]),
+            ('Room left for your games', [
+                ('Available to add', decimal_gb(ex.estimated_room_for_games)),
+                ('AI companion', binary_gib(ex.companion_remaining_bytes) + ' budget left'),
+                ('Safety cushion', binary_gib(ex.protected_free_bytes) + ' kept free'),
+            ]),
+        ]
         if self.last_physical_plan is not None:
             p = self.last_physical_plan
-            message += (
-                '\n\nREAL CARD MEASURED BY WINDOWS\n'
-                f'Actual formatted capacity: {p.capacity:,} bytes ({binary_gib(p.capacity)})\n'
-                f'Actual free before transfer: {p.capacity - p.occupied_before:,} bytes\n'
-                f'Projected free after transfer: {p.free_after:,} bytes\n'
-                'Measured values take precedence over simulated values.'
-            )
-        QMessageBox.information(self, 'Virtual exFAT format profile • no changes', message)
+            sections.append(('Your real card (Windows measurement)', [
+                ('Formatted capacity', decimal_gb(p.capacity)),
+                ('Free after copy', decimal_gb(p.free_after)),
+            ]))
+        raw = (
+            f'Nominal bytes: {ex.nominal_bytes:,}\n'
+            f'Modeled exFAT metadata/alignment: {ex.estimated_format_bytes:,} bytes\n'
+            f'Modeled formatted bytes: {ex.modeled_formatted_bytes:,}\n'
+            f'Assumed cluster size: {ex.cluster_bytes:,} bytes\n'
+            f'Staged file bytes: {ex.staged_file_bytes:,}\n'
+            f'Estimated file allocation padding: {ex.estimated_cluster_padding_bytes:,}\n'
+            f'Modeled allocated bytes: {ex.estimated_allocated_bytes:,}\n'
+            f'Unspent AI allowance: {ex.companion_remaining_bytes:,}\n'
+            f'Protected free: {ex.protected_free_bytes:,}\n'
+            f'Modeled game room: {ex.estimated_room_for_games:,}'
+        )
+        DetailsDialog(self, title='Your virtual microSD card',
+            subtitle='exFAT simulation • no formatting or file changes',
+            sections=sections,
+            note='This is an estimate, not the physical card. '
+                 'The card reader and Windows will tell us the actual available capacity '
+                 'when you select the card and run Copy to card → Preview.',
+            technical=raw, accent='#73d9c6').exec()
 
     def show_card_plan_details(self):
-        """Expose nominal, exFAT model and measured physical bytes separately."""
+        """Nominal and estimated figures are displayed without dense text."""
         model = planned_card_budget(self.staged_bytes, self.staged_companion)
         ex = virtual_exfat_preview(
             self.staged_bytes, self.staged_companion, self.staged_cluster_padding)
-        message = (
-            'VIRTUAL 512 GB CARD (nominal advertised size)\n\n'
-            f'Nominal capacity: {model.capacity:,} bytes ({binary_gib(model.capacity)})\n'
-            f'Currently staged: {model.staged:,} bytes ({decimal_gb(model.staged)})\n'
-            f'AI companion already included: {model.companion_used:,} bytes\n'
-            f'Additional AI allowance: {model.companion_remaining:,} bytes\n'
-            f'Protected free space: {model.protected_free:,} bytes (8 GiB)\n'
-            f'Nominal room for new games: {model.game_room:,} bytes ({decimal_gb(model.game_room)})\n\n'
-            'SIMULATED WINDOWS exFAT LAYER (NOT AN ACTUAL FORMAT)\n'
-            f'Modeled formatted capacity: {ex.modeled_formatted_bytes:,} bytes\n'
-            f'Modeled filesystem overhead: {ex.estimated_format_bytes:,} bytes\n'
-            f'Estimated cluster padding (128 KiB): {ex.estimated_cluster_padding_bytes:,} bytes\n'
-            f'Modeled safe room for games: {ex.estimated_room_for_games:,} bytes '
-            f'({decimal_gb(ex.estimated_room_for_games)})\n\n'
-            'Only actual files use NAS space. Nothing creates or reserves 512 GB. '
-            'Actual formatted volume size may differ.\n'
-        )
+        sections = [
+            ('Your current NAS library', [
+                ('Game files & data', decimal_gb(model.staged)),
+                ('Nominal card', decimal_gb(model.capacity)),
+                ('Room for more', decimal_gb(model.game_room)),
+            ]),
+            ('Virtual exFAT estimate', [
+                ('Modeled usable', decimal_gb(ex.modeled_formatted_bytes)),
+                ('Modeled game room', decimal_gb(ex.estimated_room_for_games)),
+                ('AI allowance', binary_gib(model.companion_remaining)),
+                ('Keep free', binary_gib(model.protected_free)),
+            ]),
+        ]
         if self.last_physical_plan is not None:
             p = self.last_physical_plan
-            message += (
-                '\nREAL PHYSICAL CARD (Windows volume measured; no formatting)\n'
-                f'Actual formatted volume: {p.capacity:,} bytes ({binary_gib(p.capacity)})\n'
-                f'Already occupied: {p.occupied_before:,} bytes\n'
-                f'Planned new transfer: {p.queued_new_bytes:,} bytes\n'
-                f'Projected free after copy: {p.free_after:,} bytes\n'
-                'Use the measured physical values for the final transfer decision.\n'
-            )
-        else:
-            message += '\nReal microSD not yet measured. Choose it and run Preview on Copy to card.'
-        QMessageBox.information(self, 'Card capacity & exact byte counts', message)
+            sections.append(('Real microSD • Windows measured', [
+                ('Formatted capacity', decimal_gb(p.capacity)),
+                ('Free after copy', decimal_gb(p.free_after)),
+            ]))
+        exact = (
+            f'Nominal capacity: {model.capacity:,} bytes\n'
+            f'Staged: {model.staged:,} bytes\n'
+            f'AI data included: {model.companion_used:,} bytes\n'
+            f'AI still budgeted: {model.companion_remaining:,} bytes\n'
+            f'Protected free: {model.protected_free:,} bytes\n'
+            f'Nominal new-game room: {model.game_room:,} bytes\n'
+            f'Modeled exFAT overhead: {ex.estimated_format_bytes:,} bytes\n'
+            f'Modeled 128 KiB cluster slack: {ex.estimated_cluster_padding_bytes:,} bytes\n'
+            f'Modeled formatted: {ex.modeled_formatted_bytes:,} bytes\n'
+            f'Modeled game room: {ex.estimated_room_for_games:,} bytes'
+        )
+        DetailsDialog(self, title='Your card space',
+            subtitle='Two plans: advertised size and exFAT estimate',
+            sections=sections,
+            note='Nothing has been allocated or formatted. The two numbers differ '
+                 'because exFAT uses space for filesystem structures and allocation units. '
+                 'Real card measurements will override the estimate for copying.',
+            technical=exact, accent='#8ec1ff').exec()
 
     def update_card_plan(self):
         if not hasattr(self, 'card_plan_bar'):
@@ -2037,19 +2071,38 @@ class Window(QMainWindow):
         self.refresh()
 
     def show_game_format(self, entry, group):
+        """One readable summary and real member files; raw paths are optional."""
         info = format_badge_info(entry, group)
-        files = '\n'.join(f'  • {g.path.name} ({pretty_bytes(g.size)})' for g in group[:16])
-        if len(group) > 16:
-            files += f'\n  • … and {len(group)-16} more'
-        QMessageBox.information(self, 'Game file format',
-            f'{preferred_title(self.settings, entry)}\n\n'
-            f'Format: {info["description"]}\n'
-            f'Displayed file: {entry.path.name}\n'
-            f'Listed file size: {pretty_bytes(entry.size)}\n\n'
-            f'{info["verification"]}\n\n'
-            f'Visible disc / playlist entries:\n{files}\n\n'
-            'The badge describes the files in your virtual card. It does not '
-            'claim the RG Rotate has launched this game successfully.')
+        multi = entry.extension.lower() == '.m3u' and sum(
+            e.extension.lower() == '.chd' for e in group) >= 2
+        disc_count = sum(e.extension.lower() == '.chd' for e in group)
+        display = preferred_title(self.settings, entry)
+        sections = [
+            ('Your game', [
+                ('Title', display),
+                ('Format', f'{disc_count} discs, one game' if multi else info['kind']),
+                ('Size', pretty_bytes(entry.size)),
+            ]),
+        ]
+        if multi:
+            sections.append(('Ready for your library', [
+                ('Game entries', '1 cover tile'),
+                ('Playlist', 'M3U points to the CHDs in order'),
+                ('Physical discs', str(disc_count) + ' separate CHD images'),
+            ]))
+        names = [e.path.name + '  •  ' + pretty_bytes(e.size) for e in group[:32]]
+        if len(group) > 32:
+            names.append(f'{len(group)-32} additional file(s)')
+        raw = 'Displayed file: ' + str(entry.path) + '\n'
+        raw += '\n'.join(str(g.path) + ' : ' + str(g.size) + ' bytes'
+                         for g in group)
+        raw += '\n\nVerification note: ' + info['verification']
+        DetailsDialog(self, title='Game file details',
+            subtitle=info['badge'] + '  •  ' + display,
+            sections=sections, items=names,
+            note='These are your staged files. A successful game launch and disc switching '
+                 'still need to be tested on the RG Rotate.',
+            technical=raw, accent='#bba0ff' if multi else '#8ec1ff').exec()
 
     def edit_game_title(self, entry):
         title, accepted = QInputDialog.getText(self, 'Edit game title',
@@ -3196,6 +3249,10 @@ class Window(QMainWindow):
         proc.errorOccurred.connect(self._transfer_start_error)
         request = {'mode':mode, 'workspace':str(self.workspace), 'target':str(self.target),
                    'simulation':bool(simulation)}
+        if mode == 'copy' and not simulation:
+            # Worker enforces this token independently before touching the card
+            # and checks again before each file. A letter/size match is not enough.
+            request['expected_card_identity'] = self.confirmed_card_identity
         payload = (json.dumps(request, ensure_ascii=True, separators=(',', ':')) + '\n').encode('ascii')
         proc.started.connect(lambda p=proc, data=payload: p.write(data))
         if getattr(sys, 'frozen', False):
@@ -3314,6 +3371,7 @@ class Window(QMainWindow):
         self.settings.setValue('target', str(target))
         self.settings.setValue('target_mode', mode)
         self.saved_destination_mode = mode
+        self.confirmed_card_identity = None
         self.simulation.blockSignals(True)
         self.simulation.setChecked(mode == 'practice')
         self.simulation.blockSignals(False)
@@ -3339,6 +3397,7 @@ class Window(QMainWindow):
             return
         self.settings.setValue('target_mode', 'practice' if practice else 'unconfirmed')
         self.saved_destination_mode = 'practice' if practice else 'unconfirmed'
+        self.confirmed_card_identity = None
         self.update_destination_hint()
         self.reset_physical_plan('Destination type changed. Run Preview again.')
         self.preflight_text.setText('Destination mode changed. Run a new preview before copying.')
@@ -3389,18 +3448,81 @@ class Window(QMainWindow):
         self._remember_destination(directory, 'practice')
         self.preflight_text.setText('Practice folder ready. Click “Check what would be copied” to preview.')
 
+    def _poll_inserted_card(self):
+        """Nonblocking background discovery; never silently select or copy."""
+        if (os.name != 'nt' or self.current_task or self.card_probe_busy or
+                not hasattr(self, 'stack') or self.stack.currentIndex() != 3):
+            return
+        self.card_probe_busy = True
+        worker = Job(list_windows_volumes)
+        worker.signals.done.connect(self._card_probe_complete)
+        worker.signals.failed.connect(self._card_probe_failed)
+        self.card_probe_pool.start(worker)
+
+    def _card_probe_failed(self, _reason):
+        self.card_probe_busy = False
+        if hasattr(self, 'card_detection_status'):
+            self.card_detection_status.setText(
+                'Windows card scan could not complete. Use Find inserted card or choose the drive manually.')
+
+    def _card_probe_complete(self, volumes):
+        self.card_probe_busy = False
+        self.detected_card_volumes = [
+            v for v in volumes if card_candidate(v, system_drive_root())]
+        keys = {(str(v.root).casefold(), str(v.guid).casefold(), int(v.serial))
+                for v in self.detected_card_volumes}
+        if keys != self._last_candidate_keys:
+            self._last_candidate_keys = keys
+            if self.detected_card_volumes:
+                self.card_detection_status.setText(
+                    f'{len(self.detected_card_volumes)} possible card drive(s) detected. '
+                    'Click Find inserted card to review and choose the correct one.')
+            else:
+                self.card_detection_status.setText(
+                    'No card candidate yet. Insert the microSD in your USB reader, then review it.')
+        if self.target and self.saved_destination_mode == 'physical':
+            selected = next((v for v in volumes if str(v.root).casefold() ==
+                             str(self.target).casefold()), None)
+            if selected is None:
+                self.confirmed_card_identity = None
+                self.reset_physical_plan('Card disconnected. Reinsert and run Preview again.')
+            elif self.confirmed_card_identity and not matches_card_identity(
+                    self.confirmed_card_identity, selected):
+                self.confirmed_card_identity = None
+                self.reset_physical_plan('Different card detected. Copy blocked until a new preview.')
+
     def detect_card(self):
-        candidates = [v for v in list_windows_volumes() if v.removable]
+        """Offer likely cards, including USB adapters reported as FIXED.
+
+        A fixed drive is *never* automatically trusted as an SD card.
+        """
+        candidates = list(self.detected_card_volumes)
+        if not candidates and os.name == 'nt':
+            # Explicit click: if the periodic worker has not finished, use
+            # currently available Windows volumes to populate a manual choice.
+            candidates = [v for v in list_windows_volumes()
+                          if card_candidate(v, system_drive_root())]
         if not candidates:
-            QMessageBox.information(self, 'No removable microSD found',
-                'Insert your microSD into a card reader first.\n\n'
-                'Some readers appear as fixed disks in Windows. If yours does, you can choose it manually; '
-                'the app will ask for extra confirmation before a real transfer.'); return
-        choices = [f'{v.root}   {v.label or "Untitled"}   {v.filesystem}   {pretty_bytes(v.free)} free' for v in candidates]
-        selected, ok = QInputDialog.getItem(self, 'Which card is yours?',
-                                           'Detected removable drives:', choices, 0, False)
-        if ok and selected:
-            self._remember_destination(candidates[choices.index(selected)].root, 'physical')
+            QMessageBox.information(self, 'No candidate card found',
+                'Connect the card reader and choose Find inserted card again. '
+                'Some USB readers appear as fixed drives and may need manual selection.'); return
+        choices = [
+            f'{v.root}   {v.label or "Unlabeled"}  •  {v.filesystem}  •  '
+            f'{decimal_gb(v.total)}  •  '
+            + ('REMOVABLE' if v.removable else 'POSSIBLE CARD / WINDOWS SAYS FIXED')
+            for v in candidates
+        ]
+        chosen, ok = QInputDialog.getItem(self, 'Review detected card',
+                        'Which drive is your actual microSD? No files will be copied.',
+                        choices, 0, False)
+        if not ok or not chosen:
+            return
+        candidate = candidates[choices.index(chosen)]
+        self._remember_destination(candidate.root, 'physical')
+        self.card_detection_status.setText(
+            f'Selected {candidate.root} for PREVIEW only • '
+            f'{candidate.filesystem} • {decimal_gb(candidate.total)}. '
+            'Please verify this in Windows Explorer before copying.')
 
     def update_destination_hint(self):
         if not hasattr(self, 'dest_name'): return
@@ -3464,6 +3586,7 @@ class Window(QMainWindow):
                     QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
                     QMessageBox.StandardButton.No)
                 if answer != QMessageBox.StandardButton.Yes: return
+        self.confirmed_card_identity = None
         self._reset_copy_display('Reviewing destination again. No files have been transferred in this run.')
         self.start_transfer_process('preview', sim, lambda plan: self.confirm_transfer(plan, sim))
 
@@ -3485,6 +3608,15 @@ class Window(QMainWindow):
             if plan.target_capacity != volume.total:
                 QMessageBox.warning(self, 'Selected drive changed',
                     'The destination capacity changed during preview. Reinsert the intended card and preview again.'); return
+            if not plan.card_identity:
+                QMessageBox.warning(self, 'Cannot identify the card',
+                    'Windows did not return a valid card volume identity. '
+                    'Copy is blocked. Please reconnect the adapter and run Preview again.'); return
+            try:
+                verify_card(self.target, plan.card_identity)
+            except ValueError as exc:
+                QMessageBox.warning(self, 'Wrong card or unsupported format', str(exc))
+                return
         # Never reuse a stale preflight after the user changes the target.
         response = QMessageBox.question(self, 'Confirm verification' if plan.bytes_new == 0 else 'Confirm the destination',
             f'{"PRACTICE COPY" if sim else "REAL microSD COPY"}\n\n'
@@ -3497,12 +3629,31 @@ class Window(QMainWindow):
             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
             QMessageBox.StandardButton.No)
         if response != QMessageBox.StandardButton.Yes: return
+        if not sim:
+            # A drive letter must be typed, not merely selected from suggestions.
+            expected_letter = self.target.drive.upper().rstrip('\\').rstrip(':') + ':'
+            typed, ok = QInputDialog.getText(
+                self, 'Confirm the microSD drive letter',
+                f'Windows identifies your selected exFAT volume as {expected_letter}.\n'
+                f'Type {expected_letter} exactly to approve a verified copy.\n'
+                'If you are unsure which card is connected, cancel now.')
+            if not ok or typed.strip().upper() != expected_letter:
+                self.set_status('Card copy cancelled. No data transferred.')
+                return
+            self.confirmed_card_identity = dict(plan.card_identity)
+            try:
+                verify_card(self.target, self.confirmed_card_identity)
+            except ValueError as exc:
+                self.confirmed_card_identity = None
+                QMessageBox.warning(self, 'Card changed', str(exc))
+                return
         self.copy_meter.setValue(0)
         self.copy_detail.setText('Starting verified copy…')
         self.start_transfer_process('copy', sim)
 
     def transfer_done(self, result):
         summary, title, message, success = copy_explanation(result, self.transfer_simulation)
+        self.confirmed_card_identity = None
         self.copy_detail.setText(summary)
         if self.last_physical_plan is not None:
             self.card_measured.setText('Transfer complete. Preview again to measure the card after copying.')

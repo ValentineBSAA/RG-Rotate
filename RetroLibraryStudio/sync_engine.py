@@ -24,6 +24,7 @@ class SyncPlan:
     target_capacity: int
     is_simulation: bool = False
     existing_files: int = 0  # Size-only matches; SHA-256 verification happens during transfer.
+    card_identity: dict | None = None  # Fresh preview only; a drive letter is not proof of identity.
 
 
 def _hash(path: Path, cancel=None) -> str:
@@ -176,7 +177,7 @@ def _copy_verified(src: Path, dest: Path, report: Callable[[int], None], cancel=
 def transfer_verified(workspace: Path, target: Path, progress: Progress | None = None,
                       cancel=None, reserve_bytes: int = FREE_RESERVE,
                       companion_budget: int = COMPANION_BUDGET,
-                      simulation: bool = False) -> dict:
+                      simulation: bool = False, expected_card_identity: dict | None = None) -> dict:
     """Requires caller-confirmed destination. Never deletes or overwrites unrelated files."""
     try:
         plan = make_plan(workspace, target, reserve_bytes, companion_budget, simulation, cancel=cancel)
@@ -201,6 +202,9 @@ def transfer_verified(workspace: Path, target: Path, progress: Progress | None =
         return {'copied': 0, 'skipped': 0, 'verified': 0, 'files': plan.files,
                 'errors': [], 'cancelled': True, 'bytes_total': plan.bytes_total}
     for index, src in enumerate(source_files, 1):
+        if not simulation and expected_card_identity is not None:
+            from card_identity import verify_card
+            verify_card(target, expected_card_identity)  # Detect a swapped reader/card before each file.
         if cancel is not None and cancel.is_set():
             break
         rel = src.relative_to(workspace)

@@ -15,6 +15,8 @@ from dataclasses import asdict
 from pathlib import Path
 
 from sync_engine import make_plan, transfer_verified
+from card_identity import fingerprint, verify_card
+from drives import validate_physical_root
 
 
 def emit(kind: str, **values) -> None:
@@ -42,7 +44,22 @@ def handle(request: dict, cancel: threading.Event) -> dict:
         raise ValueError('Invalid simulation flag')
     if mode == 'preview':
         plan = make_plan(source, destination, simulation=simulation, cancel=cancel)
+        if not simulation:
+            # Generated only in the isolated background worker; no GUI drive probe.
+            volume = validate_physical_root(destination)
+            identity = fingerprint(volume)
+            if not identity['guid'] and not identity['serial']:
+                raise ValueError('Windows did not provide a reliable volume identity. '
+                                 'Do not copy until a card can be identified.')
+            if identity['filesystem'] != 'EXFAT':
+                plan.conflicts.append('Card is not exFAT. Verify its contents and filesystem in Windows first; never auto-format.')
+            plan.card_identity = identity
         return {'mode': mode, 'plan': asdict(plan)}
+    expected = request.get('expected_card_identity')
+    if not simulation:
+        if not expected:
+            raise ValueError('A fresh, confirmed card identity from Preview is required before copying')
+        verify_card(destination, expected)
     # A deliberate re-plan takes place inside transfer_verified, so a stale
     # preview cannot bypass free-space, path-overlap or companion limits.
     last_sent = [0.0]
@@ -53,7 +70,8 @@ def handle(request: dict, cancel: threading.Event) -> dict:
                  filename=filename, speed=speed, eta=eta)
             last_sent[0] = now
     result = transfer_verified(source, destination, progress=progress,
-                               simulation=simulation, cancel=cancel)
+                               simulation=simulation, cancel=cancel,
+                               expected_card_identity=expected if not simulation else None)
     return {'mode': mode, 'copy': result}
 
 

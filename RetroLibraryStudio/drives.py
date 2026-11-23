@@ -13,6 +13,8 @@ class Volume:
     total: int
     free: int
     removable: bool
+    guid: str = ''  # Windows unique volume name; never claim this is the hardware serial
+    serial: int = 0  # Volume serial number, not the card's manufacturer serial
 
 
 def list_windows_volumes() -> list[Volume]:
@@ -32,10 +34,16 @@ def list_windows_volumes() -> list[Volume]:
             usage=shutil.disk_usage(root)
             volume_name=ctypes.create_unicode_buffer(261)
             fs_name=ctypes.create_unicode_buffer(261)
-            ok=kernel.GetVolumeInformationW(str(root),volume_name,261,None,None,None,fs_name,261)
+            serial = wintypes.DWORD(0)
+            ok=kernel.GetVolumeInformationW(str(root),volume_name,261,
+                                            ctypes.byref(serial),None,None,fs_name,261)
             label=volume_name.value if ok else ''
             fs=fs_name.value if ok else 'Unknown'
-            roots.append(Volume(root,label,fs,usage.total,usage.free,kind==2))
+            volume_guid=ctypes.create_unicode_buffer(261)
+            has_guid=kernel.GetVolumeNameForVolumeMountPointW(str(root),volume_guid,261)
+            roots.append(Volume(root,label,fs,usage.total,usage.free,kind==2,
+                                volume_guid.value if has_guid else '',
+                                int(serial.value) if ok else 0))
         except OSError:
             continue
     return roots

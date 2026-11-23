@@ -105,3 +105,12 @@ _Last organized: 2026-11-23. Current source: **v1.5.7 merged into main** (PR #11
 - [ ] I06: Verify copy preflight, 8 GiB reserve, FAT32 >4 GiB check and SHA-256 verification on actual removable card; test RG Rotate emulator only afterward.
 
 [Detailed v1.5.9 acceptance](VIRTUAL_EXFAT_PLAN.md).
+
+## J · v1.6.0 readable information + secure card selection
+- [ ] J01: Game Format, Exact sizes and exFAT dialogs use scannable cards at 125%, list two RE2 CHDs and expand/copy technical details.
+- [ ] J02: Copy to Card detects a newly inserted microSD-to-USB adapter without any automatic copy; fixed-type USB devices shown as uncertain.
+- [ ] J03: Preview records Windows volume GUID/serial, drive letter, filesystem, exact formatted bytes and free space; reject unsafe/unknown volumes.
+- [ ] J04: Copy requires separate confirmation and typing exact drive letter; wrong card, card swap and unplug reject without overwriting.
+- [ ] J05: Real exFAT card small transfer SHA-256 verifies; repeat 0-new-files verifies again; preserve 8 GiB free.
+- [ ] J06: All prior v1.5.9 CHDs/M3U/artwork/NAS/CompanionData untouched. No card formatted or cleaned.
+[Full v1.6.0 testing plan](CARD_DETECTION_AND_READABLE_DIALOGS.md).

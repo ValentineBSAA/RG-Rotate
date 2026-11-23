@@ -1,5 +1,14 @@
 # RG Rotate · Retro Library Studio
 
+## v1.6.0 · Readable details and verified microSD adapter identification
+
+- Game File Format, Exact Sizes and exFAT details are now premium **summary-first dialogs** with easy-to-read grouped facts, member files and optional *Show exact bytes and technical details*. No existing game, folder or artwork is modified.
+- On **Copy to card**, Windows volumes are scanned in a background worker. A newly plugged USB microSD reader is suggested for review, never silently chosen. Some adapters report a 512 GB SD card as a **fixed** drive, which is clearly marked as uncertain.
+- A physical copy requires an exFAT card identity (Windows volume GUID or volume serial) from a fresh Preview, a repeat match before copying, an exact typed drive-letter confirmation, and another identity check before each file. **No automatic formatting or deletion.**
+- Your Windows 11/512 GB microSD needs real capacity and filesystem verification after arrival. Simulated 512 GB and exFAT estimates remain separate from measured card data.
+- [v1.6.0 acceptance steps](docs/CARD_DETECTION_AND_READABLE_DIALOGS.md). v1.5.9 Resident Evil 2 two-CHD + M3U grouping was user verified; physical RG Rotate game-launch tests still pending.
+
+
 ## v1.5.9 · Non-destructive exFAT preview + multi-disc details
 
 - Fixed the **real Windows v1.5.8 Resident Evil 2** gallery detail defect. Read-only scan previously discarded M3U-to-CHD membership and hid the member CHDs before grouping. The new scan retains them and presents a **2 DISCS** badge with both verified file paths, **without modifying the game folder or playlist**.
