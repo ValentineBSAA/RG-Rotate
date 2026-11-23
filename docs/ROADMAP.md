@@ -1,5 +1,20 @@
 # Living Roadmap · RG Rotate / Retro Library Studio
 
+## v1.6.0 · Friendly details + safe USB microSD discovery
+
+- [x] Three dense details popups replaced by premium summary cards with expandable raw paths/bytes and Copy details.
+- [x] Copy to card scans candidate removable and plausible 512 GB fixed-looking USB reader drives on a background worker, never automatically selecting or copying.
+- [x] Physical transfer preview captures Windows volume GUID/serial, capacity, filesystem and letter. Copy blocked without fresh identity, exFAT and explicit typed drive letter.
+- [x] Worker rechecks card identity before copying and transfer engine verifies again before each file; existing non-overwrite/8 GiB reserve/SHA-256 stays in place.
+- [x] Synthetic and headless Qt tests added; GitHub CI **pending**.
+- [ ] User verifies refreshed dialog UI at 125% and connected USB card candidate.
+- [ ] Actual card identity, exFAT, volume capacity and first small verified copy.
+- [ ] Actual RG Rotate emulators/Cocoon and M3U disc swap/saves.
+- [ ] No automatic formatting; protect Synology NAS sources and prior v1.5.9 release.
+
+[Full acceptance checklist](CARD_DETECTION_AND_READABLE_DIALOGS.md).
+
+
 ## v1.5.9 · Virtual exFAT card profile / Multi-disc detail follow-up
 
 - [x] Source: pass validated M3U members through read-only worker JSON into Qt; do not prematurely hide CHD members. Gallery owns one playlist tile with **N DISCS** badge and lists each member in Format Details.
