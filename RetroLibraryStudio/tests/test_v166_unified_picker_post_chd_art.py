@@ -42,10 +42,6 @@ def extracted_cue(pbp, temp, helper, **kwargs):
 
 
 def test_last_ps1_location_routes_to_parent_for_one_or_many_game_codes():
-    assert str(ps1_parent_from_last_location(
-        Path(r'G:\PSTV\PSP\GAME\PS1\NPEE00008\EBOOT.PBP'))).endswith('PS1') or (
-            # pathlib.PosixPath does not split Windows backslashes; test with native separators below.
-            True)
     src = Path('/source/PSTV/PSP/GAME/PS1/NPEE00008/EBOOT.PBP')
     assert ps1_parent_from_last_location(src) == Path('/source/PSTV/PSP/GAME/PS1')
     assert ps1_parent_from_last_location(src.parent) == src.parent.parent
