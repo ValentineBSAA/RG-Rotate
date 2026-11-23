@@ -1,19 +1,28 @@
 {
-  "version": "1.5.4",
-  "title": "Artwork Preview & CHD Organizer Beta",
+  "version": "1.5.8",
+  "title": "Smart Multi-disc PS1 Collections Beta",
   "build_date": "2026-11-23",
   "platform": "Windows source (PySide6)",
-  "local_pytest": {
-    "passed": 240,
-    "skipped": 15
+  "source_CI": {
+    "windows_passed": 289,
+    "linux_passed": 288,
+    "linux_skipped": 1,
+    "run": "45162684438"
   },
-  "windows_real_acceptance": "pending",
-  "real_chdman_acceptance": "pending",
+  "local_pytest": {
+    "passed": 266,
+    "skipped": 25
+  },
+  "windows_real_acceptance": "pending for v1.5.8 multi-disc CHD/M3U workflow",
+  "device_acceptance": "pending for RG Rotate game launch and disc swap",
   "source_files": [
     "app.py",
-    "ps1_organizer.py",
-    "import_worker.py",
-    "tests/test_v154_organizer.py"
+    "core.py",
+    "disc_sets.py",
+    "library_presentation.py",
+    "ps1_pipeline.py",
+    "ps1_collections.py",
+    "tests/test_v158_collections.py"
   ],
-  "safety": "No permanent deletion. Legacy CUE/BIN/IMG relocated outside virtual card only after verification."
+  "safety": "Original source CUE/BIN/CHD untouched; no automatic destructive cleanup. M3U subset-only atomic extension."
 }

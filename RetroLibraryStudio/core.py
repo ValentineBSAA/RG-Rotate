@@ -35,6 +35,7 @@ class Entry:
     system: str
     size: int
     extension: str
+    members: tuple[str, ...] = ()  # scan-worker validated disc references
 
 
 def pretty_bytes(n: int) -> str:
@@ -92,13 +93,16 @@ def inventory(workspace: Path, cancel=None, progress: Progress | None = None) ->
             # Only the display entry uses this logical total. The virtual-card
             # usage counter continues counting every physical file exactly once.
             display_size = size
+            members = ()
             if file.suffix.lower() in ('.cue', '.m3u'):
                 try:
-                    components = _cue_companions(file)
-                    display_size += sum(p.stat().st_size for p in dict.fromkeys(components))
+                    components = list(dict.fromkeys(_cue_companions(file)))
+                    display_size += sum(p.stat().st_size for p in components)
+                    # Scan-worker-only: gallery never reads a NAS playlist.
+                    members = tuple(str(p) for p in components)
                 except (OSError, ValueError):
                     pass
-            entries.append(Entry(file, file.stem, system, display_size, file.suffix.lower()))
+            entries.append(Entry(file, file.stem, system, display_size, file.suffix.lower(), members))
     return entries, total, count
 
 
@@ -398,6 +402,11 @@ def _import_one(source: Path, workspace: Path, system: str, progress: Progress |
     else:
         collection = [source]
         folder = rom_root
+        if system == 'PS1' and source.suffix.lower() == '.chd':
+            from ps1_collections import disc_identity, folder_title
+            base, disc_no = disc_identity(source.stem)
+            if disc_no is not None:
+                folder = rom_root / folder_title(base)
     copied, skipped, bytes_added = 0, 0, 0
     for f in dict.fromkeys(collection):
         rel = f.relative_to(source.parent)

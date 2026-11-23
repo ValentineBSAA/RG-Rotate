@@ -1,5 +1,22 @@
 # Living Roadmap · RG Rotate / Retro Library Studio
 
+## v1.5.8 · Smart PlayStation multi-disc collections
+
+**Goal:** One Game/One Cover/One Parent Folder, with a verified CHD per actual physical disc and one safe ordered M3U. Related to existing [multi-disc issue #2](https://github.com/ValentineBSAA/RG-Rotate/issues/2).
+
+- [x] Code: dedicated full PS1 folder import action; conservative Disc/Disk/CD identity; preserve edition/region/Resident Evil 2 character tags; never join FFVII with FFVIII.
+- [x] Code: create CHDs from complete CUE/BIN via CHDman and preserve original NAS/source, or verify and organize existing CHDs without recompression.
+- [x] Code: consecutive 1..N ordered M3U; safe incremental extension with conflict checks; reject ambiguous/duplicate/missing tracks, playlist clashes, unsafe CUE paths.
+- [x] Code: one My Games gallery tile/cover and N DISCS badge using scan-worker M3U members; do not hide discs behind broken playlist; raw File List remains detailed.
+- [x] Synthetic Python/optional Qt tests added in `tests/test_v158_collections.py` (pending GitHub CI evidence).
+- [ ] GitHub Windows and Linux tests of the actual v1.5.8 branch pass.
+- [ ] Physical Windows 11 / Synology acceptance M01–M09 from [MULTIDISC_ACCEPTANCE.md](MULTIDISC_ACCEPTANCE.md), starting with a disposable complete Resident Evil 2 (USA) two-disc set.
+- [ ] Real RG Rotate/Cocoon game-launch and disc-swap acceptance M10, only after hardware arrives.
+- [ ] v1.5.5 destructive cleanup / v1.5.6 capacity meter regression acceptance remains separate, never silently inferred.
+
+**Build policy:** Source release only after CI; no claim that mocked CHDman verifies real user disc data. See [complete checklist](FULL_TEST_CHECKLIST.md).
+
+
 ## v1.5.7 · Console shelves and system-aware library (source candidate)
 
 **Implementation merged into `main` via [PR #11](https://github.com/ValentineBSAA/RG-Rotate/pull/11), squash commit `6515dba`.** display-only system sections with full-width headers, colored console pills and logical game counts; matching gallery/file-list filters; conservative explicit PS2/GameCube folders and experimental-use warnings. No actual RG Rotate support claim or new OS/app installation.

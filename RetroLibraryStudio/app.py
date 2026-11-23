@@ -50,7 +50,7 @@ from system_shelves import (PRIMARY_SYSTEMS, console_counts, console_order_key,
                             console_visual, grouped_shelves)
 from workspace_setup import suggested_workspace, copy_existing_workspace, count_workspace_files
 
-VERSION = '1.5.7 Beta – Console Shelves & Card Planner'
+VERSION = '1.5.8 Beta – Smart Multi-disc Collections'
 SCALE_CHOICES = [('100%', 100), ('110%', 110), ('125%', 125), ('140%', 140), ('150%', 150)]
 MAX_VISIBLE_FILES = 1200
 
@@ -753,8 +753,9 @@ class Window(QMainWindow):
         self.library_count = label('No games added yet', 'Subtitle'); content.addWidget(self.library_count)
         self.library_notice = label('Add games from anywhere on your computer. Your originals are never moved.', 'Small', True)
         content.addWidget(self.library_notice)
-        content.addWidget(label('PS1 discs: the app can combine a CUE and its BIN tracks into one verified CHD. '
-            'For multi-disc games, each disc gets a CHD and a small M3U playlist.', 'Small', True))
+        content.addWidget(label('PS1 game collections: choose a complete game folder or all CUE/BIN discs together. '
+            'Each disc becomes a verified CHD inside ROMs/psx/Game Title. One M3U playlist and one cover tile '
+            'represent the collection. Missing tracks are never guessed or deleted.', 'Small', True))
         self.card_search = QLineEdit(); self.card_search.setPlaceholderText('Search the games you have added…')
         self.card_search.textChanged.connect(self._gallery_search_changed)
         content.addWidget(self.card_search)
@@ -802,6 +803,10 @@ class Window(QMainWindow):
         disc_actions.addWidget(self.auto_ps1_chd, 1)
         disc_actions.addWidget(self.register(button('Convert earlier PS1 imports…', self.optimize_existing_ps1)))
         content.addLayout(disc_actions)
+        collection_row = QHBoxLayout()
+        collection_row.addWidget(self.register(button('＋ Import complete PS1 game folder…', self.pick_ps1_collection, 'Accent')))
+        collection_row.addWidget(label('Choose the folder holding all discs; CHDs and M3U are prepared automatically.', 'Small', True), 1)
+        content.addLayout(collection_row)
         batch_actions = QHBoxLayout()
         batch_actions.addWidget(self.register(button('◆ Batch convert remaining PS1 discs…', self.batch_convert_ps1, 'Accent')))
         batch_actions.addWidget(self.register(button('Open conversion backups', self.open_conversion_backups)))
@@ -1712,7 +1717,19 @@ class Window(QMainWindow):
                 image.setAlignment(Qt.AlignmentFlag.AlignCenter)
                 image.setMinimumHeight(round(185*self.scale_percent/100))
                 image.setMaximumHeight(round(208*self.scale_percent/100))
+                group = self.disc_groups.get(game_key(game.system, game.label), [game])
                 preview = cached_preview(self.workspace, game.system, game.label)
+                # Reuse an earlier Disc 1 cover as a preview if a freshly-made
+                # collection M3U lacks cover art. Local cache only; no NAS I/O.
+                if game.extension.lower() == '.m3u' and not preview.is_file():
+                    from ps1_collections import disc_identity
+                    older_art = sorted((e for e in group if e.extension.lower() == '.chd'),
+                                       key=lambda e: disc_identity(e.label)[1] or 999)
+                    for disc in older_art:
+                        candidate = cached_preview(self.workspace, disc.system, disc.label)
+                        if candidate.is_file():
+                            preview = candidate
+                            break
                 # Load local PC image only, never request SMB data in the GUI.
                 if preview.is_file():
                     pixmap = QPixmap(str(preview))
@@ -1730,7 +1747,6 @@ class Window(QMainWindow):
                 game_name.setMinimumHeight(round(37*self.scale_percent/100))
                 game_name.setToolTip(game.label)
                 t.addWidget(game_name)
-                group = self.disc_groups.get(game_key(game.system, game.label), [game])
                 # The badge comes from the actual scanned file extension, not the
                 # expected converter output or a stale task status.
                 fmt = format_badge_info(game, group)
@@ -1744,7 +1760,11 @@ class Window(QMainWindow):
                 details.addWidget(badge)
                 t.addLayout(details)
                 if len(group) > 1:
-                    discs = label(f'{len(group)} disc / file variants • files kept separate', 'Small', True)
+                    count = sum(e.extension.lower() == '.chd' for e in group)
+                    detail = (f'{count} discs • one game collection • M3U playlist'
+                              if game.extension.lower() == '.m3u' and count >= 2 else
+                              f'{len(group)} disc / file variants • files kept separate')
+                    discs = label(detail, 'Small', True)
                     discs.setToolTip('\n'.join(str(e.path) for e in group)); t.addWidget(discs)
                 t.addWidget(button('Edit display title…', lambda _=False, g=game: self.edit_game_title(g)))
                 info = self.cover_index.get(game_key(game.system, game.label), {})
@@ -2264,6 +2284,20 @@ class Window(QMainWindow):
             'Games and archives (*.zip *.7z *.chd *.cue *.bin *.img *.iso *.cso *.pbp *.m3u *.ccd *.ecm *.gba *.gb *.gbc *.nes *.sfc *.smc *.md *.gen *.nds *.n64 *.z64 *.v64 *.gdi *.cdi);;All files (*.*)')
         if names: self.import_paths([Path(x) for x in names])
 
+    def pick_ps1_collection(self):
+        """One clear import action for complete multi-disc PlayStation game sets."""
+        if not self.ensure_workspace(): return
+        folder = QFileDialog.getExistingDirectory(
+            self, 'Choose one PlayStation 1 game folder with all CUE/BIN discs', str(self.incoming))
+        if not folder: return
+        self.navigate(1)
+        self.set_status('Checking every PS1 disc, converting to verified CHD and preparing one game collection…')
+        self.start_import_process({'mode': 'folder', 'folder': str(folder),
+                                   'workspace': str(self.workspace), 'fallback': 'PS1',
+                                   'auto_ps1_chd': True, 'auto_artwork': self.auto_cover.isChecked(),
+                                   'binary': str(tools_root() / 'chdman' / 'chdman.exe')},
+                                  'Importing PS1 Game Collection')
+
     def pick_folder(self):
         if not self.ensure_workspace(): return
         folder = QFileDialog.getExistingDirectory(self, 'Choose a folder containing your existing games', str(self.incoming))
@@ -2324,10 +2358,12 @@ class Window(QMainWindow):
         else:
             self.library_notice.setText(f"✓ Added {result['copied']:,} file(s). {result['skipped']:,} already present. Your originals were not moved or deleted.")
             self.set_status('Import finished. Your new games are in My Games.')
-        if result.get('converted') or result.get('playlists'):
+        if result.get('converted') or result.get('playlists') or result.get('playlists_updated'):
             summary = (f"{result.get('converted', 0)} PS1 disc(s) converted to verified CHD; "
-                       f"{result.get('playlists', 0)} multi-disc M3U playlist(s) created.")
-            self.library_notice.setText(summary + ' Original disc files were preserved.')
+                       f"{result.get('playlists', 0)} M3U playlist(s) created, "
+                       f"{result.get('playlists_updated', 0)} extended with new discs.")
+            warning = ' Review the reported import issues before playing.' if result.get('errors') else ''
+            self.library_notice.setText(summary + ' Original disc files were preserved.' + warning)
             self.set_status(summary)
         art = result.get('artwork') or {}
         if art and isinstance(art, dict):

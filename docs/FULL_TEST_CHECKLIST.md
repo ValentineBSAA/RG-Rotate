@@ -1,4 +1,15 @@
 # RG Rotate / Retro Library Studio · Full regression & hardware test checklist
+
+## H · v1.5.8 new PS1 multi-disc collection gate
+
+Complete [new M01–M10 acceptance checklist](MULTIDISC_ACCEPTANCE.md) before claiming the one-game grouping feature is Windows-verified: folder import; real CHDman each CUE; RE2 Disc1+Disc2 one CHD per disc, M3U and cover tile; FFVII/FFVIII separate; Disc3 incremental; old custom playlists preserved; corrupted/missing tracks refused; 125% UI and Synology NAS protection; actual Cocoon disc switching later.
+
+- [ ] H01: Real Windows folder import and two-disc Resident Evil 2 CHDman conversion/verification.
+- [ ] H02: One My Games tile and title/cover with **2 DISCS** badge, File List retains disc detail.
+- [ ] H03: Incremental extra discs, album edition separation, no playlist corruption.
+- [ ] H04: NAS originals, prior recovery backups, CompanionData remain untouched.
+- [ ] H05: Actual RG Rotate Cocoon M3U disc swap when hardware arrives.
+
 _Last organized: 2026-11-23. Current source: **v1.5.7 merged into main** (PR #11); no dedicated Windows source ZIP/EXE packaged yet. **Source CI passed: [run 45155293003](https://github.com/ValentineBSAA/RG-Rotate/actions/runs/45155293003), 279 Windows passed; 278 Linux passed, 1 skipped.** Do not treat source CI as actual user Windows, Synology NAS or physical RG Rotate acceptance._
 
 **Evidence key:** [x] = explicit user-observed real Windows result (with version) or other stated tier; [ ] = outstanding acceptance. Tests below must be repeated when changing relevant code. Log app version, Windows scale, screenshots/error text, original/virtual/destination paths (redacted if shared), file size/hash and actual outcome.
