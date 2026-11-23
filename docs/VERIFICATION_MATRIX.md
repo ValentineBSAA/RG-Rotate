@@ -1,5 +1,8 @@
 # Verification matrix · Retro Library Studio
 
+**v1.6.8 completed source beta (2026-11-23):** [PR #26](https://github.com/ValentineBSAA/RG-Rotate/pull/26) merged (squash `c7e8897`). Exact branch-head [CI run 45286346213](https://github.com/ValentineBSAA/RG-Rotate/actions/runs/45286346213) PASS: **414 Windows tests; 412 Linux tests, 2 skipped**. Exact packaged branch head `742ed2b`: [Windows source ZIP workflow 45286332822](https://github.com/ValentineBSAA/RG-Rotate/actions/runs/45286332822); artifact verified 127 inner files, CRC pass, version 1.6.8. **Root cause fixed in code:** upstream has207 PSXtract v3 calls AttachConsole(parent) + freopen(CONOUT$) stealing logs from importer Popen stdout pipe; real Windows test *disproved* CREATE_NEW_CONSOLE alone for GUI app. Final fix: only isolated import_worker calls FreeConsole before invoking direct helper, preserving existing QProcess stdin/stdout and stop. Real Windows Windows GUI worker/child smoke passed; wrapped 4294967295 now rendered as -1; existing adjacent KEYS length checked (>=16) without exposing key contents. No extra helper proxy, original ROMs/keys untouched. **Clock Tower II SLUS00695 actual EBOOT still NOT YET verified convertible**; last v1.6.7 real run was 0 imported/0 CHDs. User should retest ONLY Clock Tower + a known working game and report progress/error; if authentic protected ISO still fails, this may be an incompatible/mismatched source, not CHDman. Device just arrived; stage already verified games instead of blocking all setup on one title. [v1.6.8 real test checklist](PSXTRACT_CONSOLE_CAPTURE_v168.md).
+
+
 ## v1.6.8 · Clock Tower error capture and helper diagnostics
 
 | Requirement | New tests | Actual Windows |
