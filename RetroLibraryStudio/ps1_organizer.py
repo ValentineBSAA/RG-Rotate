@@ -212,7 +212,7 @@ def convert_selected_game(source: Path, workspace: Path, binary: Path, *, progre
         raise ValueError('Invalid cleanup policy')
     out = {'converted':0, 'copied':0, 'skipped':0, 'playlists':0,
            'artwork_games':[], 'artwork_attempted':False, 'errors':[],
-           'cancelled':False, 'output':'', 'backup':''}
+           'cancelled':False, 'output':'', 'backup':'', 'deleted_files':0, 'freed_bytes':0}
     try:
         psx = workspace / 'ROMs' / 'psx'
         if not within(source, psx) or source == psx or not source.is_file() or source.is_symlink():
