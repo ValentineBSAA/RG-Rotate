@@ -72,9 +72,11 @@ def readiness(workspace: Path, host_tools: Path) -> dict[str, str]:
     result = {name: 'Not prepared' for name in (*RECOMMENDED, *OPTIONAL)}
     local_status = tool_setup.tool_status(host_tools)
     for name in WINDOWS:
-        if local_status[name]['installed']:
-            result[name] = 'Ready on Windows'
-        elif local_status[name].get('file_present'):
+        row = local_status.get(name, {})
+        if row.get('installed'):
+            result[name] = ('Helper downloaded; real PSN extraction not verified'
+                            if name == 'PSXtract' else 'Ready on Windows')
+        elif row.get('file_present'):
             result[name] = 'Needs attention: run setup to verify the existing Windows executable'
     for name in ANDROID:
         receipt = workspace / '.retro-library' / 'receipts' / (name.replace(' ', '_') + '.json')
