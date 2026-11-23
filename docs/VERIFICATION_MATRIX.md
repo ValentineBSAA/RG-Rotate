@@ -1,19 +1,21 @@
 # Verification matrix · Retro Library Studio
 
-## v1.5.8 · Multi-disc PS1 collections (source candidate)
+## v1.5.8 · Multi-disc PS1 collections (merged source beta)
 
 | Acceptance | Automated source / mock | User Windows + Synology | Actual RG Rotate |
 | --- | --- | --- | --- |
-| RE2 (USA) Disc 1+2 complete CUE/BIN → two verified CHDs, one parent folder and M3U | New test fixtures, CI pending | **Pending** M02–M03 | Pending |
-| One My Games tile, cover, N DISCS badge; broken M3U does not hide discs | New pure/Qt tests, CI pending | **Pending** M04/M08 | Cocoon art and playlist pending |
-| FFVII 3 discs, FFVIII 4 discs; distinct editions/regions | New synthetic regression, CI pending | **Pending** M06 | Pending |
-| Disc 3 imported later extends validated M3U without clobbering custom playlist | New synthetic regression, CI pending | **Pending** M05/M08 | Pending |
-| Already-compressed CHD verified and organized (no recompression) | New synthetic regression, CI pending | **Pending** M07 | Pending |
+| RE2 (USA) Disc 1+2 complete CUE/BIN → two verified CHDs, one parent folder and M3U | New synthetic tests; Windows/Linux CI passed | **Pending** M02–M03 | Pending |
+| One My Games tile, cover, N DISCS badge; broken M3U does not hide discs | New pure/Qt tests passed GitHub CI | **Pending** M04/M08 | Cocoon art and playlist pending |
+| FFVII 3 discs, FFVIII 4 discs; distinct editions/regions | New synthetic regression passed GitHub CI | **Pending** M06 | Pending |
+| Disc 3 imported later extends validated M3U without clobbering custom playlist | New synthetic regression passed GitHub CI | **Pending** M05/M08 | Pending |
+| Already-compressed CHD verified and organized (no recompression) | New synthetic regression passed GitHub CI | **Pending** M07 | Pending |
 | NAS originals/backup/CompanionData never modified | Code safety rules/test doubles | **Pending** M02/M07–M09 | Pending |
 | In-emulator disc swapping/saves | Not simulated by tests | Not applicable | **Pending** M10 |
 
 Do not conflate generated/verified CHD output under a mocked converter with actual Windows CHDman or game runtime acceptance. See [test plan](MULTIDISC_ACCEPTANCE.md).
 
+
+**v1.5.8 CI:** [run 45162967417](https://github.com/ValentineBSAA/RG-Rotate/actions/runs/45162967417): Windows 289 tests passed, Linux 288 passed/1 skipped. GitHub ZIP extracted and passed 264 local tests, with 25 skipped (no local Qt). No real user multi-disc CHDman/Synology test or emulator disc swap has passed yet.
 
 ## v1.5.7 console shelves (source merged, 2026-11-23)
 
