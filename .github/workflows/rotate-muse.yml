@@ -7,7 +7,7 @@ permissions:
   contents: read
 jobs:
   android:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
@@ -30,3 +30,4 @@ jobs:
             RotateMuse/app/build/outputs/apk/debug/*.apk
             RotateMuse/app/build/test-results/
             RotateMuse/app/build/reports/lint-results-debug.*
+
