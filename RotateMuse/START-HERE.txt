@@ -1,0 +1,22 @@
+Rotate Muse 0.1.0 beta
+
+The beta is installed as its own app. Open Rotate Muse from Cocoon's app drawer.
+Cocoon remains your default launcher.
+
+1. Choose Themes, select Neon Nostalgia or Celestial Dream, then Preview.
+2. Or choose My Videos > Import video or GIF and select your own local media.
+   Import creates a private copy. Your original is preserved.
+3. Use Clock to change format, date, font, opacity, color or position.
+   In display mode you can drag the clock. Back or Exit leaves the display.
+4. Settings controls framing, dimming and the display timeout.
+   Current tested device setting: dim after 30 seconds; end display after
+   two minutes. Android's own screen timeout applies afterward.
+
+This is a manual first beta. Automatic swivel activation is not enabled.
+The included themes are procedural demonstrations, not cinematic videos.
+Test MP4/GIF fixtures were generated from the app and remain in this folder.
+
+The APK is a private debug test build. Install only if needed; the app was
+already installed during testing. Source and Windows build/install scripts
+are in the source ZIP. See README.md and VALIDATION.md for limitations.
+No account, network, overlay, accessibility or broad storage permission needed.
