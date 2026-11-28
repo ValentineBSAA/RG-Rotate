@@ -1,4 +1,4 @@
-name: RotateRadio SD Auto Discovery 0.3.2
+name: RotateRadio Audio Compatibility Lab 0.3.3
 on:
   push:
     branches: [rotateradio-v0.3.0]
@@ -58,6 +58,11 @@ jobs:
           ffprobe -v error -show_entries stream=codec_name,sample_rate,channels -of json "$RUNNER_TEMP/test.at3" | tee "$RUNNER_TEMP/encoder-probe.json"
           python3 -c 'import json,sys; s=json.load(open(sys.argv[1]))["streams"][0]; assert s["codec_name"]=="atrac3" and int(s["sample_rate"])==44100 and s["channels"]==2, s' "$RUNNER_TEMP/encoder-probe.json"
           ffmpeg -v error -i "$RUNNER_TEMP/test.at3" -f null -
+          for codec in atrac3 atrac3plus; do
+            target/release/atracdenc -e "$codec" --container riff -i "$RUNNER_TEMP/test.wav" -o "$RUNNER_TEMP/$codec.at3"
+            ffprobe -v error -show_entries stream=codec_name,sample_rate,channels -of json "$RUNNER_TEMP/$codec.at3"
+            ffmpeg -v error -xerror -i "$RUNNER_TEMP/$codec.at3" -f null -
+          done
       - name: Cross compile Android ARM64 encoder
         shell: bash
         run: |
@@ -76,17 +81,17 @@ jobs:
         shell: bash
         run: |
           mkdir -p dist
-          cp RotateRadio/app/build/outputs/apk/debug/app-debug.apk dist/RotateRadio-v0.3.2-alpha.apk
+          cp RotateRadio/app/build/outputs/apk/debug/app-debug.apk dist/RotateRadio-v0.3.3-alpha.apk
           cp RotateRadio/README.md dist/
           cp "$RUNNER_TEMP/encoder-revision.txt" dist/
           cp "$RUNNER_TEMP/test.at3" dist/encoder-smoke-test.at3
           cp "$RUNNER_TEMP/encoder-probe.json" dist/
           git -C "$RUNNER_TEMP/atracdenc" archive --format=tar.gz --output="$GITHUB_WORKSPACE/dist/atracdenc-source.tar.gz" HEAD
-          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose dist/RotateRadio-v0.3.2-alpha.apk
-          unzip -l dist/RotateRadio-v0.3.2-alpha.apk | grep 'lib/arm64-v8a/libatracdenc.so'
-          (cd dist && sha256sum RotateRadio-v0.3.2-alpha.apk > SHA256SUMS.txt)
+          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose dist/RotateRadio-v0.3.3-alpha.apk
+          unzip -l dist/RotateRadio-v0.3.3-alpha.apk | grep 'lib/arm64-v8a/libatracdenc.so'
+          (cd dist && sha256sum RotateRadio-v0.3.3-alpha.apk > SHA256SUMS.txt)
       - uses: actions/upload-artifact@v4
         with:
-          name: RotateRadio-v0.3.2-alpha
+          name: RotateRadio-v0.3.3-alpha
           path: dist/
           if-no-files-found: error
