@@ -1,4 +1,4 @@
-name: RotateRadio Audio Compatibility Lab 0.3.3
+name: RotateRadio LCS 744-byte Encoder 0.3.4
 on:
   push:
     branches: [rotateradio-v0.3.0]
@@ -52,6 +52,9 @@ jobs:
           rustup default stable
           rustc --version
           git rev-parse HEAD > "$RUNNER_TEMP/encoder-revision.txt"
+          python3 "$GITHUB_WORKSPACE/RotateRadio/tools/patch_lcs_encoder.py" "$RUNNER_TEMP/atracdenc"
+          git diff --check
+          git diff > "$RUNNER_TEMP/encoder-lcs.patch"
           cargo build --locked --release -p atracdenc-cli
           ffmpeg -v error -f lavfi -i 'sine=frequency=440:duration=8' -ar 44100 -ac 2 -c:a pcm_s16le "$RUNNER_TEMP/test.wav"
           target/release/atracdenc -e atrac3-lp4 --container riff -i "$RUNNER_TEMP/test.wav" -o "$RUNNER_TEMP/test.at3"
@@ -63,6 +66,11 @@ jobs:
             ffprobe -v error -show_entries stream=codec_name,sample_rate,channels -of json "$RUNNER_TEMP/$codec.at3"
             ffmpeg -v error -xerror -i "$RUNNER_TEMP/$codec.at3" -f null -
           done
+          python3 "$GITHUB_WORKSPACE/RotateRadio/tools/check_lcs_frames.py" "$RUNNER_TEMP/atrac3plus.at3" | tee "$RUNNER_TEMP/lcs-frame-report.txt"
+          ffmpeg -v error -f lavfi -i 'anoisesrc=color=pink:amplitude=0.3:duration=12:sample_rate=44100:seed=123' -ac 2 -c:a pcm_s16le "$RUNNER_TEMP/complex.wav"
+          target/release/atracdenc -e atrac3plus --container riff -i "$RUNNER_TEMP/complex.wav" -o "$RUNNER_TEMP/complex.at3"
+          python3 "$GITHUB_WORKSPACE/RotateRadio/tools/check_lcs_frames.py" "$RUNNER_TEMP/complex.at3"
+          ffmpeg -v error -xerror -i "$RUNNER_TEMP/complex.at3" -f null -
       - name: Cross compile Android ARM64 encoder
         shell: bash
         run: |
@@ -81,17 +89,21 @@ jobs:
         shell: bash
         run: |
           mkdir -p dist
-          cp RotateRadio/app/build/outputs/apk/debug/app-debug.apk dist/RotateRadio-v0.3.3-alpha.apk
+          cp RotateRadio/app/build/outputs/apk/debug/app-debug.apk dist/RotateRadio-v0.3.4-alpha.apk
           cp RotateRadio/README.md dist/
           cp "$RUNNER_TEMP/encoder-revision.txt" dist/
           cp "$RUNNER_TEMP/test.at3" dist/encoder-smoke-test.at3
           cp "$RUNNER_TEMP/encoder-probe.json" dist/
-          git -C "$RUNNER_TEMP/atracdenc" archive --format=tar.gz --output="$GITHUB_WORKSPACE/dist/atracdenc-source.tar.gz" HEAD
-          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose dist/RotateRadio-v0.3.3-alpha.apk
-          unzip -l dist/RotateRadio-v0.3.3-alpha.apk | grep 'lib/arm64-v8a/libatracdenc.so'
-          (cd dist && sha256sum RotateRadio-v0.3.3-alpha.apk > SHA256SUMS.txt)
+          cp "$RUNNER_TEMP/encoder-lcs.patch" "$RUNNER_TEMP/lcs-frame-report.txt" dist/
+          cp "$RUNNER_TEMP/atrac3plus.at3" dist/encoder-lcs-smoke-test.at3
+          git -C "$RUNNER_TEMP/atracdenc" add -u
+          patched_tree="$(git -C "$RUNNER_TEMP/atracdenc" write-tree)"
+          git -C "$RUNNER_TEMP/atracdenc" archive --format=tar.gz --output="$GITHUB_WORKSPACE/dist/atracdenc-source.tar.gz" "$patched_tree"
+          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose dist/RotateRadio-v0.3.4-alpha.apk
+          unzip -l dist/RotateRadio-v0.3.4-alpha.apk | grep 'lib/arm64-v8a/libatracdenc.so'
+          (cd dist && sha256sum RotateRadio-v0.3.4-alpha.apk > SHA256SUMS.txt)
       - uses: actions/upload-artifact@v4
         with:
-          name: RotateRadio-v0.3.3-alpha
+          name: RotateRadio-v0.3.4-alpha
           path: dist/
           if-no-files-found: error
