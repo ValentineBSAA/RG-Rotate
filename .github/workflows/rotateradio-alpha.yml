@@ -6,6 +6,9 @@ on:
       - 'RotateRadio/**'
       - '.github/workflows/rotateradio-alpha.yml'
   workflow_dispatch:
+concurrency:
+  group: rotateradio-alpha-${{ github.ref }}
+  cancel-in-progress: true
 permissions:
   contents: read
 jobs:
@@ -28,6 +31,16 @@ jobs:
           log-accepted-android-sdk-licenses: false
       - name: Install Android platform and NDK
         run: sdkmanager 'platforms;android-35' 'build-tools;35.0.0' 'ndk;27.2.12479018'
+      - name: Install and verify host build dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg file unzip
+          for tool in git cargo rustup ffmpeg ffprobe file unzip sha256sum java gradle sdkmanager; do command -v "$tool"; done
+          test -x "$ANDROID_HOME/ndk/27.2.12479018/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android26-clang"
+          test -x "$ANDROID_HOME/build-tools/35.0.0/apksigner"
+          ffmpeg -version | sed -n '1p'
       - name: Build and smoke-test encoder on Linux
         shell: bash
         run: |
@@ -42,7 +55,8 @@ jobs:
           cargo build --locked --release -p atracdenc-cli
           ffmpeg -v error -f lavfi -i 'sine=frequency=440:duration=8' -ar 44100 -ac 2 -c:a pcm_s16le "$RUNNER_TEMP/test.wav"
           target/release/atracdenc -e atrac3-lp4 --container riff -i "$RUNNER_TEMP/test.wav" -o "$RUNNER_TEMP/test.at3"
-          ffprobe -v error -show_entries stream=codec_name,sample_rate,channels -of json "$RUNNER_TEMP/test.at3"
+          ffprobe -v error -show_entries stream=codec_name,sample_rate,channels -of json "$RUNNER_TEMP/test.at3" | tee "$RUNNER_TEMP/encoder-probe.json"
+          python3 -c 'import json,sys; s=json.load(open(sys.argv[1]))["streams"][0]; assert s["codec_name"]=="atrac3" and int(s["sample_rate"])==44100 and s["channels"]==2, s' "$RUNNER_TEMP/encoder-probe.json"
           ffmpeg -v error -i "$RUNNER_TEMP/test.at3" -f null -
       - name: Cross compile Android ARM64 encoder
         shell: bash
@@ -66,6 +80,7 @@ jobs:
           cp RotateRadio/README.md dist/
           cp "$RUNNER_TEMP/encoder-revision.txt" dist/
           cp "$RUNNER_TEMP/test.at3" dist/encoder-smoke-test.at3
+          cp "$RUNNER_TEMP/encoder-probe.json" dist/
           git -C "$RUNNER_TEMP/atracdenc" archive --format=tar.gz --output="$GITHUB_WORKSPACE/dist/atracdenc-source.tar.gz" HEAD
           "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose dist/RotateRadio-v0.1.0-alpha.apk
           unzip -l dist/RotateRadio-v0.1.0-alpha.apk | grep 'lib/arm64-v8a/libatracdenc.so'
