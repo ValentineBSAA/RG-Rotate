@@ -34,6 +34,10 @@ jobs:
           set -euo pipefail
           git clone https://github.com/liangchunn/atracdenc-rs.git "$RUNNER_TEMP/atracdenc"
           cd "$RUNNER_TEMP/atracdenc"
+          git checkout --detach 39118d6619b073c8382360b9d2c41a965d82ce29
+          rustup update stable
+          rustup default stable
+          rustc --version
           git rev-parse HEAD > "$RUNNER_TEMP/encoder-revision.txt"
           cargo build --locked --release -p atracdenc-cli
           ffmpeg -v error -f lavfi -i 'sine=frequency=440:duration=8' -ar 44100 -ac 2 -c:a pcm_s16le "$RUNNER_TEMP/test.wav"
