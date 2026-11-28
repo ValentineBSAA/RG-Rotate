@@ -5,6 +5,10 @@ import android.app.AlertDialog;
 import android.content.*;
 import android.database.Cursor;
 import android.graphics.Color;
+import android.graphics.Typeface;
+import android.graphics.drawable.GradientDrawable;
+import android.content.res.ColorStateList;
+import android.view.Gravity;
 import android.media.*;
 import android.net.Uri;
 import android.os.Bundle;
@@ -21,7 +25,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class MainActivity extends Activity {
- final int BG=0xff11151e, PANEL=0xff212a3b, TEXT=0xffedf2ff, BLUE=0xff9dbaff;
+ final int BG=0xff101316, PANEL=0xff1b2229, TEXT=0xfff4f6fa, BLUE=0xff9cdbcb, MUTED=0xffa9b5bf;
+ TextView headline, resultText, setupState; LinearLayout setup, sources, jobs, details; Button navHome,navJobs,navSettings,detectButton; int screen=0;
  final String[] labels={"Liberty City Stories · USA/Korea","Liberty City Stories · Europe","Liberty City Stories · Germany","Liberty City Stories · Japan","Vice City Stories · USA","Vice City Stories · Europe","Vice City Stories · Germany","Vice City Stories · Japan","Both GTA games · USA"};
  final String[][] ids={{"ULUS10041"},{"ULES00151"},{"ULES00182"},{"ULJM05255"},{"ULUS10160"},{"ULES00502"},{"ULES00503"},{"ULJM05297"},{"ULUS10041","ULUS10160"}};
  Uri source, destination;
@@ -37,35 +42,51 @@ public class MainActivity extends Activity {
  boolean busy;
  int dp(float n){return (int)(n*getResources().getDisplayMetrics().density+.5f);}
  TextView txt(String s,int size,int color){TextView t=new TextView(this);t.setText(s);t.setTextSize(size);t.setTextColor(color);return t;}
- Button btn(String s,Runnable f){Button b=new Button(this);b.setText(s);b.setAllCaps(false);b.setOnClickListener(v->f.run());return b;}
+ GradientDrawable shape(int color,int radius){GradientDrawable d=new GradientDrawable();d.setColor(color);d.setCornerRadius(dp(radius));return d;}
+ Button btn(String s,Runnable f){Button b=new Button(this);b.setText(s);b.setAllCaps(false);b.setTextSize(14);b.setTextColor(TEXT);b.setBackgroundTintList(ColorStateList.valueOf(0xff34444d));b.setMinHeight(dp(48));b.setOnClickListener(v->f.run());return b;}
+ Button primary(String s,Runnable f){Button b=btn(s,f);b.setTextColor(0xff102822);b.setBackgroundTintList(new ColorStateList(new int[][]{new int[]{-android.R.attr.state_enabled},new int[]{}},new int[]{0xff62746e,BLUE}));return b;}
  void add(LinearLayout l,View v){LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(-1,-2);p.setMargins(0,dp(4),0,dp(4));l.addView(v,p);}
+ LinearLayout column(){LinearLayout l=new LinearLayout(this);l.setOrientation(LinearLayout.VERTICAL);return l;}
+ LinearLayout card(LinearLayout l){LinearLayout c=column();c.setPadding(dp(13),dp(10),dp(13),dp(10));c.setBackground(shape(PANEL,18));add(l,c);return c;}
+ TextView heading(String s){TextView t=txt(s,19,TEXT);t.setTypeface(null,Typeface.BOLD);return t;}
+ void label(LinearLayout l,String s){add(l,txt(s,12,MUTED));}
+ void nav(int index){screen=index;sources.setVisibility(index==0?View.VISIBLE:View.GONE);jobs.setVisibility(index==1?View.VISIBLE:View.GONE);setup.setVisibility(index==2?View.VISIBLE:View.GONE);headline.setText(index==0?"Your radio, your music":index==1?"Conversion queue":"Game & storage");Button[] buttons={navHome,navJobs,navSettings};for(int i=0;i<3;i++){buttons[i].setBackgroundTintList(ColorStateList.valueOf(i==index?0xff42685d:0xff283139));}}
  @Override public void onCreate(Bundle state){super.onCreate(state);
   source=load("source");destination=load("destination");
-  ScrollView scroll=new ScrollView(this);scroll.setFillViewport(true);scroll.setBackgroundColor(BG);
-  LinearLayout l=new LinearLayout(this);l.setOrientation(1);l.setPadding(dp(16),dp(12),dp(16),dp(12));scroll.addView(l);setContentView(scroll);
-  add(l,txt("ROTATE RADIO",25,BLUE));add(l,txt("0.2.0  /  Plex Connect alpha",12,0xffaab6ca));
-  plex=new PlexBrowser(this);plexButton=btn("Plex Connect · Browse music",()->{if(!busy)plex.show();});add(l,plexButton);
-  sourceButton=btn("1  ·  Choose music folder",()->pick(11));add(l,sourceButton);sourceText=txt("",13,TEXT);add(l,sourceText);
-  destButton=btn("2  ·  Choose PPSSPP PSP folder",()->pick(12));add(l,destButton);destText=txt("",13,TEXT);add(l,destText);
-  game=new Spinner(this);ArrayAdapter<String> a=new ArrayAdapter<>(this,android.R.layout.simple_spinner_item,labels);a.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);game.setAdapter(a);game.setSelection(getPreferences(0).getInt("game",0));add(l,game);
-  add(l,btn("Detect region from existing saves",this::detectRegion));
-  add(l,txt("ATRAC3 LP4 • experimental • additive install",12,BLUE));
-  start=btn("Convert & install",this::confirm);add(l,start);
-  cancel=btn("Cancel safely",()->{stopped.set(true);Process p=encoder;if(p!=null)p.destroy();});cancel.setEnabled(false);add(l,cancel);
-  progress=new ProgressBar(this,null,android.R.attr.progressBarStyleHorizontal);add(l,progress);
-  progressText=txt("Ready",13,TEXT);add(l,progressText);
-  log=txt("Close GTA before installing. Existing music is preserved. Use PairDrop to transfer music, then pick its folder.",12,0xffb9c7da);log.setTextIsSelectable(true);add(l,log);
-  refresh();
+  getWindow().setStatusBarColor(BG);getWindow().setNavigationBarColor(BG);
+  LinearLayout root=column();root.setBackgroundColor(BG);root.setPadding(dp(12),dp(6),dp(12),dp(6));setContentView(root);
+  TextView brand=txt("ROTATE RADIO  /  0.3.0",12,BLUE);brand.setTypeface(null,Typeface.BOLD);add(root,brand);
+  headline=heading("");add(root,headline);
+  ScrollView scroll=new ScrollView(this);scroll.setFillViewport(true);root.addView(scroll,new LinearLayout.LayoutParams(-1,0,1));
+  LinearLayout body=column();scroll.addView(body);
+  sources=column();jobs=column();setup=column();body.addView(sources);body.addView(jobs);body.addView(setup);
+  plex=new PlexBrowser(this);
+  LinearLayout welcome=card(sources);setupState=txt("",14,TEXT);add(welcome,setupState);add(welcome,btn("Game & storage settings",()->nav(2)));
+  LinearLayout cloud=card(sources);add(cloud,heading("Plex music"));label(cloud,"Browse artists, albums, playlists or tracks.");plexButton=primary("Browse Plex",()->{if(!busy){if(destination==null){nav(2);line("Choose your PPSSPP folder first.");}else plex.show();}});add(cloud,plexButton);
+  LinearLayout local=card(sources);add(local,heading("Music on this device"));sourceText=txt("",13,MUTED);add(local,sourceText);sourceButton=btn("Choose music folder",()->pick(11));add(local,sourceButton);start=primary("Convert & install folder",this::confirm);add(local,start);
+  LinearLayout tips=card(sources);label(tips,"Close GTA before installing. Your original game files and existing tracks are kept.");
+  LinearLayout job=card(jobs);add(job,heading("Batch progress"));progressText=txt("Ready for music",16,TEXT);add(job,progressText);
+  progress=new ProgressBar(this,null,android.R.attr.progressBarStyleHorizontal);progress.setProgressTintList(ColorStateList.valueOf(BLUE));progress.setMax(1);add(job,progress);resultText=txt("No active batch",14,MUTED);add(job,resultText);
+  cancel=btn("Cancel safely",()->{stopped.set(true);cancel.setEnabled(false);progressText.setText("Cancelling after safe cleanup…");Process p=encoder;if(p!=null)p.destroy();});cancel.setEnabled(false);add(job,cancel);
+  details=card(jobs);Button toggle=btn("Show / hide activity details",()->log.setVisibility(log.getVisibility()==View.VISIBLE?View.GONE:View.VISIBLE));add(details,toggle);log=txt("No activity yet.",12,MUTED);log.setTextIsSelectable(true);log.setVisibility(View.GONE);add(details,log);
+  LinearLayout target=card(setup);add(target,heading("PPSSPP destination"));label(target,"Choose the existing PSP or SAVEDATA folder.");destText=txt("",13,MUTED);add(target,destText);destButton=primary("Choose PPSSPP folder",()->pick(12));add(target,destButton);
+  LinearLayout games=card(setup);add(games,heading("Target game"));game=new Spinner(this);ArrayAdapter<String> a=new ArrayAdapter<>(this,android.R.layout.simple_spinner_item,labels);a.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);game.setAdapter(a);game.setSelection(Math.max(0,Math.min(labels.length-1,getPreferences(0).getInt("game",0))));add(games,game);
+  game.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener(){public void onItemSelected(AdapterView<?> p,View v,int i,long id){getPreferences(0).edit().putInt("game",i).apply();refresh();}public void onNothingSelected(AdapterView<?> p){}});
+  detectButton=btn("Detect game from saves",this::detectRegion);add(games,detectButton);label(games,"ATRAC3 LP4 • additive installation • experimental PSP radio");
+  add(setup,primary("Done",()->nav(0)));
+  LinearLayout tabs=new LinearLayout(this);tabs.setOrientation(LinearLayout.HORIZONTAL);navHome=btn("Music",()->nav(0));navJobs=btn("Queue",()->nav(1));navSettings=btn("Setup",()->nav(2));for(Button button:new Button[]{navHome,navJobs,navSettings})tabs.addView(button,new LinearLayout.LayoutParams(0,dp(52),1));add(root,tabs);
+  refresh();nav(destination==null?2:0);
  }
+ @Override public void onBackPressed(){if(screen!=0){nav(0);return;}super.onBackPressed();}
  Uri load(String key){String x=getPreferences(0).getString(key,null);return x==null?null:Uri.parse(x);}
- void refresh(){sourceText.setText(source==null?"No music folder selected":shortUri(source));destText.setText(destination==null?"No PPSSPP folder selected":shortUri(destination));start.setEnabled(!busy&&source!=null&&destination!=null);plexButton.setEnabled(!busy);}
+ void refresh(){sourceText.setText(source==null?"No music folder selected":shortUri(source));destText.setText(destination==null?"No PPSSPP folder selected":shortUri(destination));setupState.setText(destination==null?"Setup needed · choose your PSP folder":"Destination selected · "+labels[game.getSelectedItemPosition() < 0 ? 0 : game.getSelectedItemPosition()]);start.setEnabled(!busy&&source!=null&&destination!=null);plexButton.setEnabled(!busy);detectButton.setEnabled(!busy&&destination!=null);}
  String shortUri(Uri u){try{return DocumentsContract.getTreeDocumentId(u);}catch(Exception e){return u.toString();}}
  void pick(int req){Intent i=new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);i.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION|Intent.FLAG_GRANT_WRITE_URI_PERMISSION|Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION|Intent.FLAG_GRANT_PREFIX_URI_PERMISSION);startActivityForResult(i,req);}
  @Override protected void onActivityResult(int r,int result,Intent i){super.onActivityResult(r,result,i);if(result!=RESULT_OK||i==null||i.getData()==null)return;Uri u=i.getData();int flags=i.getFlags()&(Intent.FLAG_GRANT_READ_URI_PERMISSION|Intent.FLAG_GRANT_WRITE_URI_PERMISSION);try{getContentResolver().takePersistableUriPermission(u,flags);if(r==11)source=u;else if(r==12){if((flags&Intent.FLAG_GRANT_WRITE_URI_PERMISSION)==0)throw new IOException("Folder is read-only");destination=u;}getPreferences(0).edit().putString(r==11?"source":"destination",u.toString()).apply();refresh();}catch(Exception e){new AlertDialog.Builder(this).setMessage("Folder permission failed: "+e.getMessage()).setPositiveButton("OK",null).show();}}
- void detectRegion(){if(busy)return;if(destination==null){line("Choose PPSSPP folder first.");return;}Uri dst=destination;executor.submit(()->{try{D saves=saveDir(dst);Set<String> matches=new HashSet<>();for(D d:saves.children()){if(!d.dir())continue;String n=d.name.toUpperCase(Locale.ROOT);for(int i=0;i<8;i++)if(n.startsWith(ids[i][0]))matches.add(ids[i][0]);if(n.startsWith("ULJM05885"))matches.add("ULJM05255");if(n.startsWith("ULJM05884"))matches.add("ULJM05297");}int chosen=-1;if(matches.size()==1){for(int i=0;i<8;i++)if(matches.contains(ids[i][0]))chosen=i;}else if(matches.size()==2&&matches.contains("ULUS10041")&&matches.contains("ULUS10160"))chosen=8;int selection=chosen;runOnUiThread(()->{if(busy||!dst.equals(destination))return;if(selection>=0){game.setSelection(selection);line("Detected from save folders: "+labels[selection]+". Confirm your game before installation.");}else line(matches.isEmpty()?"No recognized saves found. Select the game region manually.":"Multiple regions found. Select the target manually.");});}catch(Exception e){line("Detection failed: "+e.getMessage());}});}
+ void detectRegion(){if(busy)return;if(destination==null){line("Choose PPSSPP folder first.");return;}Uri dst=destination;executor.submit(()->{try{D saves=saveDir(dst);Set<String> matches=new HashSet<>();for(D d:saves.children()){if(!d.dir())continue;String n=d.name.toUpperCase(Locale.ROOT);for(int i=0;i<8;i++)if(n.startsWith(ids[i][0]))matches.add(ids[i][0]);if(n.startsWith("ULJM05885"))matches.add("ULJM05255");if(n.startsWith("ULJM05884"))matches.add("ULJM05297");}int chosen=-1;if(matches.size()==1){for(int i=0;i<8;i++)if(matches.contains(ids[i][0]))chosen=i;}else if(matches.size()==2&&matches.contains("ULUS10041")&&matches.contains("ULUS10160"))chosen=8;int selection=chosen;runOnUiThread(()->{if(busy||!dst.equals(destination))return;if(selection>=0){game.setSelection(selection);line("Detected from save folders: "+labels[selection]+". Confirm your game before installation.");Toast.makeText(this,"Detected: "+labels[selection],Toast.LENGTH_LONG).show();}else {String message=matches.isEmpty()?"No recognized saves found. Select manually.":"Multiple regions found. Select manually.";line(message);Toast.makeText(this,message,Toast.LENGTH_LONG).show();}});}catch(Exception e){line("Detection failed: "+e.getMessage());runOnUiThread(()->Toast.makeText(this,"Detection failed. Check the selected folder.",Toast.LENGTH_LONG).show());}});}
  void confirm(){int target=game.getSelectedItemPosition();new AlertDialog.Builder(this).setTitle("Install station pack?").setMessage("Close GTA first. Tracks will be added to "+labels[target]+". No original files will be replaced. Try a folder with two tracks first.").setNegativeButton("Cancel",null).setPositiveButton("Install",(d,w)->runBatch(target)).show();}
  void line(String s){runOnUiThread(()->{String old=log.getText().toString();if(old.length()>14000)old=old.substring(old.length()-10000);log.setText(old+"\n"+s);});}
- void status(int done,int total,String s){runOnUiThread(()->{progress.setMax(Math.max(1,total));progress.setProgress(done);progressText.setText(s);});}
+ void status(int done,int total,String s){runOnUiThread(()->{progress.setIndeterminate(false);progress.setMax(Math.max(1,total));progress.setProgress(done);progressText.setText(s);resultText.setText(done+" of "+total+" tracks processed");});}
  void check()throws IOException{if(stopped.get())throw new IOException("Cancelled");}
  class D {
   final Uri tree,uri;final String id,name,mime;
@@ -81,7 +102,7 @@ public class MainActivity extends Activity {
  void scan(D d,List<D> out,int depth,Set<String> seen)throws IOException{check();if(depth>20||!seen.add(d.id))return;for(D x:d.children()){if(x.dir())scan(x,out,depth+1,seen);else if(supported(x.name)){if(out.size()>=1000)throw new IOException("Folder exceeds 1000 supported files; split it into smaller packs");out.add(x);}}}
  void runBatch(int target){runBatch(target,null);}
  void installPlex(List<InputTrack> tracks){if(busy)return;if(destination==null){new AlertDialog.Builder(this).setMessage("Choose your PPSSPP PSP or SAVEDATA folder first, then return to Plex Connect.").setPositiveButton("OK",null).show();return;}int target=game.getSelectedItemPosition();new AlertDialog.Builder(this).setTitle("Install "+tracks.size()+" Plex tracks?").setMessage("Download, convert and add to "+labels[target]+". Close GTA first. Your Plex library and original game files will not be modified.").setNegativeButton("Cancel",null).setPositiveButton("Install",(d,w)->runBatch(target,tracks)).show();}
- void runBatch(int target,List<InputTrack> plexTracks){busy=true;plexButton.setEnabled(false);stopped.set(false);start.setEnabled(false);cancel.setEnabled(true);sourceButton.setEnabled(false);destButton.setEnabled(false);game.setEnabled(false);getPreferences(0).edit().putInt("game",target).apply();Uri src=source,dst=destination;log.setText("Scanning...");executor.submit(()->{int ok=0,fail=0,skip=0;try{
+ void runBatch(int target,List<InputTrack> plexTracks){busy=true;nav(1);progress.setIndeterminate(true);progressText.setText("Preparing your batch…");resultText.setText("Scanning music and checking destination");detectButton.setEnabled(false);getWindow().addFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);plexButton.setEnabled(false);stopped.set(false);start.setEnabled(false);cancel.setEnabled(true);sourceButton.setEnabled(false);destButton.setEnabled(false);game.setEnabled(false);getPreferences(0).edit().putInt("game",target).apply();Uri src=source,dst=destination;log.setText("Scanning...");executor.submit(()->{int ok=0,fail=0,skip=0;try{
   D s=saveDir(dst);List<InputTrack> tracks=new ArrayList<>();if(plexTracks!=null){tracks.addAll(plexTracks);}else{D input=root(src);
   // Never scan a destination tree, which may contain game saves.
   if(src.equals(dst)||input.id.equals(s.id)||(src.getAuthority().equals(dst.getAuthority())&&(s.id.startsWith(input.id+"/")||input.id.startsWith(s.id+"/")||input.id.endsWith(":")&&s.id.startsWith(input.id)))||input.id.toLowerCase(Locale.ROOT).endsWith(":psp")||input.name.equalsIgnoreCase("PSP")||input.name.equalsIgnoreCase("SAVEDATA"))throw new IOException("Choose a separate music folder, not PPSSPP data.");
@@ -92,12 +113,13 @@ public class MainActivity extends Activity {
    try{try(InputStream in=track.open();OutputStream out=new FileOutputStream(raw)){if(in==null)throw new IOException("Cannot open input");copy(in,out,512L*1024*1024);}
     status(i,tracks.size(),"Converting "+(i+1)+"/"+tracks.size()+": "+trackName);String lower=trackName.toLowerCase(Locale.ROOT);File ready;
     if(lower.endsWith(".at3")||lower.endsWith(".gta")){ready=raw;}else{wav=File.createTempFile("rr-pcm-",".wav",getCacheDir());decode(raw,wav);check();at3=File.createTempFile("rr-atrac-",".at3",getCacheDir());encode(wav,at3);ready=at3;}
-    validateAtrac(ready);String hash=sha(ready);String base=trackName.replaceFirst("\\.[^.]+$","").replaceAll("[^A-Za-z0-9 _.-]","_");if(base.length()>48)base=base.substring(0,48);String name="RR-"+hash.substring(0,16)+"-"+base+".gta";boolean added=false;
+    status(i,tracks.size(),"Verifying and installing "+(i+1)+"/"+tracks.size()+": "+trackName);validateAtrac(ready);String hash=sha(ready);String base=trackName.replaceFirst("\\.[^.]+$","").replaceAll("[^A-Za-z0-9 _.-]","_");if(base.length()>48)base=base.substring(0,48);String name="RR-"+hash.substring(0,16)+"-"+base+".gta";boolean added=false;
     for(D dest:outputs){check();D exists=null;for(D candidate:dest.children()){if(candidate.name.startsWith("RR-"+hash.substring(0,16)+"-")&&candidate.name.endsWith(".gta")){try(InputStream prior=getContentResolver().openInputStream(candidate.uri)){if(prior!=null&&hash.equals(sha(prior))){exists=candidate;break;}}}}if(exists!=null){line("Already installed: "+trackName+" / "+dest.name);continue;}if(dest.child(name)!=null)throw new IOException("Filename collision; existing file kept");install(ready,dest,name,hash);added=true;}
     if(added){ok++;line("Installed: "+trackName);}else skip++;
    }catch(Exception e){if(stopped.get())throw e;fail++;line("FAILED "+trackName+": "+e.getMessage());}finally{raw.delete();if(wav!=null)wav.delete();if(at3!=null)at3.delete();}
-  }status(tracks.size(),tracks.size(),"Finished");line("Installed "+ok+" · Already present "+skip+" · Failed "+fail);
- }catch(Exception e){line("Stopped: "+e.getMessage()+" (completed tracks kept)");}finally{runOnUiThread(()->{busy=false;cancel.setEnabled(false);sourceButton.setEnabled(true);destButton.setEnabled(true);game.setEnabled(true);refresh();});}});}
+  status(i+1,tracks.size(),"Processed "+(i+1)+" of "+tracks.size()+": "+trackName);
+  }status(tracks.size(),tracks.size(),fail==0?"Batch complete":"Batch complete with errors");String summary="Installed "+ok+" · Already present "+skip+" · Failed "+fail;line(summary);runOnUiThread(()->resultText.setText(summary));
+ }catch(Exception e){String message=stopped.get()?"Cancelled safely":"Batch stopped";String summary="Installed "+ok+" · Already present "+skip+" · Failed "+fail;line("Stopped: "+e.getMessage()+" (completed tracks kept)");runOnUiThread(()->{progress.setIndeterminate(false);progressText.setText(message);resultText.setText(summary+" · Completed tracks kept");});}finally{runOnUiThread(()->{getWindow().clearFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);busy=false;cancel.setEnabled(false);sourceButton.setEnabled(true);destButton.setEnabled(true);game.setEnabled(true);refresh();});}});}
  void copy(InputStream in,OutputStream out,long limit)throws Exception{byte[] b=new byte[65536];int n;long total=0;while((n=in.read(b))!=-1){check();total+=n;if(total>limit)throw new IOException("File exceeds safety limit");out.write(b,0,n);}}
  String sha(File f)throws Exception{try(InputStream in=new FileInputStream(f)){return sha(in);}}
  String sha(InputStream in)throws Exception{MessageDigest d=MessageDigest.getInstance("SHA-256");byte[] b=new byte[65536];int n;while((n=in.read(b))!=-1){check();d.update(b,0,n);}StringBuilder s=new StringBuilder();for(byte x:d.digest())s.append(String.format(Locale.ROOT,"%02x",x&255));return s.toString();}
