@@ -1,4 +1,4 @@
-name: RotateRadio Destination Verification 0.3.1
+name: RotateRadio SD Auto Discovery 0.3.2
 on:
   push:
     branches: [rotateradio-v0.3.0]
@@ -76,17 +76,17 @@ jobs:
         shell: bash
         run: |
           mkdir -p dist
-          cp RotateRadio/app/build/outputs/apk/debug/app-debug.apk dist/RotateRadio-v0.3.1-alpha.apk
+          cp RotateRadio/app/build/outputs/apk/debug/app-debug.apk dist/RotateRadio-v0.3.2-alpha.apk
           cp RotateRadio/README.md dist/
           cp "$RUNNER_TEMP/encoder-revision.txt" dist/
           cp "$RUNNER_TEMP/test.at3" dist/encoder-smoke-test.at3
           cp "$RUNNER_TEMP/encoder-probe.json" dist/
           git -C "$RUNNER_TEMP/atracdenc" archive --format=tar.gz --output="$GITHUB_WORKSPACE/dist/atracdenc-source.tar.gz" HEAD
-          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose dist/RotateRadio-v0.3.1-alpha.apk
-          unzip -l dist/RotateRadio-v0.3.1-alpha.apk | grep 'lib/arm64-v8a/libatracdenc.so'
-          (cd dist && sha256sum RotateRadio-v0.3.1-alpha.apk > SHA256SUMS.txt)
+          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose dist/RotateRadio-v0.3.2-alpha.apk
+          unzip -l dist/RotateRadio-v0.3.2-alpha.apk | grep 'lib/arm64-v8a/libatracdenc.so'
+          (cd dist && sha256sum RotateRadio-v0.3.2-alpha.apk > SHA256SUMS.txt)
       - uses: actions/upload-artifact@v4
         with:
-          name: RotateRadio-v0.3.1-alpha
+          name: RotateRadio-v0.3.2-alpha
           path: dist/
           if-no-files-found: error
