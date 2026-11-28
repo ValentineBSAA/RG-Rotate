@@ -27,7 +27,9 @@ public class MainActivity extends Activity {
  Uri source, destination;
  TextView sourceText,destText,log,progressText;
  ProgressBar progress;
- Button start, cancel, sourceButton,destButton;
+ Button start, cancel, sourceButton,destButton,plexButton;
+ PlexBrowser plex;
+ interface InputTrack { String name(); InputStream open() throws Exception; }
  Spinner game;
  final ExecutorService executor=Executors.newSingleThreadExecutor();
  final AtomicBoolean stopped=new AtomicBoolean();
@@ -41,7 +43,8 @@ public class MainActivity extends Activity {
   source=load("source");destination=load("destination");
   ScrollView scroll=new ScrollView(this);scroll.setFillViewport(true);scroll.setBackgroundColor(BG);
   LinearLayout l=new LinearLayout(this);l.setOrientation(1);l.setPadding(dp(16),dp(12),dp(16),dp(12));scroll.addView(l);setContentView(scroll);
-  add(l,txt("ROTATE RADIO",25,BLUE));add(l,txt("0.1.0  /  Hardware alpha",12,0xffaab6ca));
+  add(l,txt("ROTATE RADIO",25,BLUE));add(l,txt("0.2.0  /  Plex Connect alpha",12,0xffaab6ca));
+  plex=new PlexBrowser(this);plexButton=btn("Plex Connect · Browse music",()->{if(!busy)plex.show();});add(l,plexButton);
   sourceButton=btn("1  ·  Choose music folder",()->pick(11));add(l,sourceButton);sourceText=txt("",13,TEXT);add(l,sourceText);
   destButton=btn("2  ·  Choose PPSSPP PSP folder",()->pick(12));add(l,destButton);destText=txt("",13,TEXT);add(l,destText);
   game=new Spinner(this);ArrayAdapter<String> a=new ArrayAdapter<>(this,android.R.layout.simple_spinner_item,labels);a.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);game.setAdapter(a);game.setSelection(getPreferences(0).getInt("game",0));add(l,game);
@@ -55,7 +58,7 @@ public class MainActivity extends Activity {
   refresh();
  }
  Uri load(String key){String x=getPreferences(0).getString(key,null);return x==null?null:Uri.parse(x);}
- void refresh(){sourceText.setText(source==null?"No music folder selected":shortUri(source));destText.setText(destination==null?"No PPSSPP folder selected":shortUri(destination));start.setEnabled(!busy&&source!=null&&destination!=null);}
+ void refresh(){sourceText.setText(source==null?"No music folder selected":shortUri(source));destText.setText(destination==null?"No PPSSPP folder selected":shortUri(destination));start.setEnabled(!busy&&source!=null&&destination!=null);plexButton.setEnabled(!busy);}
  String shortUri(Uri u){try{return DocumentsContract.getTreeDocumentId(u);}catch(Exception e){return u.toString();}}
  void pick(int req){Intent i=new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);i.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION|Intent.FLAG_GRANT_WRITE_URI_PERMISSION|Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION|Intent.FLAG_GRANT_PREFIX_URI_PERMISSION);startActivityForResult(i,req);}
  @Override protected void onActivityResult(int r,int result,Intent i){super.onActivityResult(r,result,i);if(result!=RESULT_OK||i==null||i.getData()==null)return;Uri u=i.getData();int flags=i.getFlags()&(Intent.FLAG_GRANT_READ_URI_PERMISSION|Intent.FLAG_GRANT_WRITE_URI_PERMISSION);try{getContentResolver().takePersistableUriPermission(u,flags);if(r==11)source=u;else if(r==12){if((flags&Intent.FLAG_GRANT_WRITE_URI_PERMISSION)==0)throw new IOException("Folder is read-only");destination=u;}getPreferences(0).edit().putString(r==11?"source":"destination",u.toString()).apply();refresh();}catch(Exception e){new AlertDialog.Builder(this).setMessage("Folder permission failed: "+e.getMessage()).setPositiveButton("OK",null).show();}}
@@ -76,21 +79,23 @@ public class MainActivity extends Activity {
  D saveDir(Uri t)throws IOException{D r=root(t);if("SAVEDATA".equalsIgnoreCase(r.name))return r;D p="PSP".equalsIgnoreCase(r.name)?r:r.child("PSP");if(p==null||!p.dir())throw new IOException("Select the existing PSP or SAVEDATA folder");D s=p.child("SAVEDATA");if(s==null||!s.dir())throw new IOException("Existing SAVEDATA not found. Start PPSSPP first.");return s;}
  boolean supported(String n){return n.toLowerCase(Locale.ROOT).matches(".*\\.(mp3|m4a|aac|wav|flac|ogg|opus|at3|gta)$");}
  void scan(D d,List<D> out,int depth,Set<String> seen)throws IOException{check();if(depth>20||!seen.add(d.id))return;for(D x:d.children()){if(x.dir())scan(x,out,depth+1,seen);else if(supported(x.name)){if(out.size()>=1000)throw new IOException("Folder exceeds 1000 supported files; split it into smaller packs");out.add(x);}}}
- void runBatch(int target){busy=true;stopped.set(false);start.setEnabled(false);cancel.setEnabled(true);sourceButton.setEnabled(false);destButton.setEnabled(false);game.setEnabled(false);getPreferences(0).edit().putInt("game",target).apply();Uri src=source,dst=destination;log.setText("Scanning...");executor.submit(()->{int ok=0,fail=0,skip=0;try{
-  D s=saveDir(dst);D input=root(src);
+ void runBatch(int target){runBatch(target,null);}
+ void installPlex(List<InputTrack> tracks){if(busy)return;if(destination==null){new AlertDialog.Builder(this).setMessage("Choose your PPSSPP PSP or SAVEDATA folder first, then return to Plex Connect.").setPositiveButton("OK",null).show();return;}int target=game.getSelectedItemPosition();new AlertDialog.Builder(this).setTitle("Install "+tracks.size()+" Plex tracks?").setMessage("Download, convert and add to "+labels[target]+". Close GTA first. Your Plex library and original game files will not be modified.").setNegativeButton("Cancel",null).setPositiveButton("Install",(d,w)->runBatch(target,tracks)).show();}
+ void runBatch(int target,List<InputTrack> plexTracks){busy=true;plexButton.setEnabled(false);stopped.set(false);start.setEnabled(false);cancel.setEnabled(true);sourceButton.setEnabled(false);destButton.setEnabled(false);game.setEnabled(false);getPreferences(0).edit().putInt("game",target).apply();Uri src=source,dst=destination;log.setText("Scanning...");executor.submit(()->{int ok=0,fail=0,skip=0;try{
+  D s=saveDir(dst);List<InputTrack> tracks=new ArrayList<>();if(plexTracks!=null){tracks.addAll(plexTracks);}else{D input=root(src);
   // Never scan a destination tree, which may contain game saves.
   if(src.equals(dst)||input.id.equals(s.id)||(src.getAuthority().equals(dst.getAuthority())&&(s.id.startsWith(input.id+"/")||input.id.startsWith(s.id+"/")||input.id.endsWith(":")&&s.id.startsWith(input.id)))||input.id.toLowerCase(Locale.ROOT).endsWith(":psp")||input.name.equalsIgnoreCase("PSP")||input.name.equalsIgnoreCase("SAVEDATA"))throw new IOException("Choose a separate music folder, not PPSSPP data.");
-  List<D> tracks=new ArrayList<>();scan(input,tracks,0,new HashSet<>());if(tracks.isEmpty())throw new IOException("No supported music files found");
+  List<D> local=new ArrayList<>();scan(input,local,0,new HashSet<>());for(D doc:local)tracks.add(new InputTrack(){public String name(){return doc.name;}public InputStream open()throws Exception{return getContentResolver().openInputStream(doc.uri);}});}if(tracks.isEmpty())throw new IOException("No supported music files found");
   List<D> outputs=new ArrayList<>();for(String id:ids[target])outputs.add(s.mkdir(id+"CUSTOMTRACKS"));
-  for(int i=0;i<tracks.size();i++){check();D track=tracks.get(i);status(i,tracks.size(),"Track "+(i+1)+"/"+tracks.size()+": "+track.name);
+  for(int i=0;i<tracks.size();i++){check();InputTrack track=tracks.get(i);String trackName=track.name();status(i,tracks.size(),(plexTracks!=null?"Downloading ":"Track ")+(i+1)+"/"+tracks.size()+": "+trackName);
    File raw=File.createTempFile("rr-input-",".tmp",getCacheDir()),wav=null,at3=null;
-   try{try(InputStream in=getContentResolver().openInputStream(track.uri);OutputStream out=new FileOutputStream(raw)){if(in==null)throw new IOException("Cannot open input");copy(in,out,512L*1024*1024);}
-    String lower=track.name.toLowerCase(Locale.ROOT);File ready;
+   try{try(InputStream in=track.open();OutputStream out=new FileOutputStream(raw)){if(in==null)throw new IOException("Cannot open input");copy(in,out,512L*1024*1024);}
+    status(i,tracks.size(),"Converting "+(i+1)+"/"+tracks.size()+": "+trackName);String lower=trackName.toLowerCase(Locale.ROOT);File ready;
     if(lower.endsWith(".at3")||lower.endsWith(".gta")){ready=raw;}else{wav=File.createTempFile("rr-pcm-",".wav",getCacheDir());decode(raw,wav);check();at3=File.createTempFile("rr-atrac-",".at3",getCacheDir());encode(wav,at3);ready=at3;}
-    validateAtrac(ready);String hash=sha(ready);String base=track.name.replaceFirst("\\.[^.]+$","").replaceAll("[^A-Za-z0-9 _.-]","_");if(base.length()>48)base=base.substring(0,48);String name="RR-"+hash.substring(0,16)+"-"+base+".gta";boolean added=false;
-    for(D dest:outputs){check();D exists=null;for(D candidate:dest.children()){if(candidate.name.startsWith("RR-"+hash.substring(0,16)+"-")&&candidate.name.endsWith(".gta")){try(InputStream prior=getContentResolver().openInputStream(candidate.uri)){if(prior!=null&&hash.equals(sha(prior))){exists=candidate;break;}}}}if(exists!=null){line("Already installed: "+track.name+" / "+dest.name);continue;}if(dest.child(name)!=null)throw new IOException("Filename collision; existing file kept");install(ready,dest,name,hash);added=true;}
-    if(added){ok++;line("Installed: "+track.name);}else skip++;
-   }catch(Exception e){if(stopped.get())throw e;fail++;line("FAILED "+track.name+": "+e.getMessage());}finally{raw.delete();if(wav!=null)wav.delete();if(at3!=null)at3.delete();}
+    validateAtrac(ready);String hash=sha(ready);String base=trackName.replaceFirst("\\.[^.]+$","").replaceAll("[^A-Za-z0-9 _.-]","_");if(base.length()>48)base=base.substring(0,48);String name="RR-"+hash.substring(0,16)+"-"+base+".gta";boolean added=false;
+    for(D dest:outputs){check();D exists=null;for(D candidate:dest.children()){if(candidate.name.startsWith("RR-"+hash.substring(0,16)+"-")&&candidate.name.endsWith(".gta")){try(InputStream prior=getContentResolver().openInputStream(candidate.uri)){if(prior!=null&&hash.equals(sha(prior))){exists=candidate;break;}}}}if(exists!=null){line("Already installed: "+trackName+" / "+dest.name);continue;}if(dest.child(name)!=null)throw new IOException("Filename collision; existing file kept");install(ready,dest,name,hash);added=true;}
+    if(added){ok++;line("Installed: "+trackName);}else skip++;
+   }catch(Exception e){if(stopped.get())throw e;fail++;line("FAILED "+trackName+": "+e.getMessage());}finally{raw.delete();if(wav!=null)wav.delete();if(at3!=null)at3.delete();}
   }status(tracks.size(),tracks.size(),"Finished");line("Installed "+ok+" · Already present "+skip+" · Failed "+fail);
  }catch(Exception e){line("Stopped: "+e.getMessage()+" (completed tracks kept)");}finally{runOnUiThread(()->{busy=false;cancel.setEnabled(false);sourceButton.setEnabled(true);destButton.setEnabled(true);game.setEnabled(true);refresh();});}});}
  void copy(InputStream in,OutputStream out,long limit)throws Exception{byte[] b=new byte[65536];int n;long total=0;while((n=in.read(b))!=-1){check();total+=n;if(total>limit)throw new IOException("File exceeds safety limit");out.write(b,0,n);}}
